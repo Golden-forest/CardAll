@@ -1,242 +1,406 @@
-import React, { useState } from 'react'
-import { Card as CardType } from '@/types/card'
-import { cn } from '@/lib/utils'
-import { themeConfig } from '@/lib/theme-config'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { Card as CardType, CardContent as CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
+import { ColoredBadge } from '@/components/ui/colored-badge'
 import { 
+  FlipHorizontal, 
   Copy, 
   Camera, 
   Share2, 
-  Palette, 
-  Edit3,
+  Edit3, 
+  Palette,
+  MoreHorizontal,
   Tag,
-  ZoomIn
+  Image as ImageIcon
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface FlipCardProps {
   card: CardType
   onFlip: (cardId: string) => void
-  onEdit: (cardId: string, content: any) => void
+  onUpdate: (cardId: string, updates: Partial<CardType>) => void
   onCopy: (cardId: string) => void
   onScreenshot: (cardId: string) => void
   onShare: (cardId: string) => void
-  onStyleChange: (cardId: string, theme: any) => void
+  onStyleChange?: (cardId: string) => void
   className?: string
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export function FlipCard({
   card,
   onFlip,
-  onEdit,
+  onUpdate,
   onCopy,
   onScreenshot,
   onShare,
   onStyleChange,
-  className
+  className,
+  size = 'md'
 }: FlipCardProps) {
+  const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  
-  const getCardStyle = () => {
-    const { type, style } = card.theme
-    if (type === 'solid') {
-      return themeConfig.colors.solid[style as keyof typeof themeConfig.colors.solid]
-    } else {
-      return themeConfig.colors.gradient[style as keyof typeof themeConfig.colors.gradient]
-    }
-  }
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const currentContent = card.isFlipped ? card.backContent : card.frontContent
 
+  // Size variants - 使用固定宽度，动态高度
+  const sizeClasses = {
+    sm: 'w-64',
+    md: 'w-80', 
+    lg: 'w-96'
+  }
+
+  // Style generation based on card.style
+  const getCardStyles = () => {
+    const { style } = card
+    const baseStyles: React.CSSProperties = {
+      borderRadius: '1rem', // 统一使用16px圆角
+      fontFamily: style.fontFamily,
+      fontSize: style.fontSize === 'sm' ? '0.875rem' : 
+                style.fontSize === 'lg' ? '1.125rem' : '1rem',
+      fontWeight: style.fontWeight,
+      color: style.textColor,
+      borderWidth: style.borderWidth || 0,
+      borderColor: style.borderColor,
+    }
+
+    if (style.type === 'gradient' && style.gradientColors) {
+      baseStyles.background = `linear-gradient(135deg, ${style.gradientColors.join(', ')})`
+    } else {
+      baseStyles.backgroundColor = style.backgroundColor
+    }
+
+    // Add shadow
+    const shadowClasses: Record<string, string> = {
+      sm: 'shadow-sm',
+      md: 'shadow-md',
+      lg: 'shadow-lg',
+      xl: 'shadow-xl',
+      none: '',
+      '2xl': 'shadow-2xl'
+    }
+
+    return {
+      style: baseStyles,
+      shadowClass: shadowClasses[style.shadow || 'md'] || 'shadow-md'
+    }
+  }
+
+  const { style: cardStyles, shadowClass } = getCardStyles()
+
+  const handleFlip = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    onFlip(card.id)
+  }, [card.id, onFlip])
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsEditing(true)
+  }
+
+  const handleContentUpdate = (field: keyof CardContentType, value: any) => {
+    const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
+    const updates = {
+      [contentKey]: {
+        ...currentContent,
+        [field]: value,
+        lastModified: new Date()
+      }
+    } as Partial<CardType>
+    onUpdate(card.id, updates)
+  }
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleContentUpdate('title', e.target.value)
+  }
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    handleContentUpdate('text', e.target.value)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setIsEditing(false)
+    }
+    if (e.key === 'Enter' && e.ctrlKey) {
+      setIsEditing(false)
+    }
+  }
+
   return (
-    <div className={cn("group relative", className)}>
-      {/* Card main body */}
+    <div 
+      className={cn("relative group", className)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Simplified Card Container with Fade Animation */}
       <div 
+        ref={cardRef}
         className={cn(
-          "relative w-full min-h-[300px] rounded-3xl p-6 cursor-pointer",
-          "transform-gpu perspective-1000",
-          themeConfig.animations.flip,
-          themeConfig.shadows.card,
-          getCardStyle(),
-          card.isFlipped && "rotateY-180"
+          "relative transition-all duration-300 ease-in-out",
+          sizeClasses[size]
         )}
-        onClick={() => onFlip(card.id)}
+        style={{ 
+          minHeight: 'fit-content' // Allow dynamic height
+        }}
       >
-        {/* Front content */}
-        <div className={cn(
-          "absolute inset-0 p-6 backface-hidden rounded-3xl",
-          card.isFlipped && "rotateY-180"
-        )}>
-          <CardContent 
-            content={card.frontContent}
-            isEditing={isEditing}
-            onEdit={(content) => onEdit(card.id, { front: content })}
-          />
-        </div>
+        {/* Front Side */}
+        {!card.isFlipped && (
+          <div 
+            className={cn(
+              "w-full p-4 flex flex-col transition-opacity duration-300",
+              shadowClass
+            )}
+            style={{
+              ...cardStyles,
+              borderRadius: cardStyles.borderRadius
+            }}
+          >
+            <CardSide
+              content={card.frontContent}
+              isEditing={isEditing && !card.isFlipped}
+              onTitleChange={handleTitleChange}
+              onTextChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              sideLabel="Front"
+              isHovered={isHovered}
+              onEdit={handleEdit}
+              onFlip={handleFlip}
+              onCopy={() => onCopy(card.id)}
+              onScreenshot={() => onScreenshot(card.id)}
+              onShare={() => onShare(card.id)}
+              onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
+              card={card}
+            />
+          </div>
+        )}
 
-        {/* Back content */}
-        <div className={cn(
-          "absolute inset-0 p-6 backface-hidden rounded-3xl rotateY-180",
-          !card.isFlipped && "rotateY-180"
-        )}>
-          <CardContent 
-            content={card.backContent}
-            isEditing={isEditing}
-            onEdit={(content) => onEdit(card.id, { back: content })}
-            showTags={true}
-          />
-        </div>
-      </div>
-
-      {/* Function button group */}
-      <div className={cn(
-        "absolute -right-4 top-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100",
-        "transition-opacity duration-200"
-      )}>
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 rounded-full shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation()
-            onCopy(card.id)
-          }}
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 rounded-full shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation()
-            onScreenshot(card.id)
-          }}
-        >
-          <Camera className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 rounded-full shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation()
-            onShare(card.id)
-          }}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 rounded-full shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation()
-            setIsEditing(!isEditing)
-          }}
-        >
-          <Edit3 className="h-4 w-4" />
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 w-8 rounded-full shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation()
-            // Open style selector
-          }}
-        >
-          <Palette className="h-4 w-4" />
-        </Button>
+        {/* Back Side */}
+        {card.isFlipped && (
+          <div 
+            className={cn(
+              "w-full p-4 flex flex-col transition-opacity duration-300",
+              shadowClass
+            )}
+            style={{
+              ...cardStyles,
+              borderRadius: cardStyles.borderRadius
+            }}
+          >
+            <CardSide
+              content={card.backContent}
+              isEditing={isEditing && card.isFlipped}
+              onTitleChange={handleTitleChange}
+              onTextChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              sideLabel="Back"
+              isHovered={isHovered}
+              onEdit={handleEdit}
+              onFlip={handleFlip}
+              onCopy={() => onCopy(card.id)}
+              onScreenshot={() => onScreenshot(card.id)}
+              onShare={() => onShare(card.id)}
+              onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
+              card={card}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-interface CardContentProps {
-  content: CardContent
+// Card Side Component
+interface CardSideProps {
+  content: CardContentType
   isEditing: boolean
-  onEdit: (content: CardContent) => void
-  showTags?: boolean
+  onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onKeyDown: (e: React.KeyboardEvent) => void
+  sideLabel: string
+  isHovered: boolean
+  onEdit: (e: React.MouseEvent) => void
+  onFlip: (e: React.MouseEvent) => void
+  onCopy: () => void
+  onScreenshot: () => void
+  onShare: () => void
+  onStyleChange?: () => void
+  card: CardType
 }
 
-function CardContent({ content, isEditing, onEdit, showTags }: CardContentProps) {
+function CardSide({
+  content,
+  isEditing,
+  onTitleChange,
+  onTextChange,
+  onKeyDown,
+  sideLabel,
+  isHovered,
+  onEdit,
+  onFlip,
+  onCopy,
+  onScreenshot,
+  onShare,
+  onStyleChange,
+  card
+}: CardSideProps) {
   return (
-    <div className="h-full flex flex-col">
-      {/* Title */}
-      <div className="mb-4">
-        {isEditing ? (
-          <input
-            type="text"
-            value={content.title}
-            onChange={(e) => onEdit({ ...content, title: e.target.value })}
-            className="w-full bg-transparent border-b border-white/30 text-xl font-bold focus:outline-none focus:border-white/60"
-            placeholder="Enter title..."
-          />
-        ) : (
-          <h3 className="text-xl font-bold text-left">{content.title || 'Untitled'}</h3>
-        )}
+    <div className="flex flex-col h-full">
+      {/* Header with Title and Action Buttons */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 mr-2">
+          {isEditing ? (
+            <input
+              type="text"
+              value={content.title}
+              onChange={onTitleChange}
+              onKeyDown={onKeyDown}
+              className="w-full bg-transparent border-none outline-none text-lg font-semibold resize-none"
+              placeholder="Card title..."
+              autoFocus
+            />
+          ) : (
+            <h3 className="text-lg font-semibold text-left">
+              {content.title || 'Untitled Card'}
+            </h3>
+          )}
+        </div>
+
+        {/* Action Buttons - Inline */}
+        <div className={cn(
+          "flex gap-1 transition-all duration-200 flex-shrink-0",
+          isHovered || isEditing ? "opacity-100" : "opacity-60"
+        )}>
+          {/* Flip Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0 rounded-md hover:bg-black/10"
+            onClick={onFlip}
+            title={`Flip to ${card.isFlipped ? 'Front' : 'Back'}`}
+          >
+            <FlipHorizontal className="h-3.5 w-3.5" />
+          </Button>
+
+          {/* More Actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 rounded-md hover:bg-black/10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onEdit}>
+                <Edit3 className="h-4 w-4 mr-2" />
+                Edit Content
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onCopy}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Text
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onScreenshot}>
+                <Camera className="h-4 w-4 mr-2" />
+                Screenshot
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {onStyleChange && (
+                <DropdownMenuItem onClick={onStyleChange}>
+                  <Palette className="h-4 w-4 mr-2" />
+                  Change Style
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
-      {/* Image content */}
-      {content.images && content.images.length > 0 && (
-        <div className="mb-4 flex-shrink-0">
-          <div className="grid gap-3">
-            {content.images.map((image) => (
-              <div key={image.id} className="relative group">
+      {/* Images */}
+      {content.images.length > 0 && (
+        <div className="mb-3 flex-shrink-0">
+          <div className="grid grid-cols-2 gap-2">
+            {content.images.slice(0, 4).map((image: ImageData, index: number) => (
+              <div key={index} className="relative aspect-video rounded-md overflow-hidden bg-muted">
                 <img
                   src={image.url}
-                  alt={image.alt}
-                  className="w-full h-auto rounded-2xl object-cover max-h-48 mx-auto cursor-pointer hover:scale-105 transition-transform"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    // Image zoom functionality
-                  }}
+                  alt={image.alt || `Image ${index + 1}`}
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button size="sm" variant="secondary" className="h-6 w-6 p-0">
-                    <ZoomIn className="h-3 w-3" />
-                  </Button>
-                </div>
               </div>
             ))}
           </div>
+          {content.images.length > 4 && (
+            <div className="text-xs text-muted-foreground mt-1 text-center">
+              +{content.images.length - 4} more images
+            </div>
+          )}
         </div>
       )}
 
-      {/* Text content */}
-      <div className="flex-1">
+      {/* Text Content */}
+      <div className="flex-1 mb-3">
         {isEditing ? (
           <textarea
             value={content.text}
-            onChange={(e) => onEdit({ ...content, text: e.target.value })}
-            className="w-full h-full bg-transparent border border-white/30 rounded-xl p-3 text-left resize-none focus:outline-none focus:border-white/60"
-            placeholder="Enter content..."
+            onChange={onTextChange}
+            onKeyDown={onKeyDown}
+            className="w-full h-full bg-transparent border-none outline-none resize-none text-sm leading-relaxed min-h-[100px]"
+            placeholder="Add your content here..."
           />
         ) : (
-          <p className="text-left leading-relaxed">{content.text || 'No content'}</p>
+          <div className="text-sm leading-relaxed text-left">
+            <p className="whitespace-pre-wrap">
+              {content.text || 'Click to add content...'}
+            </p>
+          </div>
         )}
       </div>
 
-      {/* Tags */}
-      {showTags && content.tags && content.tags.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-white/20">
-          <div className="flex flex-wrap gap-2">
-            {content.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center gap-1 px-2 py-1 bg-white/20 rounded-full text-xs"
-              >
-                <Tag className="h-3 w-3" />
+      {/* Footer with Tags and Image Count */}
+      <div className="mt-auto">
+        {/* Tags */}
+        {content.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {content.tags.slice(0, 4).map((tag, index) => (
+              <ColoredBadge key={index} className="text-xs">
                 {tag}
-              </span>
+              </ColoredBadge>
             ))}
+            {content.tags.length > 4 && (
+              <ColoredBadge className="text-xs" colorIndex={7}>
+                +{content.tags.length - 4}
+              </ColoredBadge>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Image Count */}
+        {content.images.length > 0 && (
+          <div className="flex items-center justify-end text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <ImageIcon className="h-3 w-3" />
+              <span>{content.images.length}</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

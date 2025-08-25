@@ -1,151 +1,145 @@
-import React, { useState, useRef } from 'react'
-import { Card } from '@/types/card'
-import { FlipCard } from './flip-card'
+import React, { useMemo } from 'react'
+import { Card as CardType } from '@/types/card'
+import { EnhancedFlipCard } from './enhanced-flip-card'
+import { MasonryCardGrid } from './masonry-card-grid'
 import { cn } from '@/lib/utils'
 
 interface CardGridProps {
-  cards: Card[]
-  onCardUpdate: (cardId: string, updates: Partial<Card>) => void
+  cards: CardType[]
+  onCardFlip: (cardId: string) => void
+  onCardUpdate: (cardId: string, updates: Partial<CardType>) => void
   onCardCopy: (cardId: string) => void
   onCardScreenshot: (cardId: string) => void
   onCardShare: (cardId: string) => void
+  onCardStyleChange?: (cardId: string) => void
+  layout?: 'grid' | 'masonry' | 'list'
+  cardSize?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
 export function CardGrid({
   cards,
+  onCardFlip,
   onCardUpdate,
   onCardCopy,
   onCardScreenshot,
   onCardShare,
+  onCardStyleChange,
+  layout = 'masonry',
+  cardSize = 'md',
   className
 }: CardGridProps) {
-  const [draggedCard, setDraggedCard] = useState<string | null>(null)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
-  const gridRef = useRef<HTMLDivElement>(null)
+  // Sort cards by creation date (newest first)
+  const sortedCards = useMemo(() => {
+    return [...cards].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [cards])
 
-  const handleCardFlip = (cardId: string) => {
-    const card = cards.find(c => c.id === cardId)
-    if (card) {
-      onCardUpdate(cardId, { isFlipped: !card.isFlipped })
-    }
-  }
-
-  const handleCardEdit = (cardId: string, content: any) => {
-    onCardUpdate(cardId, content)
-  }
-
-  const handleCardStyleChange = (cardId: string, theme: any) => {
-    onCardUpdate(cardId, { theme })
-  }
-
-  // Drag start
-  const handleDragStart = (e: React.DragEvent, cardId: string) => {
-    setDraggedCard(cardId)
-    const rect = e.currentTarget.getBoundingClientRect()
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    })
-    e.dataTransfer.effectAllowed = 'move'
-  }
-
-  // Drag end
-  const handleDragEnd = () => {
-    setDraggedCard(null)
-    setDragOffset({ x: 0, y: 0 })
-  }
-
-  // Drag over
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }
-
-  // Drop card
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    if (!draggedCard || !gridRef.current) return
-
-    const gridRect = gridRef.current.getBoundingClientRect()
-    const newPosition = {
-      x: e.clientX - gridRect.left - dragOffset.x,
-      y: e.clientY - gridRect.top - dragOffset.y
-    }
-
-    // Check magnetic snap
-    const targetCard = findNearbyCard(newPosition, draggedCard)
-    if (targetCard) {
-      // Implement magnetic snap logic
-      const magneticPosition = calculateMagneticPosition(newPosition, targetCard)
-      onCardUpdate(draggedCard, { position: magneticPosition })
-    } else {
-      onCardUpdate(draggedCard, { position: newPosition })
-    }
-
-    handleDragEnd()
-  }
-
-  // Find nearby cards
-  const findNearbyCard = (position: { x: number; y: number }, excludeId: string) => {
-    const threshold = 50 // Snap distance threshold
-    return cards.find(card => {
-      if (card.id === excludeId) return false
-      const distance = Math.sqrt(
-        Math.pow(card.position.x - position.x, 2) + 
-        Math.pow(card.position.y - position.y, 2)
-      )
-      return distance < threshold
-    })
-  }
-
-  // Calculate magnetic snap position
-  const calculateMagneticPosition = (
-    dragPosition: { x: number; y: number }, 
-    targetCard: Card
-  ) => {
-    // Simplified snap logic, should be more complex in reality
-    return {
-      x: targetCard.position.x + targetCard.size.width + 20,
-      y: targetCard.position.y
-    }
-  }
-
-  return (
-    <div
-      ref={gridRef}
-      className={cn(
-        "relative min-h-screen p-8",
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
-        "auto-rows-min",
-        className
-      )}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      {cards.map((card) => (
-        <div
-          key={card.id}
-          draggable
-          onDragStart={(e) => handleDragStart(e, card.id)}
-          onDragEnd={handleDragEnd}
-          className={cn(
-            "transform transition-transform duration-200",
-            draggedCard === card.id && "scale-105 rotate-2 opacity-80"
-          )}
-        >
-          <FlipCard
-            card={card}
-            onFlip={handleCardFlip}
-            onEdit={handleCardEdit}
-            onCopy={onCardCopy}
-            onScreenshot={onCardScreenshot}
-            onShare={onCardShare}
-            onStyleChange={handleCardStyleChange}
-            className="h-full"
-          />
+  if (cards.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <div className="text-center space-y-4">
+          <div className="w-24 h-24 mx-auto rounded-full bg-muted flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">+</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">No cards yet</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Create your first knowledge card to get started. Click the + button to begin.
+            </p>
+          </div>
         </div>
-      ))}
+      </div>
+    )
+  }
+
+  const getGridClasses = () => {
+    switch (layout) {
+      case 'grid':
+        return cn(
+          "grid gap-8 auto-rows-max", // 增加间距到32px
+          cardSize === 'sm' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+          cardSize === 'md' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+          cardSize === 'lg' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        )
+      case 'masonry':
+        return cn(
+          "columns-1 gap-8", // 增加列间距
+          cardSize === 'sm' && "sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5",
+          cardSize === 'md' && "sm:columns-2 lg:columns-3 xl:columns-4",
+          cardSize === 'lg' && "sm:columns-2 lg:columns-3"
+        )
+      case 'list':
+        return "flex flex-col gap-6" // 增加列表间距
+      default:
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+    }
+  }
+
+  // Use new MasonryCardGrid for masonry layout
+  if (layout === 'masonry') {
+    return (
+      <MasonryCardGrid
+        cards={cards}
+        onCardFlip={onCardFlip}
+        onCardUpdate={onCardUpdate}
+        onCardCopy={onCardCopy}
+        onCardScreenshot={onCardScreenshot}
+        onCardShare={onCardShare}
+        onCardStyleChange={onCardStyleChange}
+        cardSize={cardSize}
+        className={className}
+      />
+    )
+  }
+
+  // Fallback to original grid/list layouts
+  return (
+    <div className={cn("p-6", className)}>
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold">Your Cards</h2>
+            <p className="text-muted-foreground">
+              {cards.length} {cards.length === 1 ? 'card' : 'cards'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Cards Grid */}
+      <div className={getGridClasses()}>
+        {sortedCards.map((card) => (
+          <div 
+            key={card.id} 
+            className="break-inside-avoid"
+          >
+            <EnhancedFlipCard
+              card={card}
+              onFlip={onCardFlip}
+              onUpdate={onCardUpdate}
+              onCopy={onCardCopy}
+              onScreenshot={onCardScreenshot}
+              onShare={onCardShare}
+              size={cardSize}
+              className="w-full"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Load More / Pagination could go here */}
+      {cards.length > 20 && (
+        <div className="mt-12 text-center">
+          <p className="text-muted-foreground">
+            Showing {Math.min(20, cards.length)} of {cards.length} cards
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { Card, CardFilter } from '@/types/card'
+import React, { useState } from 'react'
+import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
 import { CardGrid } from './card/card-grid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { ThemeProvider } from '@/components/theme-provider'
 import { 
   Plus, 
   Search, 
@@ -14,126 +13,51 @@ import {
   Folder,
   Tag,
   Grid3X3,
-  LayoutGrid
+  LayoutGrid,
+  FolderPlus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
+import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 
 interface DashboardProps {
   className?: string
 }
 
 export function Dashboard({ className }: DashboardProps) {
-  const [cards, setCards] = useState<Card[]>([])
-  const [filteredCards, setFilteredCards] = useState<Card[]>([])
-  const [filter, setFilter] = useState<CardFilter>({
-    searchTerm: '',
-    tags: []
-  })
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'masonry'>('masonry')
+  const { 
+    cards, 
+    filter, 
+    setFilter, 
+    viewSettings, 
+    setViewSettings, 
+    dispatch: cardDispatch,
+    getAllTags 
+  } = useCardAllCards()
+  
+  const { 
+    folderTree, 
+    selectedFolderId, 
+    setSelectedFolderId,
+    dispatch: folderDispatch 
+  } = useCardAllFolders()
+  
+  const { tags, popularTags } = useCardAllTags()
+  
   const { theme, setTheme } = useTheme()
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
-  // Initialize with sample cards
-  useEffect(() => {
-    const sampleCards: Card[] = [
-      {
-        id: '1',
-        frontContent: {
-          title: 'Welcome to CardAll',
-          text: 'This is your first knowledge card. Click to flip and see the back!',
-          images: [],
-          tags: []
-        },
-        backContent: {
-          title: 'Card Back',
-          text: 'This is the back of the card. You can add tags and additional content here.',
-          images: [],
-          tags: ['welcome', 'tutorial']
-        },
-        theme: { type: 'gradient', style: 'ocean' },
-        isFlipped: false,
-        position: { x: 0, y: 0 },
-        size: { width: 300, height: 400 },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '2',
-        frontContent: {
-          title: 'Design System',
-          text: 'CardAll uses Apple-inspired design with large rounded corners and smooth animations.',
-          images: [],
-          tags: []
-        },
-        backContent: {
-          title: 'Technical Details',
-          text: 'Built with React, TypeScript, and Shadcn UI components.',
-          images: [],
-          tags: ['design', 'react', 'typescript']
-        },
-        theme: { type: 'solid', style: 'primary' },
-        isFlipped: false,
-        position: { x: 0, y: 0 },
-        size: { width: 300, height: 400 },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '3',
-        frontContent: {
-          title: 'Features',
-          text: 'Drag & drop, magnetic snap, real-time editing, and much more!',
-          images: [],
-          tags: []
-        },
-        backContent: {
-          title: 'Coming Soon',
-          text: 'More features are being developed including folders, advanced search, and sharing.',
-          images: [],
-          tags: ['features', 'roadmap']
-        },
-        theme: { type: 'gradient', style: 'purple' },
-        isFlipped: false,
-        position: { x: 0, y: 0 },
-        size: { width: 300, height: 400 },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ]
-    setCards(sampleCards)
-    setFilteredCards(sampleCards)
-  }, [])
+  const handleCardFlip = (cardId: string) => {
+    cardDispatch({ type: 'FLIP_CARD', payload: cardId })
+  }
 
-  // Filter cards based on search and tags
-  useEffect(() => {
-    let filtered = cards
-
-    if (filter.searchTerm) {
-      filtered = filtered.filter(card => 
-        card.frontContent.title.toLowerCase().includes(filter.searchTerm.toLowerCase()) ||
-        card.frontContent.text.toLowerCase().includes(filter.searchTerm.toLowerCase()) ||
-        card.backContent.title.toLowerCase().includes(filter.searchTerm.toLowerCase()) ||
-        card.backContent.text.toLowerCase().includes(filter.searchTerm.toLowerCase())
-      )
-    }
-
-    if (filter.tags.length > 0) {
-      filtered = filtered.filter(card =>
-        filter.tags.some(tag => 
-          card.frontContent.tags.includes(tag) || 
-          card.backContent.tags.includes(tag)
-        )
-      )
-    }
-
-    setFilteredCards(filtered)
-  }, [cards, filter])
-
-  const handleCardUpdate = (cardId: string, updates: Partial<Card>) => {
-    setCards(prev => prev.map(card => 
-      card.id === cardId ? { ...card, ...updates, updatedAt: new Date() } : card
-    ))
+  const handleCardUpdate = (cardId: string, updates: any) => {
+    cardDispatch({ 
+      type: 'UPDATE_CARD', 
+      payload: { id: cardId, updates } 
+    })
   }
 
   const handleCardCopy = (cardId: string) => {
@@ -142,29 +66,108 @@ export function Dashboard({ className }: DashboardProps) {
       const content = card.isFlipped ? card.backContent : card.frontContent
       const textToCopy = `${content.title}\n\n${content.text}`
       navigator.clipboard.writeText(textToCopy)
-      // Show toast notification
+      // TODO: Show toast notification
       console.log('Card content copied to clipboard')
     }
   }
 
   const handleCardScreenshot = (cardId: string) => {
-    // Implement screenshot functionality
+    // TODO: Implement screenshot functionality
     console.log('Screenshot card:', cardId)
   }
 
   const handleCardShare = (cardId: string) => {
-    // Implement share functionality
+    // TODO: Implement share functionality
     console.log('Share card:', cardId)
   }
 
-  const handleCreateCard = (cardData: any) => {
-    const newCard: Card = {
-      ...cardData,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+  const handleCreateCard = () => {
+    const newCard = {
+      frontContent: {
+        title: 'New Card',
+        text: 'Click to edit this card...',
+        images: [],
+        tags: [],
+        lastModified: new Date()
+      },
+      backContent: {
+        title: 'Back Side',
+        text: 'Add additional content here...',
+        images: [],
+        tags: [],
+        lastModified: new Date()
+      },
+      style: {
+        type: 'solid' as const,
+        backgroundColor: '#ffffff',
+        fontFamily: 'system-ui',
+        fontSize: 'base' as const,
+        fontWeight: 'normal' as const,
+        textColor: '#1f2937',
+        borderRadius: 'xl' as const,
+        shadow: 'md' as const,
+        borderWidth: 0
+      },
+      isFlipped: false,
+      folderId: selectedFolderId || undefined
     }
-    setCards(prev => [newCard, ...prev])
+    
+    cardDispatch({ type: 'CREATE_CARD', payload: newCard })
+  }
+
+  const handleCreateFolder = () => {
+    folderDispatch({
+      type: 'CREATE_FOLDER',
+      payload: {
+        name: 'New Folder',
+        color: '#3b82f6',
+        icon: 'Folder',
+        cardIds: [],
+        isExpanded: true
+      }
+    })
+  }
+
+
+  const handleTagFilter = (tagName: string) => {
+    const isSelected = filter.tags.includes(tagName)
+    setFilter({
+      ...filter,
+      tags: isSelected 
+        ? filter.tags.filter(t => t !== tagName)
+        : [...filter.tags, tagName]
+    })
+  }
+
+  const handleFolderSelect = (folderId: string | null) => {
+    setSelectedFolderId(folderId)
+    setFilter({
+      ...filter,
+      folderId: folderId || undefined
+    })
+  }
+
+  const renderFolderTree = (folders: any[], level = 0) => {
+    return folders.map(folder => (
+      <div key={folder.id} style={{ marginLeft: level * 16 }}>
+        <Button
+          variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
+          className="w-full justify-start text-sm mb-1"
+          onClick={() => handleFolderSelect(folder.id)}
+        >
+          <Folder className="h-4 w-4 mr-2" style={{ color: folder.color }} />
+          {folder.name}
+          <Badge variant="secondary" className="ml-auto">
+            {folder.cardIds.length}
+          </Badge>
+        </Button>
+        {folder.children && folder.children.length > 0 && folder.isExpanded && (
+          <div className="ml-4">
+            {renderFolderTree(folder.children, level + 1)}
+          </div>
+        )}
+      </div>
+    ))
   }
 
   return (
@@ -187,7 +190,7 @@ export function Dashboard({ className }: DashboardProps) {
               <Input
                 placeholder="Search cards..."
                 value={filter.searchTerm}
-                onChange={(e) => setFilter(prev => ({ ...prev, searchTerm: e.target.value }))}
+                onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
                 className="pl-10 rounded-full"
               />
             </div>
@@ -198,9 +201,12 @@ export function Dashboard({ className }: DashboardProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setViewMode(viewMode === 'grid' ? 'masonry' : 'grid')}
+              onClick={() => setViewSettings({
+                ...viewSettings,
+                layout: viewSettings.layout === 'grid' ? 'masonry' : 'grid'
+              })}
             >
-              {viewMode === 'grid' ? <LayoutGrid className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
+              {viewSettings.layout === 'grid' ? <LayoutGrid className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
             </Button>
             
             <Button
@@ -220,84 +226,132 @@ export function Dashboard({ className }: DashboardProps) {
 
       {/* Main Content */}
       <main className="container mx-auto">
-        {/* Sidebar */}
         <div className="flex">
+          {/* Sidebar */}
           <aside className="w-64 p-4 border-r min-h-screen">
-            <div className="space-y-6">
-              {/* Quick Actions */}
-              <div>
-                <h3 className="text-sm font-medium mb-3">Quick Actions</h3>
-                <div className="space-y-2">
-                  <Button 
-                    className="w-full justify-start" 
-                    onClick={() => setShowCreateModal(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Card
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Folder className="h-4 w-4 mr-2" />
-                    New Folder
-                  </Button>
-                </div>
-              </div>
-
-              {/* Folders */}
-              <div>
-                <h3 className="text-sm font-medium mb-3">Folders</h3>
-                <div className="space-y-1">
-                  <Button variant="ghost" className="w-full justify-start text-sm">
-                    <Folder className="h-4 w-4 mr-2" />
-                    All Cards ({cards.length})
-                  </Button>
-                  <Button variant="ghost" className="w-full justify-start text-sm">
-                    <Folder className="h-4 w-4 mr-2" />
-                    Favorites
-                  </Button>
-                  <Button variant="ghost" className="w-full justify-start text-sm">
-                    <Folder className="h-4 w-4 mr-2" />
-                    Recent
-                  </Button>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <h3 className="text-sm font-medium mb-3">Tags</h3>
-                <div className="space-y-1">
-                  {Array.from(new Set(cards.flatMap(card => [...card.frontContent.tags, ...card.backContent.tags]))).map(tag => (
+            <ScrollArea className="h-full">
+              <div className="space-y-6">
+                {/* Quick Actions */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Quick Actions</h3>
+                  <div className="space-y-2">
                     <Button 
-                      key={tag}
-                      variant="ghost" 
-                      className="w-full justify-start text-sm"
-                      onClick={() => {
-                        const isSelected = filter.tags.includes(tag)
-                        setFilter(prev => ({
-                          ...prev,
-                          tags: isSelected 
-                            ? prev.tags.filter(t => t !== tag)
-                            : [...prev.tags, tag]
-                        }))
-                      }}
+                      className="w-full justify-start" 
+                      onClick={handleCreateCard}
                     >
-                      <Tag className="h-3 w-3 mr-2" />
-                      {tag}
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Card
                     </Button>
-                  ))}
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={handleCreateFolder}
+                    >
+                      <FolderPlus className="h-4 w-4 mr-2" />
+                      New Folder
+                    </Button>
+                  </div>
                 </div>
+
+                <Separator />
+
+                {/* Folders */}
+                <div>
+                  <h3 className="text-sm font-medium mb-3">Folders</h3>
+                  <div className="space-y-1">
+                    <Button 
+                      variant={!selectedFolderId ? "secondary" : "ghost"}
+                      className="w-full justify-start text-sm"
+                      onClick={() => handleFolderSelect(null)}
+                    >
+                      <Folder className="h-4 w-4 mr-2" />
+                      All Cards
+                      <Badge variant="secondary" className="ml-auto">
+                        {cards.length}
+                      </Badge>
+                    </Button>
+                    {renderFolderTree(folderTree)}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Tags */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium">Tags</h3>
+                    {filter.tags.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setFilter({ ...filter, tags: [] })}
+                        className="h-6 px-2 text-xs"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    {popularTags(10).map(tag => (
+                      <Button 
+                        key={tag.id}
+                        variant={filter.tags.includes(tag.name) ? "secondary" : "ghost"}
+                        className="w-full justify-start text-sm"
+                        onClick={() => handleTagFilter(tag.name)}
+                      >
+                        <Tag className="h-3 w-3 mr-2" style={{ color: tag.color }} />
+                        {tag.name}
+                        <Badge variant="secondary" className="ml-auto">
+                          {tag.count}
+                        </Badge>
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Filters */}
+                {(filter.tags.length > 0 || filter.searchTerm) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Active Filters</h3>
+                      <div className="space-y-2">
+                        {filter.searchTerm && (
+                          <div className="flex items-center gap-2">
+                            <Search className="h-3 w-3" />
+                            <span className="text-xs text-muted-foreground">
+                              "{filter.searchTerm}"
+                            </span>
+                          </div>
+                        )}
+                        {filter.tags.map(tagName => (
+                          <Badge 
+                            key={tagName}
+                            variant="secondary"
+                            className="mr-1"
+                          >
+                            {tagName}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
+            </ScrollArea>
           </aside>
 
           {/* Card Grid */}
           <div className="flex-1">
             <CardGrid
-              cards={filteredCards}
+              cards={cards}
+              onCardFlip={handleCardFlip}
               onCardUpdate={handleCardUpdate}
               onCardCopy={handleCardCopy}
               onCardScreenshot={handleCardScreenshot}
               onCardShare={handleCardShare}
-              className={viewMode === 'grid' ? 'grid-cols-3' : ''}
+              layout={viewSettings.layout}
+              cardSize={viewSettings.cardSize === 'small' ? 'sm' : viewSettings.cardSize === 'large' ? 'lg' : 'md'}
             />
           </div>
         </div>
@@ -306,7 +360,7 @@ export function Dashboard({ className }: DashboardProps) {
       {/* Floating Action Button */}
       <Button
         className="fixed bottom-8 right-8 h-14 w-14 rounded-full shadow-lg"
-        onClick={() => setShowCreateModal(true)}
+        onClick={handleCreateCard}
       >
         <Plus className="h-6 w-6" />
       </Button>
