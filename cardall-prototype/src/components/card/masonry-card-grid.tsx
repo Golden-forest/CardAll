@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useRef, useEffect } from 'react'
 import Masonry from 'react-masonry-css'
 import { Card as CardType } from '@/types/card'
 import { EnhancedFlipCard } from './enhanced-flip-card'
+import { useResizeObserver } from '@/hooks/use-resize-observer'
 import { cn } from '@/lib/utils'
 
 interface MasonryCardGridProps {
@@ -29,6 +30,17 @@ export function MasonryCardGrid({
 }: MasonryCardGridProps) {
   const masonryRef = useRef<HTMLDivElement>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Use ResizeObserver to detect container size changes
+  const containerRef = useResizeObserver<HTMLDivElement>({
+    onResize: () => {
+      // Trigger masonry reflow when container resizes
+      if (masonryRef.current) {
+        window.dispatchEvent(new Event('resize'))
+      }
+    },
+    debounceMs: 150
+  })
 
   // Sort cards by creation date (newest first)
   const sortedCards = useMemo(() => {
@@ -72,17 +84,28 @@ export function MasonryCardGrid({
     })
   }, [cardSize])
 
-  // Handle card flip with immediate reflow
+  // Handle card flip with improved reflow
   const handleCardFlip = useCallback((cardId: string) => {
     onCardFlip(cardId)
     
-    // Trigger reflow after flip animation completes
-    setTimeout(() => {
+    // Multiple reflow attempts for better layout stability
+    const triggerReflow = () => {
       if (masonryRef.current) {
         // Force reflow by triggering a resize event
         window.dispatchEvent(new Event('resize'))
+        
+        // Additional reflow after a short delay
+        setTimeout(() => {
+          window.dispatchEvent(new Event('resize'))
+        }, 50)
       }
-    }, 300) // Match flip animation duration
+    }
+    
+    // Immediate reflow
+    requestAnimationFrame(triggerReflow)
+    
+    // Reflow after flip animation completes
+    setTimeout(triggerReflow, 350)
   }, [onCardFlip])
 
   // Handle card updates with reflow
@@ -131,7 +154,7 @@ export function MasonryCardGrid({
   }
 
   return (
-    <div className={cn("p-6", className)}>
+    <div ref={containerRef} className={cn("p-6", className)}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">

@@ -13,13 +13,15 @@ export function useResizeObserver<T extends HTMLElement>({
   const observerRef = useRef<ResizeObserver | null>(null)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  const debouncedCallback = useCallback((entry: ResizeObserverEntry) => {
+  const debouncedCallback = useCallback((entries: ResizeObserverEntry[]) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current)
     }
-    
+
     timeoutRef.current = setTimeout(() => {
-      onResize?.(entry)
+      if (onResize && entries.length > 0) {
+        onResize(entries[0])
+      }
     }, debounceMs)
   }, [onResize, debounceMs])
 
@@ -28,14 +30,7 @@ export function useResizeObserver<T extends HTMLElement>({
     if (!element || !onResize) return
 
     // Create ResizeObserver
-    observerRef.current = new ResizeObserver((entries) => {
-      const entry = entries[0]
-      if (entry) {
-        debouncedCallback(entry)
-      }
-    })
-
-    // Start observing
+    observerRef.current = new ResizeObserver(debouncedCallback)
     observerRef.current.observe(element)
 
     return () => {
@@ -50,5 +45,3 @@ export function useResizeObserver<T extends HTMLElement>({
 
   return elementRef
 }
-
-export default useResizeObserver
