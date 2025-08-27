@@ -1,8 +1,11 @@
 import React, { useState } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
-import { CardGrid } from './card/card-grid'
+import { OptimizedMasonryGrid } from './card/optimized-masonry-grid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { 
   Plus, 
   Search, 
@@ -14,13 +17,16 @@ import {
   Tag,
   Grid3X3,
   LayoutGrid,
-  FolderPlus
+  FolderPlus,
+  Sliders,
+  Shuffle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 interface DashboardProps {
   className?: string
@@ -48,6 +54,11 @@ export function Dashboard({ className }: DashboardProps) {
   
   const { theme, setTheme } = useTheme()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [layoutSettings, setLayoutSettings] = useState({
+    gap: 16,
+    enableVirtualization: true,
+    showLayoutControls: false
+  })
 
   const handleCardFlip = (cardId: string) => {
     cardDispatch({ type: 'FLIP_CARD', payload: cardId })
@@ -147,6 +158,21 @@ export function Dashboard({ className }: DashboardProps) {
     })
   }
 
+  const shuffleCards = () => {
+    // Trigger a re-render by updating a timestamp
+    const shuffledCards = [...cards].sort(() => Math.random() - 0.5)
+    // Since we can't directly modify the cards array, we'll use a different approach
+    // This will cause the masonry layout to recalculate positions
+    setLayoutSettings(prev => ({ ...prev, gap: prev.gap }))
+  }
+
+  const toggleLayoutControls = () => {
+    setLayoutSettings(prev => ({ 
+      ...prev, 
+      showLayoutControls: !prev.showLayoutControls 
+    }))
+  }
+
   const renderFolderTree = (folders: any[], level = 0) => {
     return folders.map(folder => (
       <div key={folder.id} style={{ marginLeft: level * 16 }}>
@@ -198,16 +224,72 @@ export function Dashboard({ className }: DashboardProps) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setViewSettings({
-                ...viewSettings,
-                layout: viewSettings.layout === 'grid' ? 'masonry' : 'grid'
-              })}
-            >
-              {viewSettings.layout === 'grid' ? <LayoutGrid className="h-4 w-4" /> : <Grid3X3 className="h-4 w-4" />}
-            </Button>
+            {/* Layout Controls Popover */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <Sliders className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Layout Settings</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Customize the masonry layout appearance
+                    </p>
+                  </div>
+                  
+                  {/* Gap Size */}
+                  <div className="space-y-2">
+                    <Label>Gap Size: {layoutSettings.gap}px</Label>
+                    <Slider
+                      value={[layoutSettings.gap]}
+                      onValueChange={([value]) => setLayoutSettings(prev => ({ ...prev, gap: value }))}
+                      max={32}
+                      min={8}
+                      step={4}
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Card Size */}
+                  <div className="space-y-2">
+                    <Label>Card Size</Label>
+                    <div className="flex gap-2">
+                      {(['small', 'medium', 'large'] as const).map(size => (
+                        <Button
+                          key={size}
+                          variant={viewSettings.cardSize === size ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setViewSettings(prev => ({ ...prev, cardSize: size }))}
+                        >
+                          {size.charAt(0).toUpperCase() + size.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Virtualization */}
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="virtualization"
+                      checked={layoutSettings.enableVirtualization}
+                      onCheckedChange={(checked) => setLayoutSettings(prev => ({ ...prev, enableVirtualization: checked }))}
+                    />
+                    <Label htmlFor="virtualization">Enable Virtualization</Label>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-2">
+                    <Button onClick={shuffleCards} variant="outline" className="w-full">
+                      <Shuffle className="h-4 w-4 mr-2" />
+                      Shuffle Cards
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             
             <Button
               variant="ghost"
@@ -341,17 +423,19 @@ export function Dashboard({ className }: DashboardProps) {
             </ScrollArea>
           </aside>
 
-          {/* Card Grid */}
-          <div className="flex-1">
-            <CardGrid
+          {/* Masonry Card Grid */}
+          <div className="flex-1 min-h-0">
+            <OptimizedMasonryGrid
               cards={cards}
               onCardFlip={handleCardFlip}
               onCardUpdate={handleCardUpdate}
               onCardCopy={handleCardCopy}
               onCardScreenshot={handleCardScreenshot}
               onCardShare={handleCardShare}
-              layout={viewSettings.layout}
               cardSize={viewSettings.cardSize === 'small' ? 'sm' : viewSettings.cardSize === 'large' ? 'lg' : 'md'}
+              enableVirtualization={layoutSettings.enableVirtualization && cards.length > 20}
+              gap={layoutSettings.gap}
+              overscan={3}
             />
           </div>
         </div>

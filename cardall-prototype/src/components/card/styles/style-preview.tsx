@@ -1,13 +1,15 @@
-// Style preview component for displaying card style templates
+// Style preview component for displaying card style templates (Simplified Version)
 
 import React from 'react'
-import { cn } from '../../../lib/utils'
-import { StylePreviewProps } from '../../../types/style'
+import { CardStyle } from '../../../types/style'
 
-interface StylePreviewCardProps extends StylePreviewProps {
+interface StylePreviewCardProps {
   title?: string
   content?: string
-  style: React.CSSProperties
+  style: CardStyle
+  isSelected?: boolean
+  onClick?: () => void
+  className?: string
 }
 
 export const StylePreviewCard: React.FC<StylePreviewCardProps> = ({
@@ -18,45 +20,90 @@ export const StylePreviewCard: React.FC<StylePreviewCardProps> = ({
   onClick,
   className
 }) => {
+  console.log('Rendering StylePreviewCard (Simplified):', { title, isSelected, style })
+  
+  // Generate style based on card style configuration
+  const getCardStyles = (): React.CSSProperties => {
+    const baseStyles: React.CSSProperties = {
+      minHeight: '80px',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '12px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      border: isSelected ? '3px solid #3b82f6' : '2px solid #e5e7eb',
+      position: 'relative',
+      fontSize: '12px',
+      textAlign: 'center',
+      boxShadow: isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
+      transition: 'all 0.2s ease',
+      backgroundColor: '#ffffff'
+    }
+
+    // Handle both CardStyle type and React.CSSProperties type
+    if (typeof style === 'object' && style !== null) {
+      // If it's already a React.CSSProperties object (from preset components)
+      if ('background' in style || 'backgroundColor' in style) {
+        return {
+          ...baseStyles,
+          ...style,
+          // Preserve essential interactive styles
+          cursor: 'pointer',
+          border: isSelected ? '3px solid #3b82f6' : (style.border || '2px solid #e5e7eb'),
+          boxShadow: isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : (style.boxShadow || '0 2px 4px rgba(0, 0, 0, 0.1)'),
+          transition: 'all 0.2s ease'
+        }
+      }
+      
+      // If it's a CardStyle type
+      if ('type' in style) {
+        if (style.type === 'solid') {
+          return {
+            ...baseStyles,
+            backgroundColor: style.backgroundColor || '#ffffff',
+            color: style.textColor || '#374151'
+          }
+        } else if (style.type === 'gradient' && style.gradientColors) {
+          const gradientDirection = style.gradientDirection || 'to bottom right'
+          const gradientString = `linear-gradient(${gradientDirection}, ${style.gradientColors.join(', ')})`
+          
+          return {
+            ...baseStyles,
+            background: gradientString,
+            color: style.textColor || '#ffffff'
+          }
+        }
+      }
+    }
+
+    return baseStyles
+  }
+
   return (
     <div
-      className={cn(
-        "relative w-full h-20 cursor-pointer transition-all duration-200",
-        "border-2 rounded-lg overflow-hidden",
-        isSelected 
-          ? "border-blue-500 ring-2 ring-blue-200 scale-105" 
-          : "border-transparent hover:border-gray-300 hover:scale-102",
-        className
-      )}
-      style={style}
+      style={getCardStyles()}
       onClick={onClick}
+      className={className}
+      onMouseEnter={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.transform = 'scale(1.02)'
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.transform = 'scale(1)'
+        }
+      }}
     >
-      <div className="absolute inset-0 p-3 flex flex-col justify-between">
-        <div className="text-xs font-medium truncate opacity-90">
-          {title}
-        </div>
-        <div className="text-xs opacity-70 line-clamp-2">
-          {content}
-        </div>
+      <div style={{ fontWeight: '600', marginBottom: '4px', fontSize: '13px' }}>
+        {title}
       </div>
-      
-      {isSelected && (
-        <div className="absolute top-1 right-1">
-          <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-            <svg 
-              className="w-2 h-2 text-white" 
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-            >
-              <path 
-                fillRule="evenodd" 
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                clipRule="evenodd" 
-              />
-            </svg>
-          </div>
-        </div>
-      )}
+      <div style={{ fontSize: '10px', opacity: 0.8, lineHeight: '1.2' }}>
+        {content}
+      </div>
     </div>
   )
 }

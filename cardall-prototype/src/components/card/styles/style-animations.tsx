@@ -66,7 +66,7 @@ export const AnimatedBackdrop: React.FC<{
     initial="hidden"
     animate="visible"
     exit="exit"
-    className={cn("absolute inset-0 bg-black/20 backdrop-blur-sm", className)}
+    className={cn("absolute inset-0 bg-black/10 backdrop-blur-[2px]", className)}
     onClick={onClick}
   />
 )

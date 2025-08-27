@@ -1,10 +1,9 @@
 // Enhanced flip card with integrated style selection
 
-import React, { useState } from 'react'
+import React from 'react'
 import { Card as CardType } from '../../types/card'
 import { FlipCard } from './flip-card'
-import { StylePanel } from './styles/style-panel'
-import { useStyleSelection } from '../../hooks/use-style-selection'
+import { useStylePanel } from '../../contexts/style-panel-context'
 
 interface EnhancedFlipCardProps {
   card: CardType
@@ -27,6 +26,8 @@ export function EnhancedFlipCard({
   className,
   size = 'md'
 }: EnhancedFlipCardProps) {
+  const { openStylePanel } = useStylePanel()
+
   const handleStyleChange = (cardId: string, newStyle: any) => {
     onUpdate(cardId, { 
       style: newStyle,
@@ -34,41 +35,26 @@ export function EnhancedFlipCard({
     })
   }
 
-  const {
-    isPanelOpen,
-    openStylePanel,
-    closeStylePanel,
-    styleApplicationContext
-  } = useStyleSelection({
-    cardId: card.id,
-    currentStyle: card.style,
-    onStyleChange: handleStyleChange
-  })
-
   const handleStyleChangeClick = () => {
-    openStylePanel()
+    openStylePanel({
+      targetCardId: card.id,
+      currentStyle: card.style,
+      onStyleApply: (newStyle) => handleStyleChange(card.id, newStyle)
+    })
   }
 
   return (
-    <>
-      <FlipCard
-        card={card}
-        onFlip={onFlip}
-        onUpdate={onUpdate}
-        onCopy={onCopy}
-        onScreenshot={onScreenshot}
-        onShare={onShare}
-        onStyleChange={handleStyleChangeClick}
-        className={className}
-        size={size}
-      />
-
-      <StylePanel
-        isOpen={isPanelOpen}
-        onClose={closeStylePanel}
-        context={styleApplicationContext}
-      />
-    </>
+    <FlipCard
+      card={card}
+      onFlip={onFlip}
+      onUpdate={onUpdate}
+      onCopy={onCopy}
+      onScreenshot={onScreenshot}
+      onShare={onShare}
+      onStyleChange={handleStyleChangeClick}
+      className={className}
+      size={size}
+    />
   )
 }
 

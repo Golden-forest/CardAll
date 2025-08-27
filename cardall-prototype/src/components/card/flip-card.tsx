@@ -51,18 +51,18 @@ export function FlipCard({
 
   const currentContent = card.isFlipped ? card.backContent : card.frontContent
 
-  // Size variants - 在瀑布流中使用全宽，通过padding控制内容大小
+  // Size variants - 确保所有尺寸都使用完整宽度
   const sizeClasses = {
     sm: 'w-full',
     md: 'w-full', 
     lg: 'w-full'
   }
 
-  // 内容区域的最大宽度控制
-  const contentSizeClasses = {
-    sm: 'max-w-64',
-    md: 'max-w-80',
-    lg: 'max-w-96'
+  // 内容区域的padding控制，不限制宽度
+  const contentPaddingClasses = {
+    sm: 'p-3',
+    md: 'p-4',
+    lg: 'p-5'
   }
 
   // Style generation based on card.style
@@ -157,18 +157,17 @@ export function FlipCard({
           sizeClasses[size]
         )}
         style={{ 
-          minHeight: 'fit-content', // Allow dynamic height
-          width: '100%' // Ensure full width in masonry
+          minHeight: 'fit-content',
+          width: '100%'
         }}
       >
         {/* Front Side */}
         {!card.isFlipped && (
           <div 
             className={cn(
-              "w-full p-4 flex flex-col transition-opacity duration-300",
+              "w-full flex flex-col transition-opacity duration-300",
               shadowClass,
-              contentSizeClasses[size], // 限制内容区域最大宽度
-              "mx-auto" // 居中显示
+              contentPaddingClasses[size]
             )}
             style={{
               ...cardStyles,
@@ -198,8 +197,9 @@ export function FlipCard({
         {card.isFlipped && (
           <div 
             className={cn(
-              "w-full p-4 flex flex-col transition-opacity duration-300",
-              shadowClass
+              "w-full flex flex-col transition-opacity duration-300",
+              shadowClass,
+              contentPaddingClasses[size]
             )}
             style={{
               ...cardStyles,

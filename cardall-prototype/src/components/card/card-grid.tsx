@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { Card as CardType } from '@/types/card'
 import { EnhancedFlipCard } from './enhanced-flip-card'
-import { MasonryCardGrid } from './masonry-card-grid'
 import { cn } from '@/lib/utils'
 
 interface CardGridProps {
@@ -12,7 +11,7 @@ interface CardGridProps {
   onCardScreenshot: (cardId: string) => void
   onCardShare: (cardId: string) => void
   onCardStyleChange?: (cardId: string) => void
-  layout?: 'grid' | 'masonry' | 'list'
+  layout?: 'grid' | 'list'
   cardSize?: 'sm' | 'md' | 'lg'
   className?: string
 }
@@ -25,7 +24,7 @@ export function CardGrid({
   onCardScreenshot,
   onCardShare,
   onCardStyleChange,
-  layout = 'masonry',
+  layout = 'grid',
   cardSize = 'md',
   className
 }: CardGridProps) {
@@ -60,43 +59,18 @@ export function CardGrid({
     switch (layout) {
       case 'grid':
         return cn(
-          "grid gap-8 auto-rows-max", // 增加间距到32px
+          "grid gap-4", // 减少间距，移除auto-rows-max以避免固定行高
           cardSize === 'sm' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
           cardSize === 'md' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
           cardSize === 'lg' && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         )
-      case 'masonry':
-        return cn(
-          "columns-1 gap-8", // 增加列间距
-          cardSize === 'sm' && "sm:columns-2 lg:columns-3 xl:columns-4 2xl:columns-5",
-          cardSize === 'md' && "sm:columns-2 lg:columns-3 xl:columns-4",
-          cardSize === 'lg' && "sm:columns-2 lg:columns-3"
-        )
       case 'list':
-        return "flex flex-col gap-6" // 增加列表间距
+        return "flex flex-col gap-4" // 减少列表间距
       default:
-        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
     }
   }
 
-  // Use new MasonryCardGrid for masonry layout
-  if (layout === 'masonry') {
-    return (
-      <MasonryCardGrid
-        cards={cards}
-        onCardFlip={onCardFlip}
-        onCardUpdate={onCardUpdate}
-        onCardCopy={onCardCopy}
-        onCardScreenshot={onCardScreenshot}
-        onCardShare={onCardShare}
-        onCardStyleChange={onCardStyleChange}
-        cardSize={cardSize}
-        className={className}
-      />
-    )
-  }
-
-  // Fallback to original grid/list layouts
   return (
     <div className={cn("p-6", className)}>
       {/* Header */}

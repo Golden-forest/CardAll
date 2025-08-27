@@ -18,7 +18,7 @@ interface MagneticCardGridProps {
   cards: Card[];
   onCardUpdate: (id: string, updates: Partial<Card>) => void;
   onCardDelete: (id: string) => void;
-  layout?: 'grid' | 'masonry' | 'list';
+  layout?: 'grid' | 'list';
   cardSize?: 'sm' | 'md' | 'lg';
 }
 
@@ -159,8 +159,6 @@ export function MagneticCardGrid({
     const baseClasses = "w-full p-6";
     
     switch (layout) {
-      case 'masonry':
-        return `${baseClasses} columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6`;
       case 'list':
         return `${baseClasses} flex flex-col gap-4`;
       default:

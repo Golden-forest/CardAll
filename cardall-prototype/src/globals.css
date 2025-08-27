@@ -189,33 +189,6 @@
     overflow: hidden;
   }
   
-  /* React Masonry CSS Support */
-  .my-masonry-grid {
-    display: -webkit-box; /* Not needed if autoprefixing */
-    display: -ms-flexbox; /* Not needed if autoprefixing */
-    display: flex;
-    margin-left: -24px; /* gutter size offset - reduced for better spacing */
-    width: auto;
-    align-items: flex-start; /* Ensure proper alignment */
-  }
-  
-  .my-masonry-grid_column {
-    padding-left: 24px; /* gutter size - reduced for better spacing */
-    background-clip: padding-box;
-    flex: 1; /* Ensure equal column widths */
-  }
-  
-  /* Style your items */
-  .my-masonry-grid_column > div {
-    margin-bottom: 24px; /* Consistent spacing */
-    width: 100%; /* Ensure full width within column */
-    box-sizing: border-box; /* Include padding in width calculation */
-  }
-  
-  /* Masonry layout support */
-  .masonry-grid {
-    column-fill: balance;
-  }
   
   /* Smooth transitions for theme switching */
   * {
@@ -302,6 +275,12 @@
   .flip-card {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  
+  /* 确保卡片容器不会有固定高度 */
+  .card-container {
+    height: auto !important;
+    min-height: fit-content;
   }
 }
 

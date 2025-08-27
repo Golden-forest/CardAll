@@ -1,8 +1,7 @@
-import React, { useMemo, useCallback, useRef, useEffect } from 'react'
-import Masonry from 'react-masonry-css'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Card as CardType } from '@/types/card'
 import { EnhancedFlipCard } from './enhanced-flip-card'
-import { useResizeObserver } from '@/hooks/use-resize-observer'
+import { useMasonryLayout, MasonryItem } from '@/hooks/use-masonry-layout'
 import { cn } from '@/lib/utils'
 
 interface MasonryCardGridProps {
@@ -15,6 +14,11 @@ interface MasonryCardGridProps {
   onCardStyleChange?: (cardId: string) => void
   cardSize?: 'sm' | 'md' | 'lg'
   className?: string
+  gap?: number
+}
+
+interface CardWithHeight extends CardType {
+  estimatedHeight?: number
 }
 
 export function MasonryCardGrid({
@@ -26,110 +30,107 @@ export function MasonryCardGrid({
   onCardShare,
   onCardStyleChange,
   cardSize = 'md',
-  className
+  className,
+  gap = 16
 }: MasonryCardGridProps) {
-  const masonryRef = useRef<HTMLDivElement>(null)
-  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [cardHeights, setCardHeights] = useState<Map<string, number>>(new Map())
+  const [isInitialized, setIsInitialized] = useState(false)
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
-  // Use ResizeObserver to detect container size changes
-  const containerRef = useResizeObserver<HTMLDivElement>({
-    onResize: () => {
-      // Trigger masonry reflow when container resizes
-      if (masonryRef.current) {
-        window.dispatchEvent(new Event('resize'))
-      }
-    },
-    debounceMs: 150
-  })
-
-  // Sort cards by creation date (newest first)
-  const sortedCards = useMemo(() => {
-    return [...cards].sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-  }, [cards])
-
-  // Responsive breakpoints for columns
-  const breakpointColumnsObj = useMemo(() => {
-    // Type-safe breakpoint configuration
-    const createBreakpoints = (config: Record<string | number, number>) => config
-
-    // Adjust based on card size
-    if (cardSize === 'sm') {
-      return createBreakpoints({
-        default: 5,
-        1280: 5,
-        1024: 4,
-        768: 3,
-        640: 2,
-        480: 1
-      })
-    } else if (cardSize === 'lg') {
-      return createBreakpoints({
-        default: 3,
-        1280: 3,
-        1024: 2,
-        768: 2,
-        640: 1
-      })
-    }
-
-    // Base columns for medium size
-    return createBreakpoints({
-      default: 4,  // 4 columns on large screens
-      1280: 4,     // xl: 4 columns
-      1024: 3,     // lg: 3 columns  
-      768: 2,      // md: 2 columns
-      640: 1       // sm: 1 column
-    })
+  // Estimate initial card heights based on content
+  const estimateCardHeight = useCallback((card: CardType): number => {
+    const baseHeight = cardSize === 'sm' ? 200 : cardSize === 'lg' ? 300 : 250
+    const titleLines = Math.ceil(card.frontContent.title.length / 30)
+    const textLines = Math.ceil(card.frontContent.text.length / 50)
+    const imageHeight = card.frontContent.images.length > 0 ? 120 : 0
+    const tagHeight = card.frontContent.tags.length > 0 ? 32 : 0
+    
+    return baseHeight + (titleLines * 20) + (textLines * 16) + imageHeight + tagHeight
   }, [cardSize])
 
-  // Handle card flip with improved reflow
-  const handleCardFlip = useCallback((cardId: string) => {
-    onCardFlip(cardId)
-    
-    // Multiple reflow attempts for better layout stability
-    const triggerReflow = () => {
-      if (masonryRef.current) {
-        // Force reflow by triggering a resize event
-        window.dispatchEvent(new Event('resize'))
+  // Create masonry items from cards
+  const masonryItems: MasonryItem[] = cards.map(card => ({
+    id: card.id,
+    height: cardHeights.get(card.id) || estimateCardHeight(card)
+  }))
+
+  // Configure masonry layout with responsive breakpoints
+  const {
+    containerRef,
+    positions,
+    containerHeight,
+    config,
+    updateItemHeight
+  } = useMasonryLayout({
+    items: masonryItems,
+    gap,
+    minColumnWidth: cardSize === 'sm' ? 240 : cardSize === 'lg' ? 320 : 280,
+    maxColumns: cardSize === 'sm' ? 6 : cardSize === 'lg' ? 3 : 4,
+    breakpoints: {
+      sm: 640,
+      md: 768,
+      lg: 1024,
+      xl: 1280,
+      '2xl': 1536
+    }
+  })
+
+  // Measure actual card heights after render
+  const measureCardHeight = useCallback((cardId: string) => {
+    const cardElement = cardRefs.current.get(cardId)
+    if (!cardElement) return
+
+    // Use ResizeObserver for accurate height measurement
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry) {
+        const newHeight = entry.contentRect.height
+        const currentHeight = cardHeights.get(cardId)
         
-        // Additional reflow after a short delay
-        setTimeout(() => {
-          window.dispatchEvent(new Event('resize'))
-        }, 50)
+        if (Math.abs(newHeight - (currentHeight || 0)) > 5) {
+          setCardHeights(prev => new Map(prev.set(cardId, newHeight)))
+          updateItemHeight(cardId, newHeight)
+        }
       }
-    }
-    
-    // Immediate reflow
-    requestAnimationFrame(triggerReflow)
-    
-    // Reflow after flip animation completes
-    setTimeout(triggerReflow, 350)
-  }, [onCardFlip])
+    })
 
-  // Handle card updates with reflow
-  const handleCardUpdate = useCallback((cardId: string, updates: Partial<CardType>) => {
-    onCardUpdate(cardId, updates)
-    
-    // Debounced reflow for content changes
-    if (resizeTimeoutRef.current) {
-      clearTimeout(resizeTimeoutRef.current)
-    }
-    
-    resizeTimeoutRef.current = setTimeout(() => {
-      if (masonryRef.current) {
-        window.dispatchEvent(new Event('resize'))
-      }
-    }, 150)
-  }, [onCardUpdate])
+    resizeObserver.observe(cardElement)
+    return () => resizeObserver.disconnect()
+  }, [cardHeights, updateItemHeight])
 
-  // Cleanup timeout on unmount
+  // Initialize card height measurements
   useEffect(() => {
+    if (!isInitialized && cards.length > 0) {
+      // Set initial estimated heights
+      const initialHeights = new Map<string, number>()
+      cards.forEach(card => {
+        initialHeights.set(card.id, estimateCardHeight(card))
+      })
+      setCardHeights(initialHeights)
+      setIsInitialized(true)
+    }
+  }, [cards, estimateCardHeight, isInitialized])
+
+  // Measure card heights after DOM updates
+  useEffect(() => {
+    const cleanupFunctions: (() => void)[] = []
+    
+    cards.forEach(card => {
+      const cleanup = measureCardHeight(card.id)
+      if (cleanup) cleanupFunctions.push(cleanup)
+    })
+
     return () => {
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current)
-      }
+      cleanupFunctions.forEach(cleanup => cleanup())
+    }
+  }, [cards, measureCardHeight])
+
+  // Handle card ref assignment
+  const setCardRef = useCallback((cardId: string, element: HTMLDivElement | null) => {
+    if (element) {
+      cardRefs.current.set(cardId, element)
+    } else {
+      cardRefs.current.delete(cardId)
     }
   }, [])
 
@@ -154,32 +155,44 @@ export function MasonryCardGrid({
   }
 
   return (
-    <div ref={containerRef} className={cn("p-6", className)}>
+    <div className={cn("p-6", className)}>
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Your Cards</h2>
             <p className="text-muted-foreground">
-              {cards.length} {cards.length === 1 ? 'card' : 'cards'}
+              {cards.length} {cards.length === 1 ? 'card' : 'cards'} • {config.columns} columns
             </p>
           </div>
         </div>
       </div>
 
-      {/* Masonry Grid */}
-      <div ref={masonryRef}>
-        <Masonry
-          breakpointCols={breakpointColumnsObj}
-          className="my-masonry-grid"
-          columnClassName="my-masonry-grid_column"
-        >
-          {sortedCards.map((card) => (
-            <div key={card.id} className="mb-6"> {/* Vertical spacing between cards */}
+      {/* Masonry Container */}
+      <div
+        ref={containerRef}
+        className="relative w-full"
+        style={{ height: containerHeight }}
+      >
+        {cards.map((card) => {
+          const position = positions.get(card.id)
+          if (!position) return null
+
+          return (
+            <div
+              key={card.id}
+              ref={(el) => setCardRef(card.id, el)}
+              className="absolute transition-all duration-300 ease-out"
+              style={{
+                transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+                width: position.width,
+                willChange: 'transform'
+              }}
+            >
               <EnhancedFlipCard
                 card={card}
-                onFlip={handleCardFlip}
-                onUpdate={handleCardUpdate}
+                onFlip={onCardFlip}
+                onUpdate={onCardUpdate}
                 onCopy={onCardCopy}
                 onScreenshot={onCardScreenshot}
                 onShare={onCardShare}
@@ -187,20 +200,18 @@ export function MasonryCardGrid({
                 className="w-full"
               />
             </div>
-          ))}
-        </Masonry>
+          )
+        })}
       </div>
 
-      {/* Load More / Pagination */}
-      {cards.length > 20 && (
+      {/* Load More Indicator */}
+      {cards.length > 50 && (
         <div className="mt-12 text-center">
           <p className="text-muted-foreground">
-            Showing {Math.min(20, cards.length)} of {cards.length} cards
+            Showing {Math.min(50, cards.length)} of {cards.length} cards
           </p>
         </div>
       )}
     </div>
   )
 }
-
-export default MasonryCardGrid
