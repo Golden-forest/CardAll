@@ -11,6 +11,7 @@ interface OptimizedMasonryGridProps {
   onCardCopy: (cardId: string) => void
   onCardScreenshot: (cardId: string) => void
   onCardShare: (cardId: string) => void
+  onCardDelete: (cardId: string) => void
   onCardStyleChange?: (cardId: string) => void
   cardSize?: 'sm' | 'md' | 'lg'
   className?: string
@@ -26,6 +27,7 @@ export function OptimizedMasonryGrid({
   onCardCopy,
   onCardScreenshot,
   onCardShare,
+  onCardDelete,
   onCardStyleChange,
   cardSize = 'md',
   className,
@@ -261,6 +263,7 @@ export function OptimizedMasonryGrid({
                   onCopy={onCardCopy}
                   onScreenshot={onCardScreenshot}
                   onShare={onCardShare}
+                  onDelete={onCardDelete}
                   size={cardSize}
                   className="w-full"
                 />

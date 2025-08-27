@@ -92,6 +92,10 @@ export function Dashboard({ className }: DashboardProps) {
     console.log('Share card:', cardId)
   }
 
+  const handleCardDelete = (cardId: string) => {
+    cardDispatch({ type: 'DELETE_CARD', payload: cardId })
+  }
+
   const handleCreateCard = () => {
     const newCard = {
       frontContent: {
@@ -432,6 +436,7 @@ export function Dashboard({ className }: DashboardProps) {
               onCardCopy={handleCardCopy}
               onCardScreenshot={handleCardScreenshot}
               onCardShare={handleCardShare}
+              onCardDelete={handleCardDelete}
               cardSize={viewSettings.cardSize === 'small' ? 'sm' : viewSettings.cardSize === 'large' ? 'lg' : 'md'}
               enableVirtualization={layoutSettings.enableVirtualization && cards.length > 20}
               gap={layoutSettings.gap}

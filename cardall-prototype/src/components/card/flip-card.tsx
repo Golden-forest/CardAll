@@ -11,7 +11,8 @@ import {
   Palette,
   MoreHorizontal,
   Tag,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Trash2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -21,6 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { RichTextEditor } from './rich-text-editor'
+import { TitleEditor } from './title-editor'
 
 interface FlipCardProps {
   card: CardType
@@ -29,6 +32,7 @@ interface FlipCardProps {
   onCopy: (cardId: string) => void
   onScreenshot: (cardId: string) => void
   onShare: (cardId: string) => void
+  onDelete: (cardId: string) => void
   onStyleChange?: (cardId: string) => void
   className?: string
   size?: 'sm' | 'md' | 'lg'
@@ -41,12 +45,16 @@ export function FlipCard({
   onCopy,
   onScreenshot,
   onShare,
+  onDelete,
   onStyleChange,
   className,
   size = 'md'
 }: FlipCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [editingField, setEditingField] = useState<'title' | 'content' | null>(null)
+  const [originalContent, setOriginalContent] = useState<CardContentType | null>(null)
+  const [tempContent, setTempContent] = useState<CardContentType | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const currentContent = card.isFlipped ? card.backContent : card.frontContent
@@ -109,37 +117,73 @@ export function FlipCard({
     onFlip(card.id)
   }, [card.id, onFlip])
 
+  // Start editing
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation()
+    startEditing('content')
+  }
+
+  // Double click to edit
+  const handleDoubleClick = (field: 'title' | 'content') => {
+    startEditing(field)
+  }
+
+  const startEditing = (field: 'title' | 'content') => {
+    setOriginalContent(currentContent)
+    setTempContent(currentContent)
+    setEditingField(field)
     setIsEditing(true)
   }
 
-  const handleContentUpdate = (field: keyof CardContentType, value: any) => {
-    const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
-    const updates = {
-      [contentKey]: {
-        ...currentContent,
+  // Update temp content during editing
+  const handleTempContentUpdate = (field: keyof CardContentType, value: any) => {
+    if (tempContent) {
+      setTempContent({
+        ...tempContent,
         [field]: value,
         lastModified: new Date()
-      }
-    } as Partial<CardType>
-    onUpdate(card.id, updates)
+      })
+    }
   }
 
+  // Save changes
+  const handleSaveEdit = () => {
+    if (tempContent) {
+      const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
+      const updates = {
+        [contentKey]: tempContent
+      } as Partial<CardType>
+      onUpdate(card.id, updates)
+    }
+    setIsEditing(false)
+    setEditingField(null)
+    setOriginalContent(null)
+    setTempContent(null)
+  }
+
+  // Cancel changes
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    setEditingField(null)
+    setOriginalContent(null)
+    setTempContent(null)
+  }
+
+  // Legacy handlers for backward compatibility
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleContentUpdate('title', e.target.value)
+    handleTempContentUpdate('title', e.target.value)
   }
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleContentUpdate('text', e.target.value)
+    handleTempContentUpdate('text', e.target.value)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setIsEditing(false)
+      handleCancelEdit()
     }
     if (e.key === 'Enter' && e.ctrlKey) {
-      setIsEditing(false)
+      handleSaveEdit()
     }
   }
 
@@ -165,7 +209,7 @@ export function FlipCard({
         {!card.isFlipped && (
           <div 
             className={cn(
-              "w-full flex flex-col transition-opacity duration-300",
+              "w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
               contentPaddingClasses[size]
             )}
@@ -175,10 +219,15 @@ export function FlipCard({
             }}
           >
             <CardSide
-              content={card.frontContent}
+              content={tempContent || card.frontContent}
               isEditing={isEditing && !card.isFlipped}
+              editingField={editingField}
               onTitleChange={handleTitleChange}
               onTextChange={handleTextChange}
+              onTempContentUpdate={handleTempContentUpdate}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              onDoubleClick={handleDoubleClick}
               onKeyDown={handleKeyDown}
               sideLabel="Front"
               isHovered={isHovered}
@@ -187,6 +236,7 @@ export function FlipCard({
               onCopy={() => onCopy(card.id)}
               onScreenshot={() => onScreenshot(card.id)}
               onShare={() => onShare(card.id)}
+              onDelete={() => onDelete(card.id)}
               onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
               card={card}
             />
@@ -197,7 +247,7 @@ export function FlipCard({
         {card.isFlipped && (
           <div 
             className={cn(
-              "w-full flex flex-col transition-opacity duration-300",
+              "w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
               contentPaddingClasses[size]
             )}
@@ -207,10 +257,15 @@ export function FlipCard({
             }}
           >
             <CardSide
-              content={card.backContent}
+              content={tempContent || card.backContent}
               isEditing={isEditing && card.isFlipped}
+              editingField={editingField}
               onTitleChange={handleTitleChange}
               onTextChange={handleTextChange}
+              onTempContentUpdate={handleTempContentUpdate}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              onDoubleClick={handleDoubleClick}
               onKeyDown={handleKeyDown}
               sideLabel="Back"
               isHovered={isHovered}
@@ -219,6 +274,7 @@ export function FlipCard({
               onCopy={() => onCopy(card.id)}
               onScreenshot={() => onScreenshot(card.id)}
               onShare={() => onShare(card.id)}
+              onDelete={() => onDelete(card.id)}
               onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
               card={card}
             />
@@ -233,8 +289,13 @@ export function FlipCard({
 interface CardSideProps {
   content: CardContentType
   isEditing: boolean
+  editingField: 'title' | 'content' | null
   onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onTempContentUpdate: (field: keyof CardContentType, value: any) => void
+  onSaveEdit: () => void
+  onCancelEdit: () => void
+  onDoubleClick: (field: 'title' | 'content') => void
   onKeyDown: (e: React.KeyboardEvent) => void
   sideLabel: string
   isHovered: boolean
@@ -243,6 +304,7 @@ interface CardSideProps {
   onCopy: () => void
   onScreenshot: () => void
   onShare: () => void
+  onDelete: () => void
   onStyleChange?: () => void
   card: CardType
 }
@@ -250,8 +312,13 @@ interface CardSideProps {
 function CardSide({
   content,
   isEditing,
+  editingField,
   onTitleChange,
   onTextChange,
+  onTempContentUpdate,
+  onSaveEdit,
+  onCancelEdit,
+  onDoubleClick,
   onKeyDown,
   sideLabel,
   isHovered,
@@ -260,6 +327,7 @@ function CardSide({
   onCopy,
   onScreenshot,
   onShare,
+  onDelete,
   onStyleChange,
   card
 }: CardSideProps) {
@@ -268,18 +336,19 @@ function CardSide({
       {/* Header with Title and Action Buttons */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 mr-2">
-          {isEditing ? (
-            <input
-              type="text"
-              value={content.title}
-              onChange={onTitleChange}
-              onKeyDown={onKeyDown}
-              className="w-full bg-transparent border-none outline-none text-lg font-semibold resize-none"
-              placeholder="Card title..."
+          {isEditing && editingField === 'title' ? (
+            <TitleEditor
+              content={content.title}
+              onUpdate={(value) => onTempContentUpdate('title', value)}
+              onSave={onSaveEdit}
+              onCancel={onCancelEdit}
               autoFocus
             />
           ) : (
-            <h3 className="text-lg font-semibold text-left">
+            <h3 
+              className="text-lg font-semibold text-left cursor-pointer hover:bg-black/5 rounded px-1 py-0.5 -mx-1 transition-colors"
+              onDoubleClick={() => onDoubleClick('title')}
+            >
               {content.title || 'Untitled Card'}
             </h3>
           )}
@@ -302,16 +371,24 @@ function CardSide({
           </Button>
 
           {/* More Actions */}
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 rounded-md hover:bg-black/10"
+              <div
+                className="h-7 w-7 rounded-md hover:bg-black/10 flex items-center justify-center cursor-pointer transition-colors group"
+                onMouseEnter={(e) => {
+                  e.stopPropagation()
+                  // Programmatically trigger the dropdown
+                  const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                  })
+                  e.currentTarget.dispatchEvent(event)
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={onEdit}>
@@ -337,6 +414,14 @@ function CardSide({
                   Change Style
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Card
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -366,19 +451,26 @@ function CardSide({
 
       {/* Text Content */}
       <div className="flex-1 mb-3">
-        {isEditing ? (
-          <textarea
-            value={content.text}
-            onChange={onTextChange}
-            onKeyDown={onKeyDown}
-            className="w-full h-full bg-transparent border-none outline-none resize-none text-sm leading-relaxed min-h-[100px]"
+        {isEditing && editingField === 'content' ? (
+          <RichTextEditor
+            content={content.text}
             placeholder="Add your content here..."
+            onUpdate={(value) => onTempContentUpdate('text', value)}
+            onSave={onSaveEdit}
+            onCancel={onCancelEdit}
+            autoFocus
           />
         ) : (
-          <div className="text-sm leading-relaxed text-left">
-            <p className="whitespace-pre-wrap">
-              {content.text || 'Click to add content...'}
-            </p>
+          <div 
+            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px]"
+            onDoubleClick={() => onDoubleClick('content')}
+          >
+            <div 
+              className="whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ 
+                __html: content.text || '<span class="text-muted-foreground">Click to add content...</span>' 
+              }}
+            />
           </div>
         )}
       </div>

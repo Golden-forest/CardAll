@@ -12,6 +12,7 @@ interface EnhancedFlipCardProps {
   onCopy: (cardId: string) => void
   onScreenshot: (cardId: string) => void
   onShare: (cardId: string) => void
+  onDelete: (cardId: string) => void
   className?: string
   size?: 'sm' | 'md' | 'lg'
 }
@@ -23,6 +24,7 @@ export function EnhancedFlipCard({
   onCopy,
   onScreenshot,
   onShare,
+  onDelete,
   className,
   size = 'md'
 }: EnhancedFlipCardProps) {
@@ -39,7 +41,8 @@ export function EnhancedFlipCard({
     openStylePanel({
       targetCardId: card.id,
       currentStyle: card.style,
-      onStyleApply: (newStyle) => handleStyleChange(card.id, newStyle)
+      onStyleApply: (newStyle) => handleStyleChange(card.id, newStyle),
+      onPanelClose: () => {} // Add empty callback for panel close
     })
   }
 
@@ -51,6 +54,7 @@ export function EnhancedFlipCard({
       onCopy={onCopy}
       onScreenshot={onScreenshot}
       onShare={onShare}
+      onDelete={onDelete}
       onStyleChange={handleStyleChangeClick}
       className={className}
       size={size}
