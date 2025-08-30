@@ -5,6 +5,7 @@ import { Card as CardType } from '../../../types/card'
 import { EnhancedFlipCard } from '../enhanced-flip-card'
 import { Button } from '../../ui/button'
 import { RefreshCw, TestTube } from 'lucide-react'
+import { formatCardContentForCopy, copyTextToClipboard } from '../../../utils/copy-utils'
 
 // Mock card data for testing
 const createMockCard = (id: string, title: string, content: string): CardType => ({
@@ -67,12 +68,17 @@ export const StyleSystemTest: React.FC = () => {
     )
   }
 
-  const handleCardCopy = (cardId: string) => {
+  const handleCardCopy = async (cardId: string) => {
     const card = testCards.find(c => c.id === cardId)
     if (card) {
       const content = card.isFlipped ? card.backContent : card.frontContent
-      navigator.clipboard.writeText(`${content.title}\n\n${content.text}`)
-      console.log('Card content copied to clipboard')
+      const textToCopy = formatCardContentForCopy(content.title, content.text)
+      const success = await copyTextToClipboard(textToCopy)
+      if (success) {
+        console.log('Card content copied to clipboard')
+      } else {
+        console.error('Failed to copy card content')
+      }
     }
   }
 
@@ -82,6 +88,10 @@ export const StyleSystemTest: React.FC = () => {
 
   const handleCardShare = (cardId: string) => {
     console.log('Share functionality would be implemented here for card:', cardId)
+  }
+
+  const handleCardDelete = (cardId: string) => {
+    setTestCards(cards => cards.filter(card => card.id !== cardId))
   }
 
   const resetAllStyles = () => {
@@ -161,6 +171,7 @@ export const StyleSystemTest: React.FC = () => {
                 onCopy={handleCardCopy}
                 onScreenshot={handleCardScreenshot}
                 onShare={handleCardShare}
+                onDelete={handleCardDelete}
                 size="md"
               />
               <div className="text-xs text-gray-500 text-center">

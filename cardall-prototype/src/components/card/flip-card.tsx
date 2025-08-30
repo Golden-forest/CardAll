@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import { Card as CardType, CardContent as CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
-import { ColoredBadge } from '@/components/ui/colored-badge'
 import { 
-  FlipHorizontal, 
+  Cat, 
   Copy, 
   Camera, 
   Share2, 
@@ -12,7 +11,8 @@ import {
   MoreHorizontal,
   Tag,
   Image as ImageIcon,
-  Trash2
+  Trash2,
+  FolderOpen
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { RichTextEditor } from './rich-text-editor'
 import { TitleEditor } from './title-editor'
+import { CardTags } from '../tag/card-tags'
 
 interface FlipCardProps {
   card: CardType
@@ -34,6 +35,8 @@ interface FlipCardProps {
   onShare: (cardId: string) => void
   onDelete: (cardId: string) => void
   onStyleChange?: (cardId: string) => void
+  onTagsChange?: (cardId: string) => void
+  onMoveToFolder?: () => void
   className?: string
   size?: 'sm' | 'md' | 'lg'
 }
@@ -47,6 +50,8 @@ export function FlipCard({
   onShare,
   onDelete,
   onStyleChange,
+  onTagsChange,
+  onMoveToFolder,
   className,
   size = 'md'
 }: FlipCardProps) {
@@ -55,6 +60,7 @@ export function FlipCard({
   const [editingField, setEditingField] = useState<'title' | 'content' | null>(null)
   const [originalContent, setOriginalContent] = useState<CardContentType | null>(null)
   const [tempContent, setTempContent] = useState<CardContentType | null>(null)
+  const [isFlipping, setIsFlipping] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
 
   const currentContent = card.isFlipped ? card.backContent : card.frontContent
@@ -114,8 +120,17 @@ export function FlipCard({
   const handleFlip = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
+    
+    if (isFlipping) return // 防止重复点击
+    
+    setIsFlipping(true)
     onFlip(card.id)
-  }, [card.id, onFlip])
+    
+    // 动画完成后重置状态
+    setTimeout(() => {
+      setIsFlipping(false)
+    }, 600)
+  }, [card.id, onFlip, isFlipping])
 
   // Start editing
   const handleEdit = (e: React.MouseEvent) => {
@@ -190,32 +205,45 @@ export function FlipCard({
   return (
     <div 
       className={cn("relative group", className)}
+      data-card-id={card.id}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Simplified Card Container with Fade Animation */}
+      {/* 3D Flip Animation Container */}
       <div 
-        ref={cardRef}
-        className={cn(
-          "relative transition-all duration-300 ease-in-out",
-          sizeClasses[size]
-        )}
-        style={{ 
-          minHeight: 'fit-content',
-          width: '100%'
+        className="flip-card-container"
+        style={{
+          perspective: '1000px',
+          width: '100%',
+          minHeight: 'fit-content'
         }}
       >
-        {/* Front Side */}
-        {!card.isFlipped && (
+        <div 
+          ref={cardRef}
+          className={cn(
+            "flip-card-inner relative transition-all duration-700 ease-in-out",
+            sizeClasses[size]
+          )}
+          style={{ 
+            minHeight: 'fit-content',
+            width: '100%',
+            transformStyle: 'preserve-3d',
+            transform: card.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+          }}
+        >
+          {/* Front Side */}
           <div 
             className={cn(
-              "w-full flex flex-col transition-all duration-300 relative",
+              "flip-card-face flip-card-front w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
               contentPaddingClasses[size]
             )}
             style={{
               ...cardStyles,
-              borderRadius: cardStyles.borderRadius
+              borderRadius: cardStyles.borderRadius,
+              backfaceVisibility: 'hidden',
+              position: card.isFlipped ? 'absolute' : 'relative',
+              opacity: card.isFlipped ? 0 : 1
             }}
           >
             <CardSide
@@ -238,22 +266,28 @@ export function FlipCard({
               onShare={() => onShare(card.id)}
               onDelete={() => onDelete(card.id)}
               onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
+              onTagsChange={onTagsChange ? () => onTagsChange(card.id) : undefined}
+              onMoveToFolder={onMoveToFolder}
               card={card}
+              isFlipping={isFlipping}
             />
           </div>
-        )}
 
-        {/* Back Side */}
-        {card.isFlipped && (
+          {/* Back Side */}
           <div 
             className={cn(
-              "w-full flex flex-col transition-all duration-300 relative",
+              "flip-card-face flip-card-back w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
               contentPaddingClasses[size]
             )}
             style={{
               ...cardStyles,
-              borderRadius: cardStyles.borderRadius
+              borderRadius: cardStyles.borderRadius,
+              backfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)',
+              position: card.isFlipped ? 'relative' : 'absolute',
+              top: card.isFlipped ? 'auto' : '0',
+              opacity: card.isFlipped ? 1 : 0
             }}
           >
             <CardSide
@@ -276,10 +310,13 @@ export function FlipCard({
               onShare={() => onShare(card.id)}
               onDelete={() => onDelete(card.id)}
               onStyleChange={onStyleChange ? () => onStyleChange(card.id) : undefined}
+              onTagsChange={onTagsChange ? () => onTagsChange(card.id) : undefined}
+              onMoveToFolder={onMoveToFolder}
               card={card}
+              isFlipping={isFlipping}
             />
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -306,7 +343,10 @@ interface CardSideProps {
   onShare: () => void
   onDelete: () => void
   onStyleChange?: () => void
+  onTagsChange?: () => void
+  onMoveToFolder?: () => void
   card: CardType
+  isFlipping: boolean
 }
 
 function CardSide({
@@ -329,7 +369,10 @@ function CardSide({
   onShare,
   onDelete,
   onStyleChange,
-  card
+  onTagsChange,
+  onMoveToFolder,
+  card,
+  isFlipping
 }: CardSideProps) {
   return (
     <div className="flex flex-col h-full">
@@ -359,15 +402,22 @@ function CardSide({
           "flex gap-1 transition-all duration-200 flex-shrink-0",
           isHovered || isEditing ? "opacity-100" : "opacity-60"
         )}>
-          {/* Flip Button */}
+          {/* Flip Button with Cat Icon */}
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 w-7 p-0 rounded-md hover:bg-black/10"
+            className={cn(
+              "h-7 w-7 p-0 rounded-md hover:bg-black/10 transition-all duration-200",
+              isFlipping && "animate-pulse"
+            )}
             onClick={onFlip}
             title={`Flip to ${card.isFlipped ? 'Front' : 'Back'}`}
+            disabled={isFlipping}
           >
-            <FlipHorizontal className="h-3.5 w-3.5" />
+            <Cat className={cn(
+              "h-3.5 w-3.5 transition-transform duration-200",
+              isFlipping && "scale-110"
+            )} />
           </Button>
 
           {/* More Actions */}
@@ -412,6 +462,18 @@ function CardSide({
                 <DropdownMenuItem onClick={onStyleChange}>
                   <Palette className="h-4 w-4 mr-2" />
                   Change Style
+                </DropdownMenuItem>
+              )}
+              {onTagsChange && (
+                <DropdownMenuItem onClick={onTagsChange}>
+                  <Tag className="h-4 w-4 mr-2" />
+                  Manage Tags
+                </DropdownMenuItem>
+              )}
+              {onMoveToFolder && (
+                <DropdownMenuItem onClick={onMoveToFolder}>
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Move to Folder
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -478,24 +540,11 @@ function CardSide({
       {/* Footer with Tags and Image Count */}
       <div className="mt-auto">
         {/* Tags */}
-        {content.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {content.tags.slice(0, 4).map((tag, index) => (
-              <ColoredBadge key={index} className="text-xs">
-                {tag}
-              </ColoredBadge>
-            ))}
-            {content.tags.length > 4 && (
-              <ColoredBadge className="text-xs" colorIndex={7}>
-                +{content.tags.length - 4}
-              </ColoredBadge>
-            )}
-          </div>
-        )}
+        <CardTags tags={content.tags} size="sm" />
 
         {/* Image Count */}
         {content.images.length > 0 && (
-          <div className="flex items-center justify-end text-xs text-muted-foreground">
+          <div className="flex items-center justify-end text-xs text-muted-foreground mt-2">
             <div className="flex items-center gap-1">
               <ImageIcon className="h-3 w-3" />
               <span>{content.images.length}</span>

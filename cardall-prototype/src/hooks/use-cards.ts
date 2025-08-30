@@ -236,6 +236,57 @@ export function useCards() {
     return Array.from(tagSet).sort()
   }, [cards])
 
+  // Update tags across all cards (for rename/delete operations)
+  const updateTagsInAllCards = useCallback((oldTagName: string, newTagName?: string) => {
+    setCards(prevCards => {
+      return prevCards.map(card => {
+        const updateTags = (tags: string[]) => {
+          if (newTagName) {
+            // Rename tag
+            return tags.map(tag => tag === oldTagName ? newTagName : tag)
+          } else {
+            // Delete tag
+            return tags.filter(tag => tag !== oldTagName)
+          }
+        }
+
+        const frontTags = updateTags(card.frontContent.tags)
+        const backTags = updateTags(card.backContent.tags)
+
+        // Only update if tags actually changed
+        if (
+          JSON.stringify(frontTags) !== JSON.stringify(card.frontContent.tags) ||
+          JSON.stringify(backTags) !== JSON.stringify(card.backContent.tags)
+        ) {
+          return {
+            ...card,
+            frontContent: {
+              ...card.frontContent,
+              tags: frontTags,
+              lastModified: new Date()
+            },
+            backContent: {
+              ...card.backContent,
+              tags: backTags,
+              lastModified: new Date()
+            },
+            updatedAt: new Date()
+          }
+        }
+
+        return card
+      })
+    })
+  }, [])
+
+  // Get cards that use a specific tag
+  const getCardsWithTag = useCallback((tagName: string) => {
+    return cards.filter(card => 
+      card.frontContent.tags.includes(tagName) || 
+      card.backContent.tags.includes(tagName)
+    )
+  }, [cards])
+
   // Auto-save to localStorage
   useEffect(() => {
     const saveTimer = setTimeout(() => {
@@ -269,6 +320,8 @@ export function useCards() {
     dispatch,
     getCardById,
     getSelectedCards,
-    getAllTags
+    getAllTags,
+    updateTagsInAllCards,
+    getCardsWithTag
   }
 }

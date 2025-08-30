@@ -208,6 +208,41 @@ export function useTags() {
     return matches.slice(0, limit)
   }, [searchTags, popularTags])
 
+  // Rename tag
+  const renameTag = useCallback((oldName: string, newName: string) => {
+    const tag = getTagByName(oldName)
+    if (!tag) return false
+
+    // Check if new name already exists
+    const existingTag = getTagByName(newName)
+    if (existingTag && existingTag.id !== tag.id) {
+      return false // Name conflict
+    }
+
+    dispatch({
+      type: 'UPDATE_TAG',
+      payload: { 
+        id: tag.id, 
+        updates: { name: newName.trim() } 
+      }
+    })
+    return true
+  }, [dispatch, getTagByName])
+
+  // Delete tag by name
+  const deleteTagByName = useCallback((tagName: string) => {
+    const tag = getTagByName(tagName)
+    if (!tag) return false
+
+    dispatch({ type: 'DELETE_TAG', payload: tag.id })
+    return true
+  }, [dispatch, getTagByName])
+
+  // Get all tag names for validation
+  const getAllTagNames = useCallback(() => {
+    return tags.map(tag => tag.name)
+  }, [tags])
+
   // Auto-save to localStorage
   useEffect(() => {
     const saveTimer = setTimeout(() => {
@@ -254,6 +289,9 @@ export function useTags() {
     updateTagCount,
     syncTagsWithCards,
     searchTags,
-    getTagSuggestions
+    getTagSuggestions,
+    renameTag,
+    deleteTagByName,
+    getAllTagNames
   }
 }

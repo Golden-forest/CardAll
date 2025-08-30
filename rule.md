@@ -1,12 +1,11 @@
 # CardAll Project Development Rules
 
 ## Project Overview
-CardAll is a visual card management platform for creating, organizing, and sharing rich media digital cards with front/back structure, drag-and-drop interactions, and Apple-inspired design.
+CardAll is a visual card management platform for creating, organizing, and sharing rich media digital cards with front/back structure, and Apple-inspired design.
 
 ## Core Features
 - **Card System**: Front (title+content) / Back (tags+notes), flip animation, real-time editing
-- **Magnetic Snap**: Cards can magnetically attach to each other's edges (top/bottom/left/right)
-- **Folder Management**: Hierarchical organization with drag-and-drop
+- **Folder Management**: Hierarchical organization
 - **Style System**: Solid/gradient backgrounds, independent style components
 - **Tag System**: Add, filter, rename, hide tags (exclude from copy)
 - **Media Handling**: Ctrl+V paste, drag upload, image positioning, PNG export
@@ -42,25 +41,6 @@ src/
 └── types/                  # TypeScript definitions
 ```
 
-## Key Interfaces
-```typescript
-interface ICardProps {
-  id: string;
-  frontContent: ICardContent;
-  backContent: ICardContent;
-  style: ICardStyle;
-  isFlipped: boolean;
-  onFlip: (cardId: string) => void;
-}
-
-interface ICardStyle {
-  type: 'solid' | 'gradient';
-  backgroundColor: string;
-  gradientColors?: string[];
-  borderRadius: number;
-}
-```
-
 ## Team Roles
 - **Infrastructure**: Project setup, CI/CD, architecture
 - **UI/UX**: Design system, Uiverse integration, prototypes
@@ -68,26 +48,15 @@ interface ICardStyle {
 - **Backend**: API, database, authentication
 - **QA**: Testing, performance, compatibility
 
-## Quality Gates
-- TypeScript coverage > 95%
-- Unit test coverage > 85%
-- Performance: <1.5s load time, 60fps animations
-- Mobile-first responsive design
-- WCAG 2.1 AA accessibility
-
 ## Priority Features (MVP)
 1. Card CRUD with flip animation
-2. Magnetic snap combination
-3. Basic folder management
 4. Style selection (solid/gradient)
 5. Copy/screenshot functionality
 6. Tag system basics
 
 ## Technical Decisions
-- **Drag & Drop**: @dnd-kit/core for modern DnD
 - **Rich Text**: Tiptap for extensible editing
 - **Animation**: Uiverse + Framer Motion
-- **State**: Zustand for lightweight management
 - **Forms**: React Hook Form + Zod validation
 - **Styling**: Tailwind + CSS-in-JS for dynamic styles
 

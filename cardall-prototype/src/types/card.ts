@@ -124,7 +124,7 @@ export type CardAction =
 export type FolderAction =
   | { type: 'CREATE_FOLDER'; payload: Omit<Folder, 'id' | 'createdAt' | 'updatedAt'> }
   | { type: 'UPDATE_FOLDER'; payload: { id: string; updates: Partial<Folder> } }
-  | { type: 'DELETE_FOLDER'; payload: string }
+  | { type: 'DELETE_FOLDER'; payload: string; onDeleteCards?: (cardIds: string[]) => void }
   | { type: 'TOGGLE_FOLDER'; payload: string }
 
 export type TagAction =

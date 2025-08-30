@@ -76,12 +76,28 @@ export function useFolders() {
           )
 
         case 'DELETE_FOLDER':
-          // Move cards from deleted folder to root
           const folderToDelete = prevFolders.find(f => f.id === action.payload)
           if (folderToDelete) {
-            // Also delete child folders
-            const childFolders = prevFolders.filter(f => f.parentId === action.payload)
-            const allFoldersToDelete = [action.payload, ...childFolders.map(f => f.id)]
+            // Get all child folders recursively
+            const getAllChildFolders = (parentId: string): string[] => {
+              const children = prevFolders.filter(f => f.parentId === parentId)
+              const childIds = children.map(f => f.id)
+              const grandChildIds = children.flatMap(child => getAllChildFolders(child.id))
+              return [...childIds, ...grandChildIds]
+            }
+            
+            const allChildFolderIds = getAllChildFolders(action.payload)
+            const allFoldersToDelete = [action.payload, ...allChildFolderIds]
+            
+            // Get all card IDs from folders to be deleted
+            const allCardIdsToDelete = prevFolders
+              .filter(folder => allFoldersToDelete.includes(folder.id))
+              .flatMap(folder => folder.cardIds)
+            
+            // Trigger card deletion through callback if provided
+            if ('onDeleteCards' in action && action.onDeleteCards && allCardIdsToDelete.length > 0) {
+              action.onDeleteCards(allCardIdsToDelete)
+            }
             
             return prevFolders.filter(folder => !allFoldersToDelete.includes(folder.id))
           }
@@ -161,7 +177,7 @@ export function useFolders() {
     while (currentParent) {
       if (currentParent === folderId) return false
       const parentFolder = getFolderById(currentParent)
-      currentParent = parentFolder?.parentId || null
+      currentParent = parentFolder?.parentId ?? null
     }
     
     return true

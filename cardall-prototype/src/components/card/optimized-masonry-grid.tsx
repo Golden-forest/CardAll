@@ -12,6 +12,7 @@ interface OptimizedMasonryGridProps {
   onCardScreenshot: (cardId: string) => void
   onCardShare: (cardId: string) => void
   onCardDelete: (cardId: string) => void
+  onMoveToFolder?: (cardId: string, folderId: string | null) => void
   onCardStyleChange?: (cardId: string) => void
   cardSize?: 'sm' | 'md' | 'lg'
   className?: string
@@ -28,6 +29,7 @@ export function OptimizedMasonryGrid({
   onCardScreenshot,
   onCardShare,
   onCardDelete,
+  onMoveToFolder,
   onCardStyleChange,
   cardSize = 'md',
   className,
@@ -216,74 +218,41 @@ export function OptimizedMasonryGrid({
   }
 
   return (
-    <div className={cn("flex flex-col", className)} style={{ height: 'calc(100vh - 64px)' }}>
-      {/* Header */}
-      <div className="flex-shrink-0 p-6 pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">Your Cards</h2>
-            <p className="text-muted-foreground">
-              {sortedCards.length} {sortedCards.length === 1 ? 'card' : 'cards'} • {config.columns} columns
-              {enableVirtualization && ` • ${visibleItems.length} visible`}
-            </p>
+    <div
+      ref={containerRef}
+      className={cn("relative w-full", className)}
+      style={{ height: masonryHeight }}
+    >
+      {visibleItems.map((card) => {
+        const position = positions.get(card.id)
+        if (!position) return null
+
+        return (
+          <div
+            key={card.id}
+            ref={(el) => setCardRef(card.id, el)}
+            className="absolute transition-all duration-300 ease-out"
+            style={{
+              transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+              width: position.width,
+              willChange: 'transform'
+            }}
+          >
+            <EnhancedFlipCard
+              card={card}
+              onFlip={onCardFlip}
+              onUpdate={onCardUpdate}
+              onCopy={onCardCopy}
+              onScreenshot={onCardScreenshot}
+              onShare={onCardShare}
+              onDelete={onCardDelete}
+              onMoveToFolder={onMoveToFolder}
+              size={cardSize}
+              className="w-full"
+            />
           </div>
-        </div>
-      </div>
-
-      {/* Scrollable Masonry Container */}
-      <div
-        ref={scrollContainerRef}
-        className="flex-1 overflow-auto px-6"
-        onScroll={handleScroll}
-      >
-        <div
-          ref={containerRef}
-          className="relative w-full"
-          style={{ height: masonryHeight }}
-        >
-          {visibleItems.map((card) => {
-            const position = positions.get(card.id)
-            if (!position) return null
-
-            return (
-              <div
-                key={card.id}
-                ref={(el) => setCardRef(card.id, el)}
-                className="absolute transition-all duration-300 ease-out"
-                style={{
-                  transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
-                  width: position.width,
-                  willChange: 'transform'
-                }}
-              >
-                <EnhancedFlipCard
-                  card={card}
-                  onFlip={onCardFlip}
-                  onUpdate={onCardUpdate}
-                  onCopy={onCardCopy}
-                  onScreenshot={onCardScreenshot}
-                  onShare={onCardShare}
-                  onDelete={onCardDelete}
-                  size={cardSize}
-                  className="w-full"
-                />
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Load More Indicator */}
-        {sortedCards.length > 100 && (
-          <div className="py-8 text-center">
-            <p className="text-muted-foreground">
-              {enableVirtualization 
-                ? `Showing ${visibleItems.length} of ${sortedCards.length} cards (virtualized)`
-                : `Showing all ${sortedCards.length} cards`
-              }
-            </p>
-          </div>
-        )}
-      </div>
+        )
+      })}
     </div>
   )
 }
