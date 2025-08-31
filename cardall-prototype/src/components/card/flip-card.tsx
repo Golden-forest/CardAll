@@ -322,6 +322,66 @@ export function FlipCard({
   )
 }
 
+// Image Grid Component with Smart Centering
+interface ImageGridProps {
+  images: ImageData[]
+}
+
+function ImageGridComponent({ images }: ImageGridProps) {
+  const displayImages = images.slice(0, 4)
+  const imageCount = displayImages.length
+
+  // Dynamic grid layout based on image count
+  const getGridClassName = (count: number) => {
+    switch (count) {
+      case 1:
+        return "flex justify-center" // Single image centered
+      case 2:
+        return "grid grid-cols-2 gap-2" // Two columns
+      case 3:
+        return "grid grid-cols-2 gap-2" // Two columns with special handling for 3rd image
+      case 4:
+      default:
+        return "grid grid-cols-2 gap-2" // Standard 2x2 grid
+    }
+  }
+
+  // Dynamic image container styles
+  const getImageContainerClassName = (count: number, index: number) => {
+    const baseClasses = "relative aspect-video rounded-md overflow-hidden bg-muted transition-all duration-200 hover:scale-[1.02]"
+    
+    if (count === 1) {
+      // Single image: center and limit max width
+      return `${baseClasses} max-w-xs w-full`
+    }
+    
+    if (count === 3 && index === 2) {
+      // Third image in 3-image layout: span both columns and center
+      return `${baseClasses} col-span-2 max-w-xs mx-auto`
+    }
+    
+    return baseClasses
+  }
+
+  return (
+    <div className={getGridClassName(imageCount)}>
+      {displayImages.map((image: ImageData, index: number) => (
+        <div 
+          key={index} 
+          className={getImageContainerClassName(imageCount, index)}
+        >
+          <img
+            src={image.url}
+            alt={image.alt || `Image ${index + 1}`}
+            className="w-full h-full object-cover transition-transform duration-200"
+            loading="lazy"
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Card Side Component
 interface CardSideProps {
   content: CardContentType
@@ -492,17 +552,7 @@ function CardSide({
       {/* Images */}
       {content.images.length > 0 && (
         <div className="mb-3 flex-shrink-0">
-          <div className="grid grid-cols-2 gap-2">
-            {content.images.slice(0, 4).map((image: ImageData, index: number) => (
-              <div key={index} className="relative aspect-video rounded-md overflow-hidden bg-muted">
-                <img
-                  src={image.url}
-                  alt={image.alt || `Image ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
+          <ImageGridComponent images={content.images} />
           {content.images.length > 4 && (
             <div className="text-xs text-muted-foreground mt-1 text-center">
               +{content.images.length - 4} more images
@@ -524,8 +574,25 @@ function CardSide({
           />
         ) : (
           <div 
-            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px]"
-            onDoubleClick={() => onDoubleClick('content')}
+            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor"
+            onDoubleClick={(e) => {
+              // 如果点击的是链接，不触发编辑
+              if ((e.target as HTMLElement).tagName === 'A') {
+                return
+              }
+              onDoubleClick('content')
+            }}
+            onClick={(e) => {
+              // 处理链接点击
+              const target = e.target as HTMLElement
+              if (target.tagName === 'A') {
+                e.stopPropagation()
+                const href = target.getAttribute('href')
+                if (href) {
+                  window.open(href, '_blank', 'noopener,noreferrer')
+                }
+              }
+            }}
           >
             <div 
               className="whitespace-pre-wrap"
