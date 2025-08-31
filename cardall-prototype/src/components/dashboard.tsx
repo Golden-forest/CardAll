@@ -1,5 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
+import { authService, type AuthState } from '@/services/auth'
+import { useAuthModal } from '@/contexts/auth-modal-context'
 import { OptimizedMasonryGrid } from './card/optimized-masonry-grid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +16,9 @@ import {
   FolderPlus,
   Sliders,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  User,
+  LogIn
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -41,6 +45,15 @@ interface DashboardProps {
 }
 
 export function Dashboard({ className }: DashboardProps) {
+  // Authentication state
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    session: null,
+    loading: false,
+    error: null
+  })
+  const { openModal } = useAuthModal()
+
   const { 
     cards, 
     filter, 
@@ -77,6 +90,12 @@ export function Dashboard({ className }: DashboardProps) {
     gap: 16,
     showLayoutControls: false
   })
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const unsubscribe = authService.onAuthStateChange(setAuthState)
+    return unsubscribe
+  }, [])
 
   // Folder management states
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
@@ -142,7 +161,7 @@ export function Dashboard({ className }: DashboardProps) {
   }
 
   const handleCardCopy = async (cardId: string) => {
-    const card = cards.find(c => c.id === cardId)
+    const card = cards.find((c: any) => c.id === cardId)
     if (card) {
       const content = card.isFlipped ? card.backContent : card.frontContent
       const textToCopy = formatCardContentForCopy(content.title, content.text)
@@ -157,7 +176,7 @@ export function Dashboard({ className }: DashboardProps) {
   }
 
   const handleCardScreenshot = async (cardId: string) => {
-    const card = cards.find(c => c.id === cardId)
+    const card = cards.find((c: any) => c.id === cardId)
     if (!card) return
 
     // 查找卡片DOM元素
@@ -189,7 +208,7 @@ export function Dashboard({ className }: DashboardProps) {
   }
 
   const handleCardMoveToFolder = (cardId: string, folderId: string | null) => {
-    const card = cards.find(c => c.id === cardId)
+    const card = cards.find((c: any) => c.id === cardId)
     if (!card) return
 
     const currentFolderId = card.folderId
@@ -532,375 +551,400 @@ export function Dashboard({ className }: DashboardProps) {
   return (
     <FolderPanelProvider>
       <div className={cn("min-h-screen bg-background", className)}>
-      {/* Top Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between px-4">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CA</span>
+        {/* Top Navigation */}
+        <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between px-4">
+            {/* Logo */}
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <span className="text-white font-bold text-sm">CA</span>
+              </div>
+              <h1 className="text-xl font-bold">CardAll</h1>
             </div>
-            <h1 className="text-xl font-bold">CardAll</h1>
-          </div>
 
-          {/* Search */}
-          <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search cards..."
-                value={filter.searchTerm}
-                onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-                className="pl-10 rounded-full"
+            {/* Search */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search cards..."
+                  value={filter.searchTerm}
+                  onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
+                  className="pl-10 rounded-full"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              {/* Authentication Button */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={openModal}
+                className="flex items-center gap-2"
+              >
+                {authState.user ? (
+                  <>
+                    <img 
+                      src={authState.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authState.user.email}`} 
+                      alt={authState.user.username || 'User'}
+                      className="h-6 w-6 rounded-full"
+                    />
+                    <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4" />
+                    <span className="hidden sm:inline text-sm">Login</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Add Card Button */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={handleCreateCard}
+                className="text-primary hover:text-primary/80"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              
+              {/* Layout Controls Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Sliders className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Layout Settings</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Customize the masonry layout appearance
+                      </p>
+                    </div>
+                    
+                    {/* Gap Size */}
+                    <div className="space-y-2">
+                      <Label>Gap Size: {layoutSettings.gap}px</Label>
+                      <Slider
+                        value={[layoutSettings.gap]}
+                        onValueChange={([value]) => setLayoutSettings((prev: any) => ({ ...prev, gap: value }))}
+                        max={32}
+                        min={8}
+                        step={4}
+                        className="w-full"
+                      />
+                    </div>
+
+                    {/* Card Size */}
+                    <div className="space-y-2">
+                      <Label>Card Size</Label>
+                      <div className="flex gap-2">
+                        {(['small', 'medium', 'large'] as const).map(size => (
+                          <Button
+                            key={size}
+                            variant={viewSettings.cardSize === size ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setViewSettings((prev: any) => ({ ...prev, cardSize: size }))}
+                          >
+                            {size.charAt(0).toUpperCase() + size.slice(1)}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex h-[calc(100vh-4rem)]">
+          {/* Sidebar */}
+          <aside 
+            className={cn(
+              "border-r transition-all duration-300 ease-in-out flex flex-col",
+              sidebarCollapsed ? "w-16" : "w-72"
+            )}
+          >
+            {/* Sidebar Header */}
+            <div className="p-3 flex items-center justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="h-8 w-8 p-0"
+              >
+                {sidebarCollapsed ? (
+                  <ChevronRight className="h-4 w-4" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Sidebar Content */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="p-3 space-y-4">
+                {/* Quick Actions */}
+                {!sidebarCollapsed && (
+                  <div>
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full justify-start" 
+                        onClick={handleCreateCard}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        New Card
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full justify-start"
+                        onClick={handleCreateFolder}
+                      >
+                        <FolderPlus className="h-4 w-4 mr-2" />
+                        New Folder
+                      </Button>
+                    </div>
+                    <Separator className="my-4" />
+                  </div>
+                )}
+
+                {/* Collapsed Quick Actions */}
+                {sidebarCollapsed && (
+                  <div className="space-y-2">
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-10 p-0"
+                      onClick={handleCreateCard}
+                      title="New Card"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-10 p-0"
+                      onClick={handleCreateFolder}
+                      title="New Folder"
+                    >
+                      <FolderPlus className="h-4 w-4" />
+                    </Button>
+                    <Separator className="my-4" />
+                  </div>
+                )}
+
+                {/* Folders */}
+                <div>
+                  {!sidebarCollapsed && (
+                    <h3 className="text-sm font-medium mb-3">Folders</h3>
+                  )}
+                  <div className="space-y-1">
+                    <Button 
+                      variant={!selectedFolderId ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full text-sm",
+                        sidebarCollapsed ? "h-10 p-0" : "justify-start"
+                      )}
+                      onClick={() => handleFolderSelect(null)}
+                      title={sidebarCollapsed ? "All Cards" : undefined}
+                    >
+                      <Folder className="h-4 w-4" />
+                      {!sidebarCollapsed && (
+                        <>
+                          <span className="ml-2">All Cards</span>
+                          <Badge variant="secondary" className="ml-auto">
+                            {cards.length}
+                          </Badge>
+                        </>
+                      )}
+                    </Button>
+                    {sidebarCollapsed 
+                      ? renderCollapsedFolderTree(folderTree)
+                      : renderFolderTree(folderTree)
+                    }
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Tags */}
+                <div>
+                  {!sidebarCollapsed && (
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium">Tags</h3>
+                      {filter.tags.length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFilter({ ...filter, tags: [] })}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    {popularTags(sidebarCollapsed ? 5 : 10).map((tag: any) => (
+                      <TagContextMenu
+                        key={tag.id}
+                        tagName={tag.name}
+                        onRename={handleRenameTag}
+                        onDelete={handleDeleteTag}
+                        disabled={sidebarCollapsed}
+                      >
+                        <Button 
+                          variant={filter.tags.includes(tag.name) ? "secondary" : "ghost"}
+                          className={cn(
+                            "w-full text-sm",
+                            sidebarCollapsed ? "h-10 p-0" : "justify-start"
+                          )}
+                          onClick={() => handleTagFilter(tag.name)}
+                          title={sidebarCollapsed ? `${tag.name} (Right-click to expand sidebar for tag management)` : tag.name}
+                        >
+                          <Tag className="h-3 w-3" style={{ color: tag.color }} />
+                          {!sidebarCollapsed && (
+                            <>
+                              <span className="ml-2">{tag.name}</span>
+                              <Badge variant="secondary" className="ml-auto">
+                                {tag.count}
+                              </Badge>
+                            </>
+                          )}
+                        </Button>
+                      </TagContextMenu>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Active Filters */}
+                {!sidebarCollapsed && (filter.tags.length > 0 || filter.searchTerm) && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-medium mb-3">Active Filters</h3>
+                      <div className="space-y-2">
+                        {filter.searchTerm && (
+                          <div className="flex items-center gap-2">
+                            <Search className="h-3 w-3" />
+                            <span className="text-xs text-muted-foreground">
+                              "{filter.searchTerm}"
+                            </span>
+                          </div>
+                        )}
+                        {filter.tags.map((tagName: string) => (
+                          <Badge 
+                            key={tagName}
+                            variant="secondary"
+                            className="mr-1"
+                          >
+                            {tagName}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </aside>
+
+          {/* Masonry Card Grid */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <OptimizedMasonryGrid
+                cards={cards}
+                onCardFlip={handleCardFlip}
+                onCardUpdate={handleCardUpdate}
+                onCardCopy={handleCardCopy}
+                onCardScreenshot={handleCardScreenshot}
+                onCardShare={handleCardShare}
+                onCardDelete={handleCardDelete}
+                onMoveToFolder={handleCardMoveToFolder}
+                cardSize={viewSettings.cardSize === 'small' ? 'sm' : viewSettings.cardSize === 'large' ? 'lg' : 'md'}
+                enableVirtualization={cards.length > 20}
+                gap={layoutSettings.gap}
+                overscan={3}
               />
             </div>
           </div>
+        </main>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            {/* Add Card Button */}
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={handleCreateCard}
-              className="text-primary hover:text-primary/80"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            
-            {/* Layout Controls Popover */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Sliders className="h-4 w-4" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Layout Settings</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Customize the masonry layout appearance
-                    </p>
-                  </div>
-                  
-                  {/* Gap Size */}
-                  <div className="space-y-2">
-                    <Label>Gap Size: {layoutSettings.gap}px</Label>
-                    <Slider
-                      value={[layoutSettings.gap]}
-                      onValueChange={([value]) => setLayoutSettings((prev: any) => ({ ...prev, gap: value }))}
-                      max={32}
-                      min={8}
-                      step={4}
-                      className="w-full"
-                    />
-                  </div>
+        {/* Screenshot Preview Modal */}
+        {/* Screenshot Preview Modal */}
+        <ScreenshotPreviewModal
+          isOpen={showPreview}
+          onClose={cancelPreview}
+          onConfirm={confirmDownload}
+          previewUrl={previewData?.previewUrl || null}
+          fileName={previewData?.fileName || ''}
+          isDownloading={isDownloading}
+        />
 
-                  {/* Card Size */}
-                  <div className="space-y-2">
-                    <Label>Card Size</Label>
-                    <div className="flex gap-2">
-                      {(['small', 'medium', 'large'] as const).map(size => (
-                        <Button
-                          key={size}
-                          variant={viewSettings.cardSize === size ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setViewSettings((prev: any) => ({ ...prev, cardSize: size }))}
-                        >
-                          {size.charAt(0).toUpperCase() + size.slice(1)}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            
-            <Button variant="ghost" size="sm">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+        {/* Folder Management Dialogs */}
+        <CreateFolderDialog
+          isOpen={showCreateFolderDialog}
+          onClose={() => {
+            setShowCreateFolderDialog(false)
+            setEditingFolder(null)
+            setCreateFolderParentId(undefined)
+          }}
+          onConfirm={handleConfirmCreateFolder}
+          parentId={createFolderParentId}
+          initialData={useMemo(() => editingFolder ? {
+            name: editingFolder.name,
+            color: editingFolder.color,
+            icon: editingFolder.icon
+          } : undefined, [editingFolder])}
+          mode={editingFolder ? 'edit' : 'create'}
+        />
 
-      {/* Main Content */}
-      <main className="flex h-[calc(100vh-4rem)]">
-        {/* Sidebar */}
-        <aside 
-          className={cn(
-            "border-r transition-all duration-300 ease-in-out flex flex-col",
-            sidebarCollapsed ? "w-16" : "w-72"
-          )}
-        >
-          {/* Sidebar Header */}
-          <div className="p-3 flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="h-8 w-8 p-0"
-            >
-              {sidebarCollapsed ? (
-                <ChevronRight className="h-4 w-4" />
-              ) : (
-                <ChevronLeft className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
+        <DeleteFolderDialog
+          isOpen={showDeleteFolderDialog}
+          onClose={() => {
+            setShowDeleteFolderDialog(false)
+            setDeletingFolder(null)
+          }}
+          onConfirm={handleConfirmDeleteFolder}
+          folderName={deletingFolder?.name || ''}
+          cardCount={deletingFolder?.cardCount || 0}
+          hasSubfolders={deletingFolder?.hasSubfolders || false}
+          subfolderCount={deletingFolder?.subfolderCount || 0}
+        />
 
-          {/* Sidebar Content */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-3 space-y-4">
-              {/* Quick Actions */}
-              {!sidebarCollapsed && (
-                <div>
-                  <div className="space-y-2">
-                    <Button 
-                      className="w-full justify-start" 
-                      onClick={handleCreateCard}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Card
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={handleCreateFolder}
-                    >
-                      <FolderPlus className="h-4 w-4 mr-2" />
-                      New Folder
-                    </Button>
-                  </div>
-                  <Separator className="my-4" />
-                </div>
-              )}
+        {/* Tag Management Dialogs */}
+        <RenameTagDialog
+          isOpen={showRenameTagDialog}
+          onClose={() => {
+            setShowRenameTagDialog(false)
+            setEditingTagName('')
+          }}
+          onConfirm={handleConfirmRenameTag}
+          tagName={editingTagName}
+          existingTags={getAllTagNames()}
+        />
 
-              {/* Collapsed Quick Actions */}
-              {sidebarCollapsed && (
-                <div className="space-y-2">
-                  <Button 
-                    variant="ghost"
-                    size="sm"
-                    className="w-full h-10 p-0"
-                    onClick={handleCreateCard}
-                    title="New Card"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost"
-                    size="sm"
-                    className="w-full h-10 p-0"
-                    onClick={handleCreateFolder}
-                    title="New Folder"
-                  >
-                    <FolderPlus className="h-4 w-4" />
-                  </Button>
-                  <Separator className="my-4" />
-                </div>
-              )}
-
-              {/* Folders */}
-              <div>
-                {!sidebarCollapsed && (
-                  <h3 className="text-sm font-medium mb-3">Folders</h3>
-                )}
-                <div className="space-y-1">
-                  <Button 
-                    variant={!selectedFolderId ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full text-sm",
-                      sidebarCollapsed ? "h-10 p-0" : "justify-start"
-                    )}
-                    onClick={() => handleFolderSelect(null)}
-                    title={sidebarCollapsed ? "All Cards" : undefined}
-                  >
-                    <Folder className="h-4 w-4" />
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="ml-2">All Cards</span>
-                        <Badge variant="secondary" className="ml-auto">
-                          {cards.length}
-                        </Badge>
-                      </>
-                    )}
-                  </Button>
-                  {sidebarCollapsed 
-                    ? renderCollapsedFolderTree(folderTree)
-                    : renderFolderTree(folderTree)
-                  }
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Tags */}
-              <div>
-                {!sidebarCollapsed && (
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-medium">Tags</h3>
-                    {filter.tags.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setFilter({ ...filter, tags: [] })}
-                        className="h-6 px-2 text-xs"
-                      >
-                        Clear
-                      </Button>
-                    )}
-                  </div>
-                )}
-                <div className="space-y-1">
-                  {popularTags(sidebarCollapsed ? 5 : 10).map((tag: any) => (
-                    <TagContextMenu
-                      key={tag.id}
-                      tagName={tag.name}
-                      onRename={handleRenameTag}
-                      onDelete={handleDeleteTag}
-                      disabled={sidebarCollapsed}
-                    >
-                      <Button 
-                        variant={filter.tags.includes(tag.name) ? "secondary" : "ghost"}
-                        className={cn(
-                          "w-full text-sm",
-                          sidebarCollapsed ? "h-10 p-0" : "justify-start"
-                        )}
-                        onClick={() => handleTagFilter(tag.name)}
-                        title={sidebarCollapsed ? `${tag.name} (Right-click to expand sidebar for tag management)` : tag.name}
-                      >
-                        <Tag className="h-3 w-3" style={{ color: tag.color }} />
-                        {!sidebarCollapsed && (
-                          <>
-                            <span className="ml-2">{tag.name}</span>
-                            <Badge variant="secondary" className="ml-auto">
-                              {tag.count}
-                            </Badge>
-                          </>
-                        )}
-                      </Button>
-                    </TagContextMenu>
-                  ))}
-                </div>
-              </div>
-
-              {/* Active Filters */}
-              {!sidebarCollapsed && (filter.tags.length > 0 || filter.searchTerm) && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="text-sm font-medium mb-3">Active Filters</h3>
-                    <div className="space-y-2">
-                      {filter.searchTerm && (
-                        <div className="flex items-center gap-2">
-                          <Search className="h-3 w-3" />
-                          <span className="text-xs text-muted-foreground">
-                            "{filter.searchTerm}"
-                          </span>
-                        </div>
-                      )}
-                      {filter.tags.map(tagName => (
-                        <Badge 
-                          key={tagName}
-                          variant="secondary"
-                          className="mr-1"
-                        >
-                          {tagName}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Masonry Card Grid */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <OptimizedMasonryGrid
-              cards={cards}
-              onCardFlip={handleCardFlip}
-              onCardUpdate={handleCardUpdate}
-              onCardCopy={handleCardCopy}
-              onCardScreenshot={handleCardScreenshot}
-              onCardShare={handleCardShare}
-              onCardDelete={handleCardDelete}
-              onMoveToFolder={handleCardMoveToFolder}
-              cardSize={viewSettings.cardSize === 'small' ? 'sm' : viewSettings.cardSize === 'large' ? 'lg' : 'md'}
-              enableVirtualization={cards.length > 20}
-              gap={layoutSettings.gap}
-              overscan={3}
-            />
-          </div>
-        </div>
-      </main>
-
-      {/* Screenshot Preview Modal */}
-      <ScreenshotPreviewModal
-        isOpen={showPreview}
-        onClose={cancelPreview}
-        onConfirm={confirmDownload}
-        previewUrl={previewData?.previewUrl || null}
-        fileName={previewData?.fileName || ''}
-        isDownloading={isDownloading}
-      />
-
-      {/* Folder Management Dialogs */}
-      <CreateFolderDialog
-        isOpen={showCreateFolderDialog}
-        onClose={() => {
-          setShowCreateFolderDialog(false)
-          setEditingFolder(null)
-          setCreateFolderParentId(undefined)
-        }}
-        onConfirm={handleConfirmCreateFolder}
-        parentId={createFolderParentId}
-        initialData={useMemo(() => editingFolder ? {
-          name: editingFolder.name,
-          color: editingFolder.color,
-          icon: editingFolder.icon
-        } : undefined, [editingFolder])}
-        mode={editingFolder ? 'edit' : 'create'}
-      />
-
-      <DeleteFolderDialog
-        isOpen={showDeleteFolderDialog}
-        onClose={() => {
-          setShowDeleteFolderDialog(false)
-          setDeletingFolder(null)
-        }}
-        onConfirm={handleConfirmDeleteFolder}
-        folderName={deletingFolder?.name || ''}
-        cardCount={deletingFolder?.cardCount || 0}
-        hasSubfolders={deletingFolder?.hasSubfolders || false}
-        subfolderCount={deletingFolder?.subfolderCount || 0}
-      />
-
-      {/* Tag Management Dialogs */}
-      <RenameTagDialog
-        isOpen={showRenameTagDialog}
-        onClose={() => {
-          setShowRenameTagDialog(false)
-          setEditingTagName('')
-        }}
-        onConfirm={handleConfirmRenameTag}
-        tagName={editingTagName}
-        existingTags={getAllTagNames()}
-      />
-
-      <DeleteTagDialog
-        isOpen={showDeleteTagDialog}
-        onClose={() => {
-          setShowDeleteTagDialog(false)
-          setDeletingTagData(null)
-        }}
-        onConfirm={handleConfirmDeleteTag}
-        tagName={deletingTagData?.name || ''}
-        cardCount={deletingTagData?.cardCount || 0}
-      />
+        <DeleteTagDialog
+          isOpen={showDeleteTagDialog}
+          onClose={() => {
+            setShowDeleteTagDialog(false)
+            setDeletingTagData(null)
+          }}
+          onConfirm={handleConfirmDeleteTag}
+          tagName={deletingTagData?.name || ''}
+          cardCount={deletingTagData?.cardCount || 0}
+        />
       </div>
     </FolderPanelProvider>
   )

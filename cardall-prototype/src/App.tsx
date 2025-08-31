@@ -1,25 +1,34 @@
+import React from 'react'
+import { Dashboard } from '@/components/dashboard'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
+import { AuthModalEnhanced } from '@/components/auth/auth-modal-enhanced'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
-import { Dashboard } from '@/components/dashboard'
-import { TagPanel } from '@/components/tag/tag-panel'
-import { useTagPanel } from '@/contexts/tag-panel-context'
-import { Toaster } from '@/components/ui/sonner'
+import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context'
 import './globals.css'
 
-// Inner component to use TagPanel context
 function AppContent() {
-  const { isOpen, currentCardTags, onTagsChange, closeTagPanel } = useTagPanel()
+  const { isOpen, closeModal } = useAuthModal()
 
   return (
     <div className="min-h-screen bg-background">
-      <Dashboard />
-      <TagPanel
-        isOpen={isOpen}
-        onClose={closeTagPanel}
-        currentCardTags={currentCardTags}
-        onTagsChange={onTagsChange || (() => {})}
-      />
+      <CardAllProvider>
+        <StylePanelProvider>
+          <TagPanelProvider>
+            <Dashboard />
+          </TagPanelProvider>
+        </StylePanelProvider>
+      </CardAllProvider>
+      
+      {/* PWA Install Prompt */}
+      <InstallPrompt />
+      
+      {/* Authentication Modal */}
+      <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />
+      
       <Toaster />
     </div>
   )
@@ -27,13 +36,11 @@ function AppContent() {
 
 function App() {
   return (
-    <CardAllProvider>
-      <StylePanelProvider>
-        <TagPanelProvider>
-          <AppContent />
-        </TagPanelProvider>
-      </StylePanelProvider>
-    </CardAllProvider>
+    <ThemeProvider defaultTheme="light" storageKey="cardall-theme">
+      <AuthModalProvider>
+        <AppContent />
+      </AuthModalProvider>
+    </ThemeProvider>
   )
 }
 
