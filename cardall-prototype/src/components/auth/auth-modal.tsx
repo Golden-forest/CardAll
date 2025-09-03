@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, Github, Cloud, Shield, RefreshCw } from 'lucide-react'
 import { authService, type AuthState } from '@/services/auth'
 import { cloudSyncService } from '@/services/cloud-sync'
+import { UserAvatar } from '@/components/ui/user-avatar'
 
 interface AuthModalProps {
   open: boolean
@@ -57,10 +58,10 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
             <Card>
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <img 
-                    src={authState.user.avatar_url} 
-                    alt={authState.user.username}
-                    className="h-10 w-10 rounded-full"
+                  <UserAvatar 
+                    user={authState.user}
+                    size="lg"
+                    showHoverEffect={false}
                   />
                   <div>
                     <CardTitle className="text-base">{authState.user.username}</CardTitle>

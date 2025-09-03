@@ -65,8 +65,8 @@ export const StylePanel: React.FC<StylePanelProps> = ({
         onClick={handleClose}
       />
       
-      {/* Panel - Responsive sizing */}
-      <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 w-full max-w-sm sm:max-w-md lg:max-w-lg">
+      {/* Panel - Larger size to display more templates */}
+      <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 p-6 w-full max-w-md sm:max-w-2xl lg:max-w-4xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-semibold text-gray-900">Card Styles</h2>
@@ -78,8 +78,8 @@ export const StylePanel: React.FC<StylePanelProps> = ({
           </button>
         </div>
 
-        {/* Style Grid - 2x4 Compact Layout */}
-        <div className="grid grid-cols-2 gap-3 mb-6" style={{ minHeight: '200px' }}>
+        {/* Style Grid - 3x4 Layout for more styles */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-6" style={{ minHeight: '300px', maxHeight: '70vh', overflowY: 'auto' }}>
           {stylePresets.map((preset) => {
             const PreviewComponent = preset.previewComponent
             console.log('Rendering preset:', preset.id, preset.name, PreviewComponent)

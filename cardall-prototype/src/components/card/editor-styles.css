@@ -3,6 +3,18 @@
   outline: none;
   font-family: inherit;
   line-height: 1.6;
+  position: relative;
+  z-index: 20; /* 确保编辑器在动画层之上 */
+  pointer-events: auto !important;
+  background: rgba(255, 255, 255, 0.1); /* 添加轻微背景以确保可见性 */
+}
+
+/* 确保编辑器在渐变波浪样式中可见 */
+.gradient-wave-animation .ProseMirror {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+  padding: 4px;
 }
 
 .ProseMirror p {

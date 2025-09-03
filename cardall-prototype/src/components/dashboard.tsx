@@ -28,6 +28,7 @@ import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-util
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
 import { useToast } from '@/hooks/use-toast'
+import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   FolderContextMenu, 
   CreateFolderDialog, 
@@ -36,7 +37,8 @@ import {
 import { 
   TagContextMenu,
   RenameTagDialog,
-  DeleteTagDialog
+  DeleteTagDialog,
+  ConnectedTagPanel
 } from '@/components/tag'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
 
@@ -586,10 +588,11 @@ export function Dashboard({ className }: DashboardProps) {
               >
                 {authState.user ? (
                   <>
-                    <img 
-                      src={authState.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authState.user.email}`} 
-                      alt={authState.user.username || 'User'}
-                      className="h-6 w-6 rounded-full"
+                    <UserAvatar 
+                      user={authState.user}
+                      size="sm"
+                      onClick={openModal}
+                      showHoverEffect={true}
                     />
                     <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
                   </>
@@ -945,6 +948,9 @@ export function Dashboard({ className }: DashboardProps) {
           tagName={deletingTagData?.name || ''}
           cardCount={deletingTagData?.cardCount || 0}
         />
+
+        {/* Tag Panel */}
+        <ConnectedTagPanel />
       </div>
     </FolderPanelProvider>
   )

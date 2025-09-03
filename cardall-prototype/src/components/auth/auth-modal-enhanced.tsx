@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { authService, type AuthState } from '@/services/auth'
 import { cloudSyncService } from '@/services/cloud-sync'
+import { UserAvatar } from '@/components/ui/user-avatar'
 
 interface AuthModalEnhancedProps {
   open: boolean
@@ -182,10 +183,11 @@ export function AuthModalEnhanced({ open, onOpenChange }: AuthModalEnhancedProps
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <img 
-                      src={authState.user.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${authState.user.email}`} 
-                      alt={authState.user.username || 'User'}
-                      className="h-16 w-16 rounded-2xl shadow-lg"
+                    <UserAvatar 
+                      user={authState.user}
+                      size="lg"
+                      className="h-16 w-16 shadow-lg"
+                      showHoverEffect={false}
                     />
                     <div className="absolute -bottom-1 -right-1 h-5 w-5 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>

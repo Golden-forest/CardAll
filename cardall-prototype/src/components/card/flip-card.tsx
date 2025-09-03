@@ -93,10 +93,48 @@ export function FlipCard({
       borderColor: style.borderColor,
     }
 
+    // Handle different style types and add special classes
+    let specialClasses = ''
+    
     if (style.type === 'gradient' && style.gradientColors) {
       baseStyles.background = `linear-gradient(135deg, ${style.gradientColors.join(', ')})`
+      
+      // Add animation classes based on style ID or gradient colors
+      if (style.gradientColors.includes('#8a2be2') && style.gradientColors.includes('#00ffff')) {
+        specialClasses = 'gradient-wave-animation';
+        // 确保渐变波浪样式不会干扰编辑功能
+        baseStyles.position = 'relative';
+      } else if (style.gradientColors.includes('#ee7752') && style.gradientColors.includes('#23d5ab')) {
+        specialClasses = 'moving-gradient-animation';
+      } else if (style.gradientColors.includes('#667eea')) {
+        specialClasses = 'gradient-mesh-animation';
+      }
+    } else if (style.type === 'glass') {
+      // Glass morphism effect
+      baseStyles.background = style.backgroundColor || 'rgba(255, 255, 255, 0.15)'
+      baseStyles.backdropFilter = 'blur(20px) saturate(180%)'
+      baseStyles.WebkitBackdropFilter = 'blur(20px) saturate(180%)'
+      baseStyles.border = `1px solid ${style.borderColor || 'rgba(255, 255, 255, 0.18)'}`
+      specialClasses = 'glass-morphism'
     } else {
-      baseStyles.backgroundColor = style.backgroundColor
+      // Handle special gradient backgrounds from backgroundColor field
+      if (style.backgroundColor && style.backgroundColor.includes('linear-gradient')) {
+        baseStyles.background = style.backgroundColor
+        baseStyles.backgroundSize = '400% 400%'
+        // Add gradient animation for gradient-mesh style
+        if (style.backgroundColor.includes('#667eea')) {
+          specialClasses = 'gradient-mesh-animation'
+        }
+      } else {
+        baseStyles.backgroundColor = style.backgroundColor
+        
+        // Add animation classes based on solid colors and border
+        if (style.backgroundColor === '#1a1a2e' && style.borderColor === '#4361ee') {
+          specialClasses = 'pulse-border-animation';
+        } else if (style.backgroundColor === '#0f172a') {
+          specialClasses = 'glow-hover-animation';
+        }
+      }
     }
 
     // Add shadow
@@ -106,16 +144,18 @@ export function FlipCard({
       lg: 'shadow-lg',
       xl: 'shadow-xl',
       none: '',
-      '2xl': 'shadow-2xl'
+      '2xl': 'shadow-2xl',
+      glass: 'shadow-lg' // Custom glass shadow
     }
 
     return {
       style: baseStyles,
-      shadowClass: shadowClasses[style.shadow || 'md'] || 'shadow-md'
+      shadowClass: shadowClasses[style.shadow || 'md'] || 'shadow-md',
+      specialClasses
     }
   }
 
-  const { style: cardStyles, shadowClass } = getCardStyles()
+  const { style: cardStyles, shadowClass, specialClasses } = getCardStyles()
 
   const handleFlip = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -236,6 +276,7 @@ export function FlipCard({
             className={cn(
               "flip-card-face flip-card-front w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
+              specialClasses,
               contentPaddingClasses[size]
             )}
             style={{
@@ -278,6 +319,7 @@ export function FlipCard({
             className={cn(
               "flip-card-face flip-card-back w-full flex flex-col transition-all duration-300 relative",
               shadowClass,
+              specialClasses,
               contentPaddingClasses[size]
             )}
             style={{
@@ -562,7 +604,7 @@ function CardSide({
       )}
 
       {/* Text Content */}
-      <div className="flex-1 mb-3">
+      <div className="flex-1 mb-3 relative z-10">
         {isEditing && editingField === 'content' ? (
           <RichTextEditor
             content={content.text}
@@ -574,7 +616,7 @@ function CardSide({
           />
         ) : (
           <div 
-            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor"
+            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor relative z-10"
             onDoubleClick={(e) => {
               // 如果点击的是链接，不触发编辑
               if ((e.target as HTMLElement).tagName === 'A') {

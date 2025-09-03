@@ -1,5 +1,6 @@
 /* Import flip card styles */
 @import './components/card/flip-card.css';
+@import './components/card/styles/style-animations.css';
 
 @tailwind base;
 @tailwind components;

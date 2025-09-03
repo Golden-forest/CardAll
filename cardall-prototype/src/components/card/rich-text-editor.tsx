@@ -283,7 +283,7 @@ export function RichTextEditor({
   }
 
   return (
-    <div className={cn("relative", className)} ref={editorRef}>
+    <div className={cn("relative z-20", className)} ref={editorRef}>
       {/* Editor Content */}
       <div className="relative p-2 -m-2">
         <EditorContent 

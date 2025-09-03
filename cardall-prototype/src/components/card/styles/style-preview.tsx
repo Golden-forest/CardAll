@@ -1,7 +1,7 @@
 // Style preview component for displaying card style templates (Simplified Version)
 
 import React from 'react'
-import { CardStyle } from '../../../types/style'
+import { CardStyle } from '../../../types/card'
 
 interface StylePreviewCardProps {
   title?: string
@@ -25,18 +25,18 @@ export const StylePreviewCard: React.FC<StylePreviewCardProps> = ({
   // Generate style based on card style configuration
   const getCardStyles = (): React.CSSProperties => {
     const baseStyles: React.CSSProperties = {
-      minHeight: '80px',
+      minHeight: '60px',
       width: '100%',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: '12px',
+      padding: '8px',
       borderRadius: '8px',
       cursor: 'pointer',
-      border: isSelected ? '3px solid #3b82f6' : '2px solid #e5e7eb',
+      border: isSelected ? '2px solid #3b82f6' : '1px solid #e5e7eb',
       position: 'relative',
-      fontSize: '12px',
+      fontSize: '10px',
       textAlign: 'center',
       boxShadow: isSelected ? '0 4px 12px rgba(59, 130, 246, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
       transition: 'all 0.2s ease',
@@ -87,21 +87,11 @@ export const StylePreviewCard: React.FC<StylePreviewCardProps> = ({
       style={getCardStyles()}
       onClick={onClick}
       className={className}
-      onMouseEnter={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.transform = 'scale(1.02)'
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isSelected) {
-          e.currentTarget.style.transform = 'scale(1)'
-        }
-      }}
     >
-      <div style={{ fontWeight: '600', marginBottom: '4px', fontSize: '13px' }}>
+      <div style={{ fontWeight: '600', marginBottom: '2px', fontSize: '11px' }}>
         {title}
       </div>
-      <div style={{ fontSize: '10px', opacity: 0.8, lineHeight: '1.2' }}>
+      <div style={{ fontSize: '9px', opacity: 0.8, lineHeight: '1.1' }}>
         {content}
       </div>
     </div>

@@ -19,7 +19,7 @@ export interface CardContent {
 }
 
 export interface CardStyle {
-  type: 'solid' | 'gradient'
+  type: 'solid' | 'gradient' | 'glass'
   backgroundColor?: string
   gradientColors?: string[]
   gradientDirection?: 'to-r' | 'to-br' | 'to-b' | 'to-bl' | 'to-l' | 'to-tl' | 'to-t' | 'to-tr'
@@ -28,7 +28,7 @@ export interface CardStyle {
   fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold'
   textColor?: string
   borderRadius?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
-  shadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'
+  shadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'glass'
   borderWidth?: number
   borderColor?: string
 }
