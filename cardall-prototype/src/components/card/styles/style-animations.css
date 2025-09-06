@@ -72,23 +72,6 @@
   background-size: 100% 100% !important;
 }
 
-/* Pulse Border Animation */
-@keyframes pulseBorder {
-  0% {
-    box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
-  }
-}
-
-.pulse-border-animation {
-  animation: pulseBorder 2s infinite !important;
-  pointer-events: auto !important; /* 确保点击事件可以穿透到子元素 */
-}
 
 /* Moving Gradient Animation */
 @keyframes moveGradient {
@@ -109,13 +92,3 @@
   pointer-events: auto !important; /* 确保点击事件可以穿透到子元素 */
 }
 
-/* Glow Hover Animation */
-.glow-hover-animation {
-  transition: all 0.3s ease !important;
-}
-
-.glow-hover-animation:hover {
-  box-shadow: 0 0 15px 5px rgba(99, 102, 241, 0.6) !important;
-  border-color: rgba(99, 102, 241, 0.8) !important;
-  transform: translateY(-5px) !important;
-}

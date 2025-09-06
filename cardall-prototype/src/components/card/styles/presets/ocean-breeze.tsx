@@ -1,25 +1,25 @@
-// Soft Pink - Natural gentle style
+// Ocean Breeze - Fresh natural style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const SoftPinkPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const OceanBreezePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: 'linear-gradient(90deg, #fda4af 0%, #f87171 100%)',
+    background: 'linear-gradient(90deg, #34d399 0%, #0d9488 100%)',
     color: '#ffffff',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '500',
     borderRadius: '20px',
-    boxShadow: '0 10px 15px -3px rgba(253, 164, 175, 0.3), 0 4px 6px -2px rgba(248, 113, 113, 0.1)',
-    border: '1px solid rgba(253, 164, 175, 0.3)'
+    boxShadow: '0 10px 15px -3px rgba(52, 211, 153, 0.3), 0 4px 6px -2px rgba(13, 148, 136, 0.1)',
+    border: '1px solid rgba(52, 211, 153, 0.3)'
   }
 
   return (
     <StylePreviewCard
-      title="Soft Pink"
-      content="Gentle and soothing"
+      title="Ocean Breeze"
+      content="Fresh and refreshing"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -28,14 +28,14 @@ const SoftPinkPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, cla
   )
 }
 
-export const softPinkStyle: StylePreset = {
-  id: 'soft-pink',
-  name: 'Soft Pink',
+export const oceanBreezeStyle: StylePreset = {
+  id: 'ocean-breeze',
+  name: 'Ocean Breeze',
   category: 'natural',
-  description: 'Warm pink to red gradient with romantic tones',
+  description: 'Fresh emerald to teal gradient with tropical vibes',
   style: {
     type: 'gradient',
-    gradientColors: ['#fda4af', '#f87171'],
+    gradientColors: ['#34d399', '#0d9488'],
     gradientDirection: 'to-r',
     fontFamily: 'system-ui',
     fontSize: 'base',
@@ -44,9 +44,9 @@ export const softPinkStyle: StylePreset = {
     borderRadius: '2xl',
     shadow: 'lg',
     borderWidth: 1,
-    borderColor: 'rgba(253, 164, 175, 0.3)'
+    borderColor: 'rgba(52, 211, 153, 0.3)'
   },
-  previewComponent: SoftPinkPreview
+  previewComponent: OceanBreezePreview
 }
 
-export default softPinkStyle
+export default oceanBreezeStyle

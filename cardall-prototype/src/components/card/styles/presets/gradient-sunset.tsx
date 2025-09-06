@@ -6,13 +6,13 @@ import { StylePreviewCard } from '../style-preview'
 
 const GradientSunsetPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: 'linear-gradient(135deg, #ff6b6b 0%, #feca57 25%, #ff9ff3 50%, #54a0ff 75%, #5f27cd 100%)',
+    background: 'linear-gradient(90deg, #fb923c 0%, #8b5cf6 100%)',
     color: '#ffffff',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '600',
     borderRadius: '24px',
-    boxShadow: '0 25px 50px -12px rgba(255, 107, 107, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+    boxShadow: '0 25px 50px -12px rgba(251, 146, 60, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2)',
     border: 'none'
   }
 
@@ -32,11 +32,11 @@ export const gradientSunsetStyle: StylePreset = {
   id: 'gradient-sunset',
   name: 'Gradient Sunset',
   category: 'personality',
-  description: 'Vibrant multi-color gradient with expressive energy',
+  description: 'Warm orange to violet gradient with magical sunset vibes',
   style: {
     type: 'gradient',
-    gradientColors: ['#ff6b6b', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'],
-    gradientDirection: 'to-br',
+    gradientColors: ['#fb923c', '#8b5cf6'],
+    gradientDirection: 'to-r',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'semibold',

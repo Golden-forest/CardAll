@@ -16,6 +16,7 @@ interface UserAvatarProps {
 
 // 预定义的渐变色组合
 const gradientColors = [
+  'from-violet-500 to-pink-500', // 主要颜色，与Logo保持一致
   'from-blue-500 to-purple-600',
   'from-green-500 to-teal-600', 
   'from-orange-500 to-red-600',

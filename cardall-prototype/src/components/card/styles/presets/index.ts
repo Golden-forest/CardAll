@@ -9,13 +9,12 @@ import elegantPurpleStyle from './elegant-purple'
 import warmOrangeStyle from './warm-orange'
 import freshGreenStyle from './fresh-green'
 import softPinkStyle from './soft-pink'
+import oceanBreezeStyle from './ocean-breeze'
 import deepDarkStyle from './deep-dark'
 import gradientSunsetStyle from './gradient-sunset'
 import gradientMeshStyle from './gradient-mesh'
 import gradientWaveStyle from './gradient-wave'
-import pulseBorderStyle from './pulse-border'
 import movingGradientStyle from './moving-gradient'
-import glowHoverStyle from './glow-hover'
 
 // Register all styles
 const registerAllStyles = () => {
@@ -26,13 +25,12 @@ const registerAllStyles = () => {
     warmOrangeStyle,
     freshGreenStyle,
     softPinkStyle,
+    oceanBreezeStyle,
     deepDarkStyle,
     gradientSunsetStyle,
     gradientMeshStyle,
     gradientWaveStyle,
-    pulseBorderStyle,
-    movingGradientStyle,
-    glowHoverStyle
+    movingGradientStyle
   ]
 
   styles.forEach(style => {
@@ -53,13 +51,12 @@ export {
   warmOrangeStyle,
   freshGreenStyle,
   softPinkStyle,
+  oceanBreezeStyle,
   deepDarkStyle,
   gradientSunsetStyle,
   gradientMeshStyle,
   gradientWaveStyle,
-  pulseBorderStyle,
-  movingGradientStyle,
-  glowHoverStyle
+  movingGradientStyle
 }
 
 export default registerAllStyles

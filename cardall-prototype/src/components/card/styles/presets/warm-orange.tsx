@@ -6,13 +6,13 @@ import { StylePreviewCard } from '../style-preview'
 
 const WarmOrangePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 50%, #dc2626 100%)',
+    background: 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
     color: '#ffffff',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '600',
     borderRadius: '18px',
-    boxShadow: '0 25px 50px -12px rgba(249, 115, 22, 0.25), 0 0 0 1px rgba(249, 115, 22, 0.1)',
+    boxShadow: '0 25px 50px -12px rgba(255, 126, 95, 0.25), 0 0 0 1px rgba(255, 126, 95, 0.1)',
     border: 'none'
   }
 
@@ -32,10 +32,10 @@ export const warmOrangeStyle: StylePreset = {
   id: 'warm-orange',
   name: 'Warm Orange',
   category: 'creative',
-  description: 'Energetic orange gradient with vibrant warmth',
+  description: 'Energetic warm orange gradient with peachy tones',
   style: {
     type: 'gradient',
-    gradientColors: ['#f97316', '#ea580c', '#dc2626'],
+    gradientColors: ['#ff7e5f', '#feb47b'],
     gradientDirection: 'to-br',
     fontFamily: 'system-ui',
     fontSize: 'base',

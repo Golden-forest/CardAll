@@ -558,62 +558,43 @@ export function Dashboard({ className }: DashboardProps) {
           <div className="container flex h-16 items-center justify-between px-4">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
                 <span className="text-white font-bold text-sm">CA</span>
               </div>
-              <h1 className="text-xl font-bold">CardAll</h1>
+              <h1 className="text-xl font-bold">
+                <span className="text-violet-600">Card</span>
+                <span className="text-pink-500">All</span>
+              </h1>
             </div>
 
-            {/* Search */}
-            <div className="flex-1 max-w-md mx-8">
+            {/* Search - Centered */}
+            <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search cards..."
                   value={filter.searchTerm}
                   onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-                  className="pl-10 rounded-full"
+                  className="pl-10 rounded-full w-80"
+                />
+              </div>
+            </div>
+            
+            {/* Search - Mobile (only when centered search is hidden) */}
+            <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={filter.searchTerm}
+                  onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
+                  className="pl-10 rounded-full w-60"
                 />
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Authentication Button */}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={openModal}
-                className="flex items-center gap-2"
-              >
-                {authState.user ? (
-                  <>
-                    <UserAvatar 
-                      user={authState.user}
-                      size="sm"
-                      onClick={openModal}
-                      showHoverEffect={true}
-                    />
-                    <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm">Login</span>
-                  </>
-                )}
-              </Button>
-
-              {/* Add Card Button */}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={handleCreateCard}
-                className="text-primary hover:text-primary/80"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-              
               {/* Layout Controls Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -662,9 +643,41 @@ export function Dashboard({ className }: DashboardProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+
+              {/* Add Card Button */}
+              <Button 
+                onClick={handleCreateCard}
+                variant="ghost"
+                size="sm"
+                className="text-black font-bold hover:bg-gray-100 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+              >
+                <Plus className="h-6 w-6" />
+                <span className="sr-only">Add Card</span>
+              </Button>
               
-              <Button variant="ghost" size="sm">
-                <Settings className="h-4 w-4" />
+              {/* Authentication Button */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={openModal}
+                className="flex items-center gap-2"
+              >
+                {authState.user ? (
+                  <>
+                    <UserAvatar 
+                      user={authState.user}
+                      size="sm"
+                      onClick={openModal}
+                      showHoverEffect={true}
+                    />
+                    <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4" />
+                    <span className="hidden sm:inline text-sm">Login</span>
+                  </>
+                )}
               </Button>
             </div>
           </div>
