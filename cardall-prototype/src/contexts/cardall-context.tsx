@@ -27,7 +27,7 @@ export function CardAllProvider({ children }: CardAllProviderProps) {
       allCardTags.push(...card.frontContent.tags, ...card.backContent.tags)
     })
     tags.syncTagsWithCards(allCardTags)
-  }, [cards.allCards, tags])
+  }, [cards.allCards, tags.syncTagsWithCards])
 
   const value: CardAllContextType = {
     cards,

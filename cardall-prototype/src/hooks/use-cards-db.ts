@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
-import { db, DbCard } from '@/services/database'
-import { syncService } from '@/services/sync'
+import { db, DbCard } from '@/services/database-simple'
+import { cloudSyncService } from '@/services/cloud-sync'
+import { authService } from '@/services/auth'
 import { fileSystemService } from '@/services/file-system'
 
 // 转换数据库卡片到前端卡片格式
 const dbCardToCard = (dbCard: DbCard): Card => {
-  const { syncVersion, lastSyncAt, pendingSync, ...card } = dbCard
+  const { userId, syncVersion, lastSyncAt, pendingSync, ...card } = dbCard
   return {
     ...card,
     id: card.id || '',
@@ -16,12 +17,20 @@ const dbCardToCard = (dbCard: DbCard): Card => {
 }
 
 // 转换前端卡片到数据库格式
-const cardToDbCard = (card: Card): DbCard => {
+const cardToDbCard = (card: Card, userId?: string): DbCard => {
   return {
     ...card,
+    userId,
     syncVersion: 1,
-    pendingSync: true
+    pendingSync: true,
+    updatedAt: new Date(card.updatedAt)
   }
+}
+
+// 获取当前用户ID
+const getCurrentUserId = (): string | null => {
+  const user = authService.getCurrentUser()
+  return user?.id || null
 }
 
 export function useCardsDb() {
@@ -150,20 +159,31 @@ export function useCardsDb() {
 
   // 卡片操作
   const dispatch = useCallback(async (action: CardAction) => {
+    const userId = getCurrentUserId()
+    
     try {
       switch (action.type) {
         case 'CREATE_CARD': {
-          const newCard: DbCard = {
+          const cardId = crypto.randomUUID()
+          const newCardData = {
             ...action.payload,
-            id: `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: cardId,
+            userId,
             createdAt: new Date(),
             updatedAt: new Date(),
             syncVersion: 1,
             pendingSync: true
           }
 
-          const id = await db.cards.add(newCard)
-          await syncService.addToSyncQueue('create', 'card', newCard.id!, newCard)
+          await db.cards.add(newCardData)
+          
+          // 添加到同步队列
+          await cloudSyncService.queueOperation({
+            type: 'create',
+            table: 'cards',
+            data: newCardData,
+            localId: cardId
+          })
           
           // 重新加载数据
           await loadCards()
@@ -173,13 +193,21 @@ export function useCardsDb() {
         case 'UPDATE_CARD': {
           const updates = {
             ...action.payload.updates,
+            userId,
             updatedAt: new Date(),
             syncVersion: 1,
             pendingSync: true
           }
 
           await db.cards.update(action.payload.id, updates)
-          await syncService.addToSyncQueue('update', 'card', action.payload.id, updates)
+          
+          // 添加到同步队列
+          await cloudSyncService.queueOperation({
+            type: 'update',
+            table: 'cards',
+            data: { ...action.payload.updates, userId },
+            localId: action.payload.id
+          })
           
           await loadCards()
           break
@@ -202,7 +230,14 @@ export function useCardsDb() {
           }
 
           await db.cards.delete(action.payload)
-          await syncService.addToSyncQueue('delete', 'card', action.payload)
+          
+          // 添加到同步队列
+          await cloudSyncService.queueOperation({
+            type: 'delete',
+            table: 'cards',
+            data: { userId },
+            localId: action.payload
+          })
           
           await loadCards()
           break
@@ -214,12 +249,19 @@ export function useCardsDb() {
             const updates = {
               isFlipped: !card.isFlipped,
               updatedAt: new Date(),
-              syncVersion: card.syncVersion + 1,
+              syncVersion: (card.syncVersion || 0) + 1,
               pendingSync: true
             }
 
             await db.cards.update(action.payload, updates)
-            await syncService.addToSyncQueue('update', 'card', action.payload, updates)
+            
+            // 添加到同步队列
+            await cloudSyncService.queueOperation({
+              type: 'update',
+              table: 'cards',
+              data: updates,
+              localId: action.payload
+            })
             
             await loadCards()
           }
@@ -241,9 +283,11 @@ export function useCardsDb() {
         case 'DUPLICATE_CARD': {
           const originalCard = await db.cards.get(action.payload)
           if (originalCard) {
+            const duplicatedCardId = crypto.randomUUID()
             const duplicatedCard: DbCard = {
               ...originalCard,
-              id: `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              id: duplicatedCardId,
+              userId,
               createdAt: new Date(),
               updatedAt: new Date(),
               syncVersion: 1,
@@ -251,7 +295,14 @@ export function useCardsDb() {
             }
 
             await db.cards.add(duplicatedCard)
-            await syncService.addToSyncQueue('create', 'card', duplicatedCard.id!, duplicatedCard)
+            
+            // 添加到同步队列
+            await cloudSyncService.queueOperation({
+              type: 'create',
+              table: 'cards',
+              data: duplicatedCard,
+              localId: duplicatedCardId
+            })
             
             await loadCards()
           }
@@ -261,13 +312,21 @@ export function useCardsDb() {
         case 'MOVE_TO_FOLDER': {
           const updates = {
             folderId: action.payload.folderId,
+            userId,
             updatedAt: new Date(),
             syncVersion: 1,
             pendingSync: true
           }
 
           await db.cards.update(action.payload.cardId, updates)
-          await syncService.addToSyncQueue('update', 'card', action.payload.cardId, updates)
+          
+          // 添加到同步队列
+          await cloudSyncService.queueOperation({
+            type: 'update',
+            table: 'cards',
+            data: updates,
+            localId: action.payload.cardId
+          })
           
           await loadCards()
           break
@@ -302,6 +361,8 @@ export function useCardsDb() {
 
   // 更新所有卡片中的标签
   const updateTagsInAllCards = useCallback(async (oldTagName: string, newTagName?: string) => {
+    const userId = getCurrentUserId()
+    
     try {
       const cardsWithTag = await db.cards
         .filter(card => 
@@ -333,13 +394,21 @@ export function useCardsDb() {
             tags: backTags,
             lastModified: new Date()
           },
+          userId,
           updatedAt: new Date(),
-          syncVersion: card.syncVersion + 1,
+          syncVersion: (card.syncVersion || 0) + 1,
           pendingSync: true
         }
 
         await db.cards.update(card.id!, updates)
-        await syncService.addToSyncQueue('update', 'card', card.id!, updates)
+        
+        // 添加到同步队列
+        await cloudSyncService.queueOperation({
+          type: 'update',
+          table: 'cards',
+          data: updates,
+          localId: card.id!
+        })
       }
 
       await loadCards()
@@ -358,6 +427,8 @@ export function useCardsDb() {
 
   // 处理图片上传
   const handleImageUpload = useCallback(async (file: File, cardId: string) => {
+    const userId = getCurrentUserId()
+    
     try {
       const card = await db.cards.get(cardId)
       if (!card) throw new Error('Card not found')
@@ -394,13 +465,31 @@ export function useCardsDb() {
             lastModified: new Date()
           }
         }
+        card.userId = userId
         card.updatedAt = new Date()
-        card.syncVersion = card.syncVersion + 1
+        card.syncVersion = (card.syncVersion || 0) + 1
         card.pendingSync = true
       })
 
-      await syncService.addToSyncQueue('update', 'card', cardId, { images: updatedImages })
-      await syncService.addToSyncQueue('create', 'image', processedImage.id)
+      // 添加卡片更新到同步队列
+      await cloudSyncService.queueOperation({
+        type: 'update',
+        table: 'cards',
+        data: { 
+          [currentSide]: { images: updatedImages },
+          userId,
+          updatedAt: new Date()
+        },
+        localId: cardId
+      })
+      
+      // 添加图片创建到同步队列（如果需要的话）
+      // await cloudSyncService.queueOperation({
+      //   type: 'create',
+      //   table: 'images',
+      //   data: processedImage,
+      //   localId: processedImage.id
+      // })
       
       await loadCards()
       return imageData

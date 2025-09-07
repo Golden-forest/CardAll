@@ -19,6 +19,24 @@ class AuthService {
 
   constructor() {
     this.initialize()
+    // 延迟设置认证服务到同步服务，避免循环依赖
+    setTimeout(() => {
+      this.setupCloudSync()
+    }, 0)
+  }
+
+  // 设置云同步服务（解决循环依赖）
+  private setupCloudSync() {
+    try {
+      // 动态导入避免循环依赖
+      import('./cloud-sync').then(({ cloudSyncService }) => {
+        cloudSyncService.setAuthService(this)
+      }).catch(error => {
+        console.warn('Failed to setup cloud sync service:', error)
+      })
+    } catch (error) {
+      console.warn('Failed to setup cloud sync service:', error)
+    }
   }
 
   // 初始化认证服务
@@ -48,7 +66,23 @@ class AuthService {
       supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
         console.log('Auth state changed:', event, session?.user?.id)
         
-        if (session?.user) {
+        if (event === 'SIGNED_OUT') {
+          // 用户登出，清理同步状态但保留本地数据
+          try {
+            // 动态获取同步服务
+            const { cloudSyncService } = await import('./cloud-sync')
+            await cloudSyncService.clearSyncQueue()
+          } catch (error) {
+            console.warn('Failed to clear sync queue on signout:', error)
+          }
+          
+          this.updateState({ 
+            user: null, 
+            session: null, 
+            loading: false, 
+            error: null 
+          })
+        } else if (session?.user) {
           const user = await this.fetchUserProfile(session.user.id)
           this.updateState({ 
             user, 
@@ -56,6 +90,16 @@ class AuthService {
             loading: false, 
             error: null 
           })
+          
+          // 触发完整同步
+          if (event === 'SIGNED_IN') {
+            try {
+              const { cloudSyncService } = await import('./cloud-sync')
+              await cloudSyncService.performFullSync()
+            } catch (error) {
+              console.warn('Failed to perform full sync after signin:', error)
+            }
+          }
         } else {
           this.updateState({ 
             user: null, 

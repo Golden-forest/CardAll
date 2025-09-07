@@ -1,7 +1,6 @@
-import { supabase, type Database, type SyncStatus } from './supabase'
-import { authService } from './auth'
+import { supabase, type SyncStatus } from './supabase'
 import { db } from './database-simple'
-import type { DbCard, DbFolder, DbTag, DbImage } from './database-simple'
+import type { DbCard, DbFolder, DbTag } from './database-simple'
 
 export interface SyncOperation {
   id: string
@@ -29,6 +28,7 @@ class CloudSyncService {
   private lastSyncTime: Date | null = null
   private conflicts: ConflictResolution[] = []
   private listeners: ((status: SyncStatus) => void)[] = []
+  private authService: any = null // 延迟初始化
 
   constructor() {
     this.initialize()
@@ -48,19 +48,24 @@ class CloudSyncService {
       this.notifyStatusChange()
     })
 
+    // 定期同步（每5分钟）
+    setInterval(() => {
+      if (this.isOnline && this.authService?.isAuthenticated()) {
+        this.processSyncQueue()
+      }
+    }, 5 * 60 * 1000)
+  }
+
+  // 设置认证服务（解决循环依赖）
+  setAuthService(authService: any) {
+    this.authService = authService
+    
     // 监听认证状态变化
-    authService.onAuthStateChange((authState) => {
+    authService.onAuthStateChange((authState: any) => {
       if (authState.user && this.isOnline) {
         this.performFullSync()
       }
     })
-
-    // 定期同步（每5分钟）
-    setInterval(() => {
-      if (this.isOnline && authService.isAuthenticated()) {
-        this.processSyncQueue()
-      }
-    }, 5 * 60 * 1000)
   }
 
   // 添加状态监听器
@@ -108,7 +113,7 @@ class CloudSyncService {
     await this.persistSyncQueue()
     
     // 如果在线且已认证，立即尝试同步
-    if (this.isOnline && authService.isAuthenticated()) {
+    if (this.isOnline && this.authService?.isAuthenticated()) {
       this.processSyncQueue()
     }
 
@@ -117,7 +122,7 @@ class CloudSyncService {
 
   // 处理同步队列
   private async processSyncQueue() {
-    if (this.syncInProgress || !this.isOnline || !authService.isAuthenticated()) {
+    if (this.syncInProgress || !this.isOnline || !this.authService?.isAuthenticated()) {
       return
     }
 
@@ -163,7 +168,7 @@ class CloudSyncService {
 
   // 执行单个同步操作
   private async executeOperation(operation: SyncOperation) {
-    const user = authService.getCurrentUser()
+    const user = this.authService?.getCurrentUser()
     if (!user) throw new Error('User not authenticated')
 
     switch (operation.table) {
@@ -333,7 +338,7 @@ class CloudSyncService {
 
   // 执行完整同步
   async performFullSync(): Promise<void> {
-    if (!authService.isAuthenticated() || !this.isOnline) {
+    if (!this.authService?.isAuthenticated() || !this.isOnline) {
       return
     }
 
@@ -341,7 +346,7 @@ class CloudSyncService {
       this.syncInProgress = true
       this.notifyStatusChange()
 
-      const user = authService.getCurrentUser()!
+      const user = this.authService.getCurrentUser()!
       
       // 下行同步：从云端获取数据
       await this.syncFromCloud(user.id)
@@ -405,7 +410,7 @@ class CloudSyncService {
     }
   }
 
-  // 合并云端卡片数据
+  // 合并云端卡片数据 - 使用"最后写入获胜"策略
   private async mergeCloudCard(cloudCard: any) {
     const localCard = await db.cards?.get(cloudCard.id)
     
@@ -416,35 +421,43 @@ class CloudSyncService {
         frontContent: cloudCard.front_content,
         backContent: cloudCard.back_content,
         style: cloudCard.style,
-        folderId: cloudCard.folder_id,
+        folderId: cloudCard.folder_id || undefined,
+        isFlipped: false,
         createdAt: new Date(cloudCard.created_at),
         updatedAt: new Date(cloudCard.updated_at),
         syncVersion: cloudCard.sync_version,
         pendingSync: false
-      })
-    } else if (cloudCard.sync_version > localCard.syncVersion) {
-      // 云端版本更新，更新本地
-      await db.cards?.update(cloudCard.id, {
-        frontContent: cloudCard.front_content,
-        backContent: cloudCard.back_content,
-        style: cloudCard.style,
-        folderId: cloudCard.folder_id,
-        updatedAt: new Date(cloudCard.updated_at),
-        syncVersion: cloudCard.sync_version,
-        pendingSync: false
-      })
-    } else if (localCard.syncVersion > cloudCard.sync_version && localCard.pendingSync) {
-      // 本地版本更新，需要上传到云端
-      await this.queueOperation({
-        type: 'update',
-        table: 'cards',
-        data: localCard,
-        localId: localCard.id
-      })
+      } as DbCard)
+    } else {
+      // 比较更新时间，采用"最后写入获胜"策略
+      const localUpdateTime = new Date(localCard.updatedAt).getTime()
+      const cloudUpdateTime = new Date(cloudCard.updated_at).getTime()
+      
+      if (cloudUpdateTime > localUpdateTime) {
+        // 云端数据更新，使用云端数据
+        await db.cards?.update(cloudCard.id, {
+          frontContent: cloudCard.front_content,
+          backContent: cloudCard.back_content,
+          style: cloudCard.style,
+          folderId: cloudCard.folder_id || undefined,
+          updatedAt: new Date(cloudCard.updated_at),
+          syncVersion: cloudCard.sync_version,
+          pendingSync: false
+        })
+      } else if (localUpdateTime > cloudUpdateTime && localCard.pendingSync) {
+        // 本地数据更新，上传到云端
+        await this.queueOperation({
+          type: 'update',
+          table: 'cards',
+          data: localCard,
+          localId: localCard.id
+        })
+      }
+      // 如果时间相同，认为是同步的，不做任何操作
     }
   }
 
-  // 合并云端文件夹数据
+  // 合并云端文件夹数据 - 使用"最后写入获胜"策略
   private async mergeCloudFolder(cloudFolder: any) {
     const localFolder = await db.folders?.get(cloudFolder.id)
     
@@ -452,24 +465,42 @@ class CloudSyncService {
       await db.folders?.add({
         id: cloudFolder.id,
         name: cloudFolder.name,
-        parentId: cloudFolder.parent_id,
+        color: '#3b82f6',
+        icon: 'Folder',
+        cardIds: [],
+        parentId: cloudFolder.parent_id || undefined,
+        isExpanded: true,
         createdAt: new Date(cloudFolder.created_at),
         updatedAt: new Date(cloudFolder.updated_at),
         syncVersion: cloudFolder.sync_version,
         pendingSync: false
-      })
-    } else if (cloudFolder.sync_version > localFolder.syncVersion) {
-      await db.folders?.update(cloudFolder.id, {
-        name: cloudFolder.name,
-        parentId: cloudFolder.parent_id,
-        updatedAt: new Date(cloudFolder.updated_at),
-        syncVersion: cloudFolder.sync_version,
-        pendingSync: false
-      })
+      } as DbFolder)
+    } else {
+      // 比较更新时间，采用"最后写入获胜"策略
+      const localUpdateTime = new Date(localFolder.updatedAt).getTime()
+      const cloudUpdateTime = new Date(cloudFolder.updated_at).getTime()
+      
+      if (cloudUpdateTime > localUpdateTime) {
+        await db.folders?.update(cloudFolder.id, {
+          name: cloudFolder.name,
+          parentId: cloudFolder.parent_id || undefined,
+          updatedAt: new Date(cloudFolder.updated_at),
+          syncVersion: cloudFolder.sync_version,
+          pendingSync: false
+        })
+      } else if (localUpdateTime > cloudUpdateTime && localFolder.pendingSync) {
+        // 本地数据更新，上传到云端
+        await this.queueOperation({
+          type: 'update',
+          table: 'folders',
+          data: localFolder,
+          localId: localFolder.id
+        })
+      }
     }
   }
 
-  // 合并云端标签数据
+  // 合并云端标签数据 - 使用"最后写入获胜"策略
   private async mergeCloudTag(cloudTag: any) {
     const localTag = await db.tags?.get(cloudTag.id)
     
@@ -478,19 +509,34 @@ class CloudSyncService {
         id: cloudTag.id,
         name: cloudTag.name,
         color: cloudTag.color,
+        count: 0, // 云端同步下来的标签初始计数为0，后续会通过syncTagsWithCards更新
         createdAt: new Date(cloudTag.created_at),
         updatedAt: new Date(cloudTag.updated_at),
         syncVersion: cloudTag.sync_version,
         pendingSync: false
-      })
-    } else if (cloudTag.sync_version > localTag.syncVersion) {
-      await db.tags?.update(cloudTag.id, {
-        name: cloudTag.name,
-        color: cloudTag.color,
-        updatedAt: new Date(cloudTag.updated_at),
-        syncVersion: cloudTag.sync_version,
-        pendingSync: false
-      })
+      } as DbTag)
+    } else {
+      // 比较更新时间，采用"最后写入获胜"策略
+      const localUpdateTime = new Date(localTag.updatedAt).getTime()
+      const cloudUpdateTime = new Date(cloudTag.updatedAt).getTime()
+      
+      if (cloudUpdateTime > localUpdateTime) {
+        await db.tags?.update(cloudTag.id, {
+          name: cloudTag.name,
+          color: cloudTag.color,
+          updatedAt: new Date(cloudTag.updated_at),
+          syncVersion: cloudTag.sync_version,
+          pendingSync: false
+        })
+      } else if (localUpdateTime > cloudUpdateTime && localTag.pendingSync) {
+        // 本地数据更新，上传到云端
+        await this.queueOperation({
+          type: 'update',
+          table: 'tags',
+          data: localTag,
+          localId: localTag.id
+        })
+      }
     }
   }
 

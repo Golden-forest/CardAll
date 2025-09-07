@@ -165,13 +165,12 @@ export function useTags() {
     }, {} as Record<string, number>)
 
     // Update existing tags and create new ones
-    const updatedTags = [...tags]
+    const updatedTags = tags.map(tag => ({
+      ...tag,
+      count: tagCounts[tag.name] || 0
+    }))
+    
     const existingTagNames = new Set(tags.map(tag => tag.name))
-
-    // Update counts for existing tags
-    updatedTags.forEach(tag => {
-      tag.count = tagCounts[tag.name] || 0
-    })
 
     // Create new tags
     Object.entries(tagCounts).forEach(([tagName, count]) => {

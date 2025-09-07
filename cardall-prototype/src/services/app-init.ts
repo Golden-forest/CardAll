@@ -1,7 +1,8 @@
-import { initializeDatabase } from './database'
-import { syncService } from './sync'
+import { initializeDatabase } from './database-simple'
+import { cloudSyncService } from './cloud-sync'
 import { migrationService } from './migration'
 import { fileSystemService } from './file-system'
+import { authService } from './auth'
 
 export interface InitializationStatus {
   step: string
@@ -117,7 +118,13 @@ class AppInitializationService {
         hasError: false
       })
 
-      await syncService.initialize()
+      // 恢复同步队列
+      await cloudSyncService.restoreSyncQueue()
+      
+      // 如果用户已登录，执行完整同步
+      if (authService.isAuthenticated()) {
+        await cloudSyncService.performFullSync()
+      }
 
       // 步骤5: 完成初始化
       this.updateStatus({
@@ -165,7 +172,7 @@ class AppInitializationService {
   }> {
     try {
       const migrationStatus = await migrationService.getMigrationStatus()
-      const syncStatus = syncService.getStatus()
+      const syncStatus = cloudSyncService.getCurrentStatus()
       
       return {
         databaseReady: true, // 如果能调用说明数据库已就绪
