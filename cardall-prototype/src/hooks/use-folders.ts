@@ -1,221 +1,302 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Folder, FolderAction } from '@/types/card'
+import { Folder, FolderAction, FolderFilter } from '@/types/card'
+import { db, DbFolder } from '@/services/database-simple'
+import { cloudSyncService } from '@/services/cloud-sync'
+import { authService } from '@/services/auth'
 
-// Mock data for development
-const mockFolders: Folder[] = [
-  {
-    id: 'folder-1',
-    name: 'Development',
-    color: '#3b82f6',
-    icon: 'Code',
-    cardIds: ['1'],
-    isExpanded: true,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-15')
-  },
-  {
-    id: 'folder-2',
-    name: 'Design Resources',
-    color: '#8b5cf6',
-    icon: 'Palette',
-    cardIds: [],
-    isExpanded: false,
-    createdAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-12')
-  },
-  {
-    id: 'folder-3',
-    name: 'Learning Notes',
-    color: '#10b981',
-    icon: 'BookOpen',
-    cardIds: ['2'],
-    parentId: 'folder-1',
-    isExpanded: true,
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-16')
+// 转换数据库文件夹到前端文件夹格式
+const dbFolderToFolder = (dbFolder: DbFolder): Folder => {
+  const { userId, syncVersion, pendingSync, ...folder } = dbFolder
+  return {
+    ...folder,
+    id: folder.id || '',
+    createdAt: new Date(folder.createdAt),
+    updatedAt: new Date(folder.updatedAt)
   }
-]
+}
+
+// 转换前端文件夹到数据库格式
+const folderToDbFolder = (folder: Folder, userId?: string): DbFolder => {
+  return {
+    ...folder,
+    userId,
+    syncVersion: 1,
+    pendingSync: true,
+    updatedAt: new Date(folder.updatedAt)
+  }
+}
+
+// 获取当前用户ID
+const getCurrentUserId = (): string | null => {
+  const user = authService.getCurrentUser()
+  return user?.id || null
+}
 
 export function useFolders() {
-  const [folders, setFolders] = useState<Folder[]>(mockFolders)
-  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
+  const [folders, setFolders] = useState<Folder[]>([])
+  const [filter, setFilter] = useState<FolderFilter>({
+    searchTerm: '',
+    showEmpty: true
+  })
+  const [selectedFolderIds, setSelectedFolderIds] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  // Get folder tree structure
-  const getFolderTree = useCallback(() => {
-    const rootFolders = folders.filter(folder => !folder.parentId)
-    
-    const buildTree = (parentFolders: Folder[]): (Folder & { children: Folder[] })[] => {
-      return parentFolders.map(folder => ({
-        ...folder,
-        children: buildTree(folders.filter(f => f.parentId === folder.id))
-      }))
+  // 从数据库加载文件夹
+  const loadFolders = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const dbFolders = await db.folders.toArray()
+      const convertedFolders = dbFolders.map(dbFolderToFolder)
+      setFolders(convertedFolders)
+    } catch (error) {
+      console.error('Failed to load folders:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    return buildTree(rootFolders)
-  }, [folders])
-
-  // Folder actions
-  const dispatch = useCallback((action: FolderAction) => {
-    setFolders(prevFolders => {
-      switch (action.type) {
-        case 'CREATE_FOLDER':
-          const newFolder: Folder = {
-            ...action.payload,
-            id: `folder-${Date.now()}`,
-            cardIds: [],
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-          return [...prevFolders, newFolder]
-
-        case 'UPDATE_FOLDER':
-          return prevFolders.map(folder =>
-            folder.id === action.payload.id
-              ? { ...folder, ...action.payload.updates, updatedAt: new Date() }
-              : folder
-          )
-
-        case 'DELETE_FOLDER':
-          const folderToDelete = prevFolders.find(f => f.id === action.payload)
-          if (folderToDelete) {
-            // Get all child folders recursively
-            const getAllChildFolders = (parentId: string): string[] => {
-              const children = prevFolders.filter(f => f.parentId === parentId)
-              const childIds = children.map(f => f.id)
-              const grandChildIds = children.flatMap(child => getAllChildFolders(child.id))
-              return [...childIds, ...grandChildIds]
-            }
-            
-            const allChildFolderIds = getAllChildFolders(action.payload)
-            const allFoldersToDelete = [action.payload, ...allChildFolderIds]
-            
-            // Get all card IDs from folders to be deleted
-            const allCardIdsToDelete = prevFolders
-              .filter(folder => allFoldersToDelete.includes(folder.id))
-              .flatMap(folder => folder.cardIds)
-            
-            // Trigger card deletion through callback if provided
-            if ('onDeleteCards' in action && action.onDeleteCards && allCardIdsToDelete.length > 0) {
-              action.onDeleteCards(allCardIdsToDelete)
-            }
-            
-            return prevFolders.filter(folder => !allFoldersToDelete.includes(folder.id))
-          }
-          return prevFolders.filter(folder => folder.id !== action.payload)
-
-        case 'TOGGLE_FOLDER':
-          return prevFolders.map(folder =>
-            folder.id === action.payload
-              ? { ...folder, isExpanded: !folder.isExpanded, updatedAt: new Date() }
-              : folder
-          )
-
-        default:
-          return prevFolders
-      }
-    })
   }, [])
 
-  // Utility functions
+  // 初始化时加载数据
+  useEffect(() => {
+    loadFolders()
+  }, [loadFolders])
+
+  // 监听数据库变化
+  useEffect(() => {
+    const subscription = db.folders.hook('creating', (primKey, obj, trans) => {
+      console.log('Folder creating:', primKey)
+    })
+
+    const updateSubscription = db.folders.hook('updating', (modifications, primKey, obj, trans) => {
+      console.log('Folder updating:', primKey)
+    })
+
+    const deleteSubscription = db.folders.hook('deleting', (primKey, obj, trans) => {
+      console.log('Folder deleting:', primKey)
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+      updateSubscription?.unsubscribe()
+      deleteSubscription?.unsubscribe()
+    }
+  }, [])
+
+  // 过滤文件夹
+  const filteredFolders = useCallback(() => {
+    let filtered = folders.filter(folder => {
+      // 搜索词过滤
+      if (filter.searchTerm) {
+        const searchLower = filter.searchTerm.toLowerCase()
+        const matchesName = folder.name.toLowerCase().includes(searchLower)
+        if (!matchesName) return false
+      }
+
+      // 父文件夹过滤
+      if (filter.parentId !== undefined && folder.parentId !== filter.parentId) {
+        return false
+      }
+
+      return true
+    })
+
+    // 排序文件夹
+    filtered.sort((a, b) => {
+      // 按创建时间降序排列
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+
+    return filtered
+  }, [folders, filter])
+
+  // 文件夹操作
+  const dispatch = useCallback(async (action: FolderAction) => {
+    const userId = getCurrentUserId()
+    
+    try {
+      switch (action.type) {
+        case 'CREATE_FOLDER': {
+          const folderId = crypto.randomUUID()
+          const newFolder: DbFolder = {
+            ...action.payload,
+            id: folderId,
+            userId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            syncVersion: 1,
+            pendingSync: true
+          }
+
+          console.log('📁 useFoldersDb: Creating new folder', newFolder)
+          
+          const id = await db.folders.add(newFolder)
+          console.log('📁 useFoldersDb: Folder added to local DB with id', id)
+          
+          await cloudSyncService.queueOperation({
+            type: 'create',
+            table: 'folders',
+            data: newFolder,
+            localId: folderId
+          })
+          
+          console.log('📁 useFoldersDb: Sync operation queued')
+          
+          // 重新加载数据
+          await loadFolders()
+          break
+        }
+
+        case 'UPDATE_FOLDER': {
+          const updates = {
+            ...action.payload.updates,
+            userId,
+            updatedAt: new Date(),
+            syncVersion: 1,
+            pendingSync: true
+          }
+
+          await db.folders.update(action.payload.id, updates)
+          await cloudSyncService.queueOperation({
+            type: 'update',
+            table: 'folders',
+            data: updates,
+            localId: action.payload.id
+          })
+          
+          await loadFolders()
+          break
+        }
+
+        case 'DELETE_FOLDER': {
+          await db.folders.delete(action.payload)
+          await cloudSyncService.queueOperation({
+            type: 'delete',
+            table: 'folders',
+            data: { userId },
+            localId: action.payload
+          })
+          
+          await loadFolders()
+          break
+        }
+
+        case 'SELECT_FOLDER':
+          setSelectedFolderIds(prev => 
+            prev.includes(action.payload) 
+              ? prev.filter(id => id !== action.payload)
+              : [...prev, action.payload]
+          )
+          break
+
+        case 'DESELECT_ALL_FOLDERS':
+          setSelectedFolderIds([])
+          break
+
+        case 'TOGGLE_EXPAND': {
+          const folder = await db.folders.get(action.payload)
+          if (folder) {
+            const updates = {
+              isExpanded: !folder.isExpanded,
+              userId,
+              updatedAt: new Date(),
+              syncVersion: (folder.syncVersion || 0) + 1,
+              pendingSync: true
+            }
+
+            await db.folders.update(action.payload, updates)
+            await cloudSyncService.queueOperation({
+              type: 'update',
+              table: 'folders',
+              data: updates,
+              localId: action.payload
+            })
+            
+            await loadFolders()
+          }
+          break
+        }
+
+        case 'MOVE_CARDS_TO_FOLDER': {
+          const updates = {
+            // 这里需要更新卡片引用，暂时简化处理
+            userId,
+            updatedAt: new Date(),
+            syncVersion: 1,
+            pendingSync: true
+          }
+
+          await db.folders.update(action.payload.folderId, updates)
+          await cloudSyncService.queueOperation({
+            type: 'update',
+            table: 'folders',
+            data: updates,
+            localId: action.payload.folderId
+          })
+          
+          await loadFolders()
+          break
+        }
+
+        default:
+          console.warn('Unknown folder action:', action)
+      }
+    } catch (error) {
+      console.error('Folder operation failed:', error)
+      throw error
+    }
+  }, [loadFolders])
+
+  // 工具函数
   const getFolderById = useCallback((id: string) => {
     return folders.find(folder => folder.id === id)
   }, [folders])
 
-  const getFolderPath = useCallback((folderId: string): Folder[] => {
-    const path: Folder[] = []
-    let currentFolder = getFolderById(folderId)
-    
-    while (currentFolder) {
-      path.unshift(currentFolder)
-      currentFolder = currentFolder.parentId ? getFolderById(currentFolder.parentId) : null
+  const getSelectedFolders = useCallback(() => {
+    return folders.filter(folder => selectedFolderIds.includes(folder.id))
+  }, [folders, selectedFolderIds])
+
+  const getFolderHierarchy = useCallback(() => {
+    const buildHierarchy = (parentId: string | null = null): Folder[] => {
+      return filteredFolders()
+        .filter(folder => folder.parentId === parentId)
+        .map(folder => ({
+          ...folder,
+          children: buildHierarchy(folder.id)
+        }))
     }
     
-    return path
-  }, [folders, getFolderById])
+    return buildHierarchy()
+  }, [filteredFolders])
 
-  const addCardToFolder = useCallback((cardId: string, folderId: string) => {
-    dispatch({
-      type: 'UPDATE_FOLDER',
-      payload: {
-        id: folderId,
-        updates: {
-          cardIds: [...(getFolderById(folderId)?.cardIds || []), cardId]
-        }
-      }
-    })
-  }, [dispatch, getFolderById])
+  const getRootFolders = useCallback(() => {
+    return filteredFolders().filter(folder => !folder.parentId)
+  }, [filteredFolders])
 
-  const removeCardFromFolder = useCallback((cardId: string, folderId: string) => {
-    const folder = getFolderById(folderId)
-    if (folder) {
-      dispatch({
-        type: 'UPDATE_FOLDER',
-        payload: {
-          id: folderId,
-          updates: {
-            cardIds: folder.cardIds.filter(id => id !== cardId)
-          }
-        }
-      })
-    }
-  }, [dispatch, getFolderById])
+  const getChildFolders = useCallback((parentId: string) => {
+    return filteredFolders().filter(folder => folder.parentId === parentId)
+  }, [filteredFolders])
 
-  const moveCardBetweenFolders = useCallback((cardId: string, fromFolderId: string | null, toFolderId: string | null) => {
-    if (fromFolderId) {
-      removeCardFromFolder(cardId, fromFolderId)
-    }
-    if (toFolderId) {
-      addCardToFolder(cardId, toFolderId)
-    }
-  }, [addCardToFolder, removeCardFromFolder])
-
-  const canMoveFolder = useCallback((folderId: string, targetParentId: string | null): boolean => {
-    // Can't move folder to itself or its descendants
-    if (folderId === targetParentId) return false
-    
-    let currentParent = targetParentId
-    while (currentParent) {
-      if (currentParent === folderId) return false
-      const parentFolder = getFolderById(currentParent)
-      currentParent = parentFolder?.parentId ?? null
-    }
-    
-    return true
-  }, [getFolderById])
-
-  // Auto-save to localStorage
-  useEffect(() => {
-    const saveTimer = setTimeout(() => {
-      localStorage.setItem('cardall-folders', JSON.stringify(folders))
-    }, 1000)
-
-    return () => clearTimeout(saveTimer)
-  }, [folders])
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('cardall-folders')
-    if (saved) {
-      try {
-        const parsedFolders = JSON.parse(saved)
-        setFolders(parsedFolders)
-      } catch (error) {
-        console.error('Failed to load saved folders:', error)
-      }
-    }
+  // 获取文件夹中的卡片数量（需要与卡片服务集成）
+  const getFolderCardCount = useCallback((folderId: string) => {
+    // 这里需要与卡片服务集成来获取准确的计数
+    // 暂时返回0
+    return 0
   }, [])
 
   return {
-    folders,
-    folderTree: getFolderTree(),
-    selectedFolderId,
-    setSelectedFolderId,
+    folders: filteredFolders(),
+    allFolders: folders,
+    folderTree: getFolderHierarchy(),
+    filter,
+    setFilter,
+    selectedFolderIds,
+    isLoading,
     dispatch,
     getFolderById,
-    getFolderPath,
-    addCardToFolder,
-    removeCardFromFolder,
-    moveCardBetweenFolders,
-    canMoveFolder
+    getSelectedFolders,
+    getFolderHierarchy,
+    getRootFolders,
+    getChildFolders,
+    getFolderCardCount,
+    loadFolders
   }
 }

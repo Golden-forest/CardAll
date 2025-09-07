@@ -191,9 +191,16 @@ class CloudSyncService {
   private async syncCard(operation: SyncOperation, userId: string) {
     const { type, data, localId } = operation
 
+    // 验证 ID 格式
+    if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      console.warn('⚠️ Invalid card ID format, skipping sync:', localId)
+      return
+    }
+
     switch (type) {
       case 'create':
       case 'update':
+        console.log('📄 Syncing card:', { localId, data })
         const { error } = await supabase
           .from('cards')
           .upsert({
@@ -211,6 +218,12 @@ class CloudSyncService {
         break
 
       case 'delete':
+        // 验证 ID 格式
+        if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.warn('⚠️ Invalid card ID format for delete, skipping sync:', localId)
+          return
+        }
+        
         const { error: deleteError } = await supabase
           .from('cards')
           .update({ 
@@ -229,9 +242,16 @@ class CloudSyncService {
   private async syncFolder(operation: SyncOperation, userId: string) {
     const { type, data, localId } = operation
 
+    // 验证 ID 格式
+    if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      console.warn('⚠️ Invalid folder ID format, skipping sync:', localId)
+      return
+    }
+
     switch (type) {
       case 'create':
       case 'update':
+        console.log('📁 Syncing folder:', { localId, data })
         const { error } = await supabase
           .from('folders')
           .upsert({
@@ -247,6 +267,12 @@ class CloudSyncService {
         break
 
       case 'delete':
+        // 验证 ID 格式
+        if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.warn('⚠️ Invalid folder ID format for delete, skipping sync:', localId)
+          return
+        }
+        
         const { error: deleteError } = await supabase
           .from('folders')
           .update({ 
@@ -265,9 +291,16 @@ class CloudSyncService {
   private async syncTag(operation: SyncOperation, userId: string) {
     const { type, data, localId } = operation
 
+    // 验证 ID 格式
+    if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      console.warn('⚠️ Invalid tag ID format, skipping sync:', localId)
+      return
+    }
+
     switch (type) {
       case 'create':
       case 'update':
+        console.log('🏷️ Syncing tag:', { localId, data })
         const { error } = await supabase
           .from('tags')
           .upsert({
@@ -283,6 +316,12 @@ class CloudSyncService {
         break
 
       case 'delete':
+        // 验证 ID 格式
+        if (!localId || !localId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+          console.warn('⚠️ Invalid tag ID format for delete, skipping sync:', localId)
+          return
+        }
+        
         const { error: deleteError } = await supabase
           .from('tags')
           .update({ 
@@ -348,20 +387,161 @@ class CloudSyncService {
 
       const user = this.authService.getCurrentUser()!
       
-      // 下行同步：从云端获取数据
+      console.log('🔄 开始完整同步流程...')
+      
+      // 1. 数据迁移：将本地未关联用户的数据迁移到云端
+      await this.migrateLocalDataToCloud(user.id)
+      
+      // 2. 下行同步：从云端获取数据
       await this.syncFromCloud(user.id)
       
-      // 上行同步：处理本地队列
+      // 3. 上行同步：处理本地队列
       await this.processSyncQueue()
       
       this.lastSyncTime = new Date()
-      console.log('Full sync completed successfully')
+      console.log('✅ 完整同步完成')
       
     } catch (error) {
-      console.error('Full sync failed:', error)
+      console.error('❌ 完整同步失败:', error)
+      throw error
     } finally {
       this.syncInProgress = false
       this.notifyStatusChange()
+    }
+  }
+
+  // 数据迁移：将本地未关联用户的数据迁移到云端
+  private async migrateLocalDataToCloud(userId: string) {
+    console.log('📤 开始数据迁移...')
+    
+    try {
+      // 1. 迁移卡片数据
+      await this.migrateCards(userId)
+      
+      // 2. 迁移文件夹数据
+      await this.migrateFolders(userId)
+      
+      // 3. 迁移标签数据
+      await this.migrateTags(userId)
+      
+      console.log('✅ 数据迁移完成')
+    } catch (error) {
+      console.error('❌ 数据迁移失败:', error)
+      throw error
+    }
+  }
+
+  // 迁移卡片数据
+  private async migrateCards(userId: string) {
+    const localCards = await db.cards
+      .filter(card => !card.userId || card.userId !== userId)
+      .toArray()
+    
+    if (localCards.length === 0) {
+      console.log('📄 没有需要迁移的卡片数据')
+      return
+    }
+    
+    console.log(`📄 迁移 ${localCards.length} 个卡片...`)
+    
+    for (const card of localCards) {
+      try {
+        // 更新本地数据的用户ID
+        await db.cards.update(card.id!, {
+          userId: userId,
+          updatedAt: new Date(),
+          syncVersion: (card.syncVersion || 0) + 1,
+          pendingSync: true
+        })
+        
+        // 添加到同步队列
+        await this.queueOperation({
+          type: 'create',
+          table: 'cards',
+          data: { ...card, userId: userId },
+          localId: card.id!
+        })
+        
+        console.log(`📄 卡片 ${card.id} 迁移成功`)
+      } catch (error) {
+        console.error(`❌ 卡片 ${card.id} 迁移失败:`, error)
+      }
+    }
+  }
+
+  // 迁移文件夹数据
+  private async migrateFolders(userId: string) {
+    const localFolders = await db.folders
+      .filter(folder => !folder.userId || folder.userId !== userId)
+      .toArray()
+    
+    if (localFolders.length === 0) {
+      console.log('📁 没有需要迁移的文件夹数据')
+      return
+    }
+    
+    console.log(`📁 迁移 ${localFolders.length} 个文件夹...`)
+    
+    for (const folder of localFolders) {
+      try {
+        // 更新本地数据的用户ID
+        await db.folders.update(folder.id!, {
+          userId: userId,
+          updatedAt: new Date(),
+          syncVersion: (folder.syncVersion || 0) + 1,
+          pendingSync: true
+        })
+        
+        // 添加到同步队列
+        await this.queueOperation({
+          type: 'create',
+          table: 'folders',
+          data: { ...folder, userId: userId },
+          localId: folder.id!
+        })
+        
+        console.log(`📁 文件夹 ${folder.id} 迁移成功`)
+      } catch (error) {
+        console.error(`❌ 文件夹 ${folder.id} 迁移失败:`, error)
+      }
+    }
+  }
+
+  // 迁移标签数据
+  private async migrateTags(userId: string) {
+    const localTags = await db.tags
+      .filter(tag => !tag.userId || tag.userId !== userId)
+      .toArray()
+    
+    if (localTags.length === 0) {
+      console.log('🏷️ 没有需要迁移的标签数据')
+      return
+    }
+    
+    console.log(`🏷️ 迁移 ${localTags.length} 个标签...`)
+    
+    for (const tag of localTags) {
+      try {
+        // 更新本地数据的用户ID
+        await db.tags.update(tag.id!, {
+          userId: userId,
+          updatedAt: new Date(),
+          syncVersion: (tag.syncVersion || 0) + 1,
+          pendingSync: true
+        })
+        
+        // 添加到同步队列
+        await this.queueOperation({
+          type: 'create',
+          table: 'tags',
+          data: { ...tag, userId: userId },
+          localId: tag.id!
+        })
+        
+        console.log(`🏷️ 标签 ${tag.id} 迁移成功`)
+      } catch (error) {
+        console.error(`❌ 标签 ${tag.id} 迁移失败:`, error)
+      }
     }
   }
 

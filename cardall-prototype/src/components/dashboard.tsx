@@ -491,7 +491,7 @@ export function Dashboard({ className }: DashboardProps) {
     }
   }
 
-  const renderFolderTree = (folders: any[], level = 0) => {
+  const renderFolderTree = (folders: any[] = [], level = 0) => {
     return folders.map(folder => (
       <div key={folder.id} style={{ marginLeft: level * 16 }}>
         <FolderContextMenu
@@ -515,14 +515,14 @@ export function Dashboard({ className }: DashboardProps) {
         </FolderContextMenu>
         {folder.children && folder.children.length > 0 && folder.isExpanded && (
           <div className="ml-4">
-            {renderFolderTree(folder.children, level + 1)}
+            {renderFolderTree(folder.children || [], level + 1)}
           </div>
         )}
       </div>
     ))
   }
 
-  const renderCollapsedFolderTree = (folders: any[]) => {
+  const renderCollapsedFolderTree = (folders: any[] = []) => {
     return folders.map(folder => (
       <div key={folder.id}>
         <FolderContextMenu
@@ -543,7 +543,7 @@ export function Dashboard({ className }: DashboardProps) {
         </FolderContextMenu>
         {folder.children && folder.children.length > 0 && folder.isExpanded && (
           <div>
-            {renderCollapsedFolderTree(folder.children)}
+            {renderCollapsedFolderTree(folder.children || [])}
           </div>
         )}
       </div>

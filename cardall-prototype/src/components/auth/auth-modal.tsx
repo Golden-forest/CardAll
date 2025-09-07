@@ -19,6 +19,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     loading: false,
     error: null
   })
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle')
 
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChange(setAuthState)
@@ -40,7 +41,21 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   }
 
   const handleSyncNow = async () => {
-    await cloudSyncService.performFullSync()
+    try {
+      // 显示同步中状态
+      setSyncStatus('syncing')
+      
+      await cloudSyncService.performFullSync()
+      
+      // 同步成功
+      setSyncStatus('success')
+      setTimeout(() => setSyncStatus('idle'), 2000)
+    } catch (error) {
+      // 同步失败
+      setSyncStatus('error')
+      console.error('同步失败:', error)
+      setTimeout(() => setSyncStatus('idle'), 3000)
+    }
   }
 
   if (authState.user) {
@@ -74,6 +89,28 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                   <Cloud className="h-4 w-4" />
                   云端同步已启用
                 </div>
+                {syncStatus !== 'idle' && (
+                  <div className="mt-2 flex items-center gap-2 text-sm">
+                    {syncStatus === 'syncing' && (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                        <span className="text-blue-500">正在同步数据...</span>
+                      </>
+                    )}
+                    {syncStatus === 'success' && (
+                      <>
+                        <Shield className="h-4 w-4 text-green-500" />
+                        <span className="text-green-500">同步完成</span>
+                      </>
+                    )}
+                    {syncStatus === 'error' && (
+                      <>
+                        <RefreshCw className="h-4 w-4 text-red-500" />
+                        <span className="text-red-500">同步失败，请重试</span>
+                      </>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -82,14 +119,20 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 onClick={handleSyncNow}
                 variant="outline" 
                 className="flex-1"
-                disabled={authState.loading}
+                disabled={authState.loading || syncStatus === 'syncing'}
               >
-                {authState.loading ? (
+                {syncStatus === 'syncing' ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : syncStatus === 'success' ? (
+                  <Shield className="h-4 w-4 mr-2 text-green-500" />
+                ) : syncStatus === 'error' ? (
+                  <RefreshCw className="h-4 w-4 mr-2 text-red-500" />
                 ) : (
                   <RefreshCw className="h-4 w-4 mr-2" />
                 )}
-                立即同步
+                {syncStatus === 'syncing' ? '同步中...' : 
+                 syncStatus === 'success' ? '同步成功' : 
+                 syncStatus === 'error' ? '同步失败' : '立即同步'}
               </Button>
               
               <Button 
