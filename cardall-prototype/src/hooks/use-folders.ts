@@ -275,11 +275,17 @@ export function useFolders() {
     return filteredFolders().filter(folder => folder.parentId === parentId)
   }, [filteredFolders])
 
-  // 获取文件夹中的卡片数量（需要与卡片服务集成）
-  const getFolderCardCount = useCallback((folderId: string) => {
-    // 这里需要与卡片服务集成来获取准确的计数
-    // 暂时返回0
-    return 0
+  // 获取文件夹中的卡片数量
+  const getFolderCardCount = useCallback(async (folderId: string) => {
+    try {
+      const cards = await db.cards
+        .filter(card => card.folderId === folderId && !card.isDeleted)
+        .toArray()
+      return cards.length
+    } catch (error) {
+      console.error('Failed to get folder card count:', error)
+      return 0
+    }
   }, [])
 
   return {

@@ -3,13 +3,16 @@ import { db } from './database-simple'
 import type { DbCard, DbFolder, DbTag } from './database-simple'
 
 export interface SyncOperation {
-  id: string
+  id?: string
   type: 'create' | 'update' | 'delete'
   table: 'cards' | 'folders' | 'tags' | 'images'
   data: any
   localId: string
   timestamp: Date
   retryCount: number
+  maxRetries?: number
+  error?: string
+  nextRetry?: Date
 }
 
 export interface ConflictResolution {
@@ -56,6 +59,17 @@ class CloudSyncService {
     }, 5 * 60 * 1000)
   }
 
+  // 更新同步配置
+  updateConfig(config: { enabled: boolean; interval: number }): void {
+    // 更新同步配置
+    console.log('Cloud sync config updated:', config)
+    
+    // 如果启用了同步且在线，立即处理同步队列
+    if (config.enabled && this.isOnline && this.authService?.isAuthenticated()) {
+      this.processSyncQueue()
+    }
+  }
+
   // 设置认证服务（解决循环依赖）
   setAuthService(authService: any) {
     this.authService = authService
@@ -99,12 +113,13 @@ class CloudSyncService {
   }
 
   // 添加同步操作到队列
-  async queueOperation(operation: Omit<SyncOperation, 'id' | 'timestamp' | 'retryCount'>) {
+  async queueOperation(operation: Omit<SyncOperation, 'id' | 'timestamp' | 'retryCount' | 'maxRetries'>) {
     const syncOp: SyncOperation = {
       ...operation,
       id: crypto.randomUUID(),
       timestamp: new Date(),
-      retryCount: 0
+      retryCount: 0,
+      maxRetries: 3
     }
 
     this.syncQueue.push(syncOp)
@@ -120,7 +135,7 @@ class CloudSyncService {
     this.notifyStatusChange()
   }
 
-  // 处理同步队列
+  // 处理同步队列 - 改进错误处理和重试机制
   private async processSyncQueue() {
     if (this.syncInProgress || !this.isOnline || !this.authService?.isAuthenticated()) {
       return
@@ -130,7 +145,10 @@ class CloudSyncService {
     this.notifyStatusChange()
 
     try {
-      const operations = [...this.syncQueue]
+      // 限制每次处理的操作数量，避免长时间阻塞
+      const operations = this.syncQueue.slice(0, 10)
+      let successCount = 0
+      let failureCount = 0
       
       for (const operation of operations) {
         try {
@@ -140,19 +158,27 @@ class CloudSyncService {
           const index = this.syncQueue.findIndex(op => op.id === operation.id)
           if (index > -1) {
             this.syncQueue.splice(index, 1)
+            successCount++
           }
         } catch (error) {
           console.error('Sync operation failed:', error)
+          failureCount++
           
           // 增加重试次数
           operation.retryCount++
           
-          // 如果重试次数过多，移除操作
+          // 指数退避策略
           if (operation.retryCount > 3) {
+            // 如果重试次数过多，移除操作但记录日志
             const index = this.syncQueue.findIndex(op => op.id === operation.id)
             if (index > -1) {
               this.syncQueue.splice(index, 1)
+              console.warn(`❌ 同步操作失败超过最大重试次数，已移除:`, operation)
             }
+          } else {
+            // 计算下次重试的延迟时间
+            const delay = Math.pow(2, operation.retryCount) * 1000 // 2s, 4s, 8s
+            operation.nextRetry = new Date(Date.now() + delay)
           }
         }
       }
@@ -160,6 +186,19 @@ class CloudSyncService {
       await this.persistSyncQueue()
       this.lastSyncTime = new Date()
       
+      console.log(`🔄 同步完成: 成功 ${successCount} 个，失败 ${failureCount} 个`)
+      
+      // 如果还有待处理的操作，延迟后继续处理
+      if (this.syncQueue.length > 0 && !this.syncInProgress) {
+        setTimeout(() => {
+          if (this.isOnline && this.authService?.isAuthenticated()) {
+            this.processSyncQueue()
+          }
+        }, 5000) // 5秒后继续处理
+      }
+      
+    } catch (error) {
+      console.error('❌ 同步队列处理失败:', error)
     } finally {
       this.syncInProgress = false
       this.notifyStatusChange()
@@ -720,22 +759,54 @@ class CloudSyncService {
     }
   }
 
-  // 持久化同步队列
+  // 持久化同步队列 - 使用IndexedDB替代localStorage
   private async persistSyncQueue() {
     try {
-      localStorage.setItem('cardall_sync_queue', JSON.stringify(this.syncQueue))
+      // 使用IndexedDB存储同步队列，避免localStorage大小限制
+      if (this.syncQueue.length > 0) {
+        await db.syncQueue.clear()
+        await db.syncQueue.bulkAdd(this.syncQueue.map(op => ({
+          ...op,
+          timestamp: new Date(op.timestamp)
+        })))
+      }
     } catch (error) {
       console.error('Failed to persist sync queue:', error)
+      // 降级到localStorage
+      try {
+        const data = JSON.stringify(this.syncQueue.slice(0, 100)) // 限制数量
+        localStorage.setItem('cardall_sync_queue', data)
+      } catch (fallbackError) {
+        console.error('Fallback to localStorage also failed:', fallbackError)
+      }
     }
   }
 
-  // 恢复同步队列
+  // 恢复同步队列 - 优先从IndexedDB恢复
   async restoreSyncQueue() {
     try {
+      // 优先从IndexedDB恢复
+      const storedOps = await db.syncQueue.toArray()
+      if (storedOps.length > 0) {
+        this.syncQueue = storedOps.map(op => ({
+          ...op,
+          timestamp: new Date(op.timestamp)
+        }))
+        this.notifyStatusChange()
+        console.log(`📋 恢复了 ${this.syncQueue.length} 个同步操作`)
+        return
+      }
+      
+      // 尝试从localStorage恢复（兼容旧版本）
       const stored = localStorage.getItem('cardall_sync_queue')
       if (stored) {
         this.syncQueue = JSON.parse(stored)
         this.notifyStatusChange()
+        console.log(`📋 从localStorage恢复了 ${this.syncQueue.length} 个同步操作`)
+        
+        // 迁移到IndexedDB
+        await this.persistSyncQueue()
+        localStorage.removeItem('cardall_sync_queue')
       }
     } catch (error) {
       console.error('Failed to restore sync queue:', error)
