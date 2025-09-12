@@ -1,4 +1,4 @@
-import { initializeDatabase } from './database-simple'
+import { initializeDatabase } from './database'
 import { cloudSyncService } from './cloud-sync'
 import { migrationService } from './migration'
 import { fileSystemService } from './file-system'

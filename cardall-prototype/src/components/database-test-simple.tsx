@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Database, RefreshCw } from 'lucide-react'
-import { db } from '@/services/database-simple'
+import { db } from '@/services/database'
 
 export function SimpleDatabaseTest() {
   const [stats, setStats] = useState<any>(null)

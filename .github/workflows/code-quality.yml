@@ -1,0 +1,301 @@
+name: Code Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main, develop ]
+
+jobs:
+  code-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for better analysis
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
+        
+      - name: Run Prettier check
+        run: npm run format:check
+        
+      - name: Run TypeScript strict mode
+        run: npx tsc --noEmit --strict
+        
+      - name: Generate lint report
+        run: npm run lint:report
+        
+      - name: Upload lint report
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-report
+          path: lint-report.html
+
+  dependency-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Check for outdated dependencies
+        run: npm outdated || true
+        
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+        
+      - name: Check for unused dependencies
+        run: npx depcheck
+        
+      - name: Generate dependency report
+        run: npx npm-check-updates --json > dependency-report.json
+        
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-report
+          path: dependency-report.json
+
+  performance-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Analyze bundle size
+        run: npm run analyze:bundle
+        
+      - name: Run performance budget check
+        run: npm run check:performance-budget
+        
+      - name: Generate performance report
+        run: |
+          mkdir -p performance-reports
+          echo "Performance Analysis Report" > performance-reports/report.md
+          npm run analyze:bundle >> performance-reports/report.md
+          
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-analysis
+          path: performance-reports/
+
+  test-coverage:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: all
+          name: codecov-coverage
+          
+      - name: Generate coverage report
+        run: npm run test:coverage:report
+        
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage/
+
+  accessibility-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Build application
+        run: npm run build
+        
+      - name: Run accessibility tests
+        run: npm run test:accessibility
+        
+      - name: Generate accessibility report
+        run: npm run test:accessibility:report
+        
+      - name: Upload accessibility report
+        uses: actions/upload-artifact@v3
+        with:
+          name: accessibility-report
+          path: accessibility-report/
+
+  documentation-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+        
+      - name: Check documentation links
+        run: npm run check:links
+        
+      - name: Validate documentation structure
+        run: npm run validate:docs
+        
+      - name: Generate documentation
+        run: npm run generate:docs
+        
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: docs/
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [code-analysis, dependency-check, performance-analysis, test-coverage, accessibility-check, security-scan]
+    if: always()
+    
+    steps:
+      - name: Determine overall status
+        id: quality-status
+        run: |
+          if [ "${{ needs.code-analysis.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "reason=Code analysis failed" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.dependency-check.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "reason=Dependency check failed" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.test-coverage.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "reason=Test coverage insufficient" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.accessibility-check.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "reason=Accessibility issues found" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.security-scan.result }}" != "success" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "reason=Security vulnerabilities found" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "reason=All quality checks passed" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Comment on PR with quality report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const status = '${{ steps.quality-status.outputs.status }}';
+            const reason = '${{ steps.quality-status.outputs.reason }}';
+            
+            let comment = `## 🔍 Code Quality Report\n\n`;
+            comment += `**Overall Status**: ${status === 'success' ? '✅ Passed' : '❌ Failed'}\n\n`;
+            comment += `**Reason**: ${reason}\n\n`;
+            
+            if (fs.existsSync('lint-report.html')) {
+              comment += `📋 [Lint Report](./lint-report.html)\n`;
+            }
+            
+            if (fs.existsSync('coverage/lcov-report/index.html')) {
+              comment += `📊 [Coverage Report](./coverage/lcov-report/index.html)\n`;
+            }
+            
+            if (fs.existsSync('accessibility-report/index.html')) {
+              comment += `♿ [Accessibility Report](./accessibility-report/index.html)\n`;
+            }
+            
+            comment += `\n---\n`;
+            comment += `*Generated by CI/CD Pipeline*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+            
+      - name: Fail if quality checks failed
+        if: steps.quality-status.outputs.status == 'failure'
+        run: exit 1

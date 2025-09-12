@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Database, Cloud, RefreshCw, Play, Stop } from 'lucide-react'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { authService } from '@/services/auth'
-import { db } from '@/services/database-simple'
+import { db } from '@/services/database'
 import { runAllTests, testSupabaseConnection, testAuthStatus } from '@/services/supabase-test'
 
 export function SyncTestPanel() {

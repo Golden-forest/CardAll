@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Database, HardDrive, Cloud, RefreshCw } from 'lucide-react'
 import { db } from '@/services/database'
-import { syncService } from '@/services/sync'
+import { cloudSyncService } from '@/services/cloud-sync'
 import { fileSystemService } from '@/services/file-system'
 import { migrationService } from '@/services/migration'
 
@@ -21,7 +21,7 @@ export function DatabaseTest() {
     try {
       const [dbStats, syncStat, storageStat, migrationStat] = await Promise.all([
         db.getStats(),
-        syncService.getStatus(),
+        cloudSyncService.getCurrentStatus(),
         fileSystemService.getStorageStats(),
         migrationService.getMigrationStatus()
       ])
@@ -49,7 +49,7 @@ export function DatabaseTest() {
 
   const testSync = async () => {
     try {
-      await syncService.triggerSync()
+      await cloudSyncService.performFullSync()
       await loadStats()
     } catch (error) {
       console.error('Sync test failed:', error)
