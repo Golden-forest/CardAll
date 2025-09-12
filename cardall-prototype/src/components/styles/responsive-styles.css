@@ -1,0 +1,360 @@
+/* Responsive Design System for CardAll */
+
+/* Breakpoint-based utilities */
+@layer utilities {
+  /* Responsive visibility */
+  .hidden-xs {
+    @apply hidden;
+  }
+  
+  .hidden-sm {
+    @apply hidden sm:block;
+  }
+  
+  .hidden-md {
+    @apply hidden md:block;
+  }
+  
+  .hidden-lg {
+    @apply hidden lg:block;
+  }
+  
+  .hidden-xl {
+    @apply hidden xl:block;
+  }
+  
+  .hidden-2xl {
+    @apply hidden 2xl:block;
+  }
+  
+  /* Mobile-first visibility */
+  .block-xs {
+    @apply block;
+  }
+  
+  .block-sm {
+    @apply hidden sm:block;
+  }
+  
+  .block-md {
+    @apply hidden md:block;
+  }
+  
+  .block-lg {
+    @apply hidden lg:block;
+  }
+  
+  .block-xl {
+    @apply hidden xl:block;
+  }
+  
+  .block-2xl {
+    @apply hidden 2xl:block;
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl lg:text-3xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl lg:text-5xl;
+  }
+  
+  /* Responsive spacing */
+  .p-responsive-xs {
+    @apply p-2 sm:p-3;
+  }
+  
+  .p-responsive-sm {
+    @apply p-3 sm:p-4 md:p-5;
+  }
+  
+  .p-responsive-md {
+    @apply p-4 sm:p-6 md:p-8;
+  }
+  
+  .p-responsive-lg {
+    @apply p-6 sm:p-8 md:p-10 lg:p-12;
+  }
+  
+  .p-responsive-xl {
+    @apply p-8 sm:p-12 md:p-16 lg:p-20;
+  }
+  
+  /* Responsive margins */
+  .m-responsive-xs {
+    @apply m-2 sm:m-3;
+  }
+  
+  .m-responsive-sm {
+    @apply m-3 sm:m-4 md:m-5;
+  }
+  
+  .m-responsive-md {
+    @apply m-4 sm:m-6 md:m-8;
+  }
+  
+  .m-responsive-lg {
+    @apply m-6 sm:m-8 md:m-10 lg:m-12;
+  }
+  
+  /* Responsive gaps */
+  .gap-responsive-xs {
+    @apply gap-2 sm:gap-3;
+  }
+  
+  .gap-responsive-sm {
+    @apply gap-3 sm:gap-4 md:gap-5;
+  }
+  
+  .gap-responsive-md {
+    @apply gap-4 sm:gap-6 md:gap-8;
+  }
+  
+  .gap-responsive-lg {
+    @apply gap-6 sm:gap-8 md:gap-10 lg:gap-12;
+  }
+  
+  /* Responsive grid columns */
+  .grid-responsive-2 {
+    @apply grid-cols-1 sm:grid-cols-2;
+  }
+  
+  .grid-responsive-3 {
+    @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3;
+  }
+  
+  .grid-responsive-4 {
+    @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
+  }
+  
+  .grid-responsive-5 {
+    @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5;
+  }
+  
+  .grid-responsive-6 {
+    @apply grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6;
+  }
+  
+  /* Responsive container widths */
+  .container-responsive {
+    @apply max-w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg xl:max-w-screen-xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-narrow {
+    @apply max-w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Responsive flex utilities */
+  .flex-responsive-col {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .flex-responsive-col-reverse {
+    @apply flex flex-col-reverse sm:flex-row;
+  }
+  
+  /* Responsive card sizes */
+  .card-responsive-sm {
+    @apply w-full sm:w-64 md:w-72 lg:w-80;
+  }
+  
+  .card-responsive-md {
+    @apply w-full sm:w-80 md:w-96 lg:w-112;
+  }
+  
+  .card-responsive-lg {
+    @apply w-full sm:w-96 md:w-112 lg:w-128;
+  }
+  
+  /* Responsive button sizes */
+  .btn-responsive-sm {
+    @apply px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm;
+  }
+  
+  .btn-responsive-md {
+    @apply px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base;
+  }
+  
+  .btn-responsive-lg {
+    @apply px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 767px) {
+  /* Touch-friendly targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  
+  /* Mobile card optimizations */
+  .mobile-card {
+    @apply rounded-lg shadow-md hover:shadow-lg transition-all duration-200;
+  }
+  
+  /* Mobile text truncation */
+  .mobile-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+  
+  /* Mobile-safe animations */
+  .mobile-animation {
+    animation-duration: 0.3s;
+    animation-timing-function: ease-out;
+  }
+  
+  /* Mobile scrolling optimization */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile-safe hover states */
+  .mobile-hover {
+    @apply active:scale-95 active:opacity-90 transition-transform duration-150;
+  }
+}
+
+/* Tablet-specific optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Tablet card layouts */
+  .tablet-card-grid {
+    @apply grid-cols-2 gap-4;
+  }
+  
+  /* Tablet navigation */
+  .tablet-nav {
+    @apply flex items-center justify-between px-4 py-3;
+  }
+}
+
+/* Desktop-specific optimizations */
+@media (min-width: 1024px) {
+  /* Desktop hover effects */
+  .desktop-hover {
+    @apply hover:scale-105 hover:shadow-xl transition-all duration-200;
+  }
+  
+  /* Desktop tooltips */
+  .desktop-tooltip {
+    @apply invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-200;
+  }
+  
+  /* Desktop drag indicators */
+  .desktop-drag-handle {
+    @apply cursor-grab active:cursor-grabbing;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .high-contrast-border {
+    @apply border-2 border-current;
+  }
+  
+  .high-contrast-focus {
+    @apply outline-2 outline-current outline-offset-2;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print optimization */
+@media print {
+  .no-print {
+    @apply hidden;
+  }
+  
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+  
+  .print-break-after {
+    break-after: page;
+  }
+  
+  .print-break-before {
+    break-before: page;
+  }
+}
+
+/* Orientation-specific styles */
+@media (orientation: portrait) {
+  .portrait-optimized {
+    @apply max-h-screen overflow-y-auto;
+  }
+}
+
+@media (orientation: landscape) {
+  .landscape-optimized {
+    @apply max-h-screen overflow-x-auto;
+  }
+}
+
+/* Dark mode responsive adjustments */
+@media (prefers-color-scheme: dark) {
+  .dark-mode-adjusted {
+    @apply brightness-110;
+  }
+}
+
+/* Accessibility focus improvements */
+@media (hover: hover) {
+  .focus-enhanced {
+    @apply focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  }
+}
+
+@media (hover: none) {
+  .focus-enhanced {
+    @apply focus:ring-4 focus:ring-primary focus:ring-offset-0;
+  }
+}
+
+/* Touch device specific styles */
+@media (hover: none) and (pointer: coarse) {
+  .touch-optimized {
+    @apply touch-manipulation;
+  }
+  
+  .touch-button {
+    @apply min-h-[48px] min-w-[48px];
+  }
+}
+
+/* Mouse device specific styles */
+@media (hover: hover) and (pointer: fine) {
+  .mouse-optimized {
+    @apply cursor-pointer;
+  }
+}

@@ -1,6 +1,6 @@
 import { supabase, type SyncStatus } from './supabase'
-import { db } from './database-simple'
-import type { DbCard, DbFolder, DbTag } from './database-simple'
+import { db } from './database'
+import type { DbCard, DbFolder, DbTag } from './database'
 
 export interface SyncOperation {
   id: string

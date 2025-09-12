@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Tag, TagAction, TagFilter } from '@/types/card'
-import { db, DbTag } from '@/services/database-simple'
+import { db, DbTag } from '@/services/database'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { authService } from '@/services/auth'
 

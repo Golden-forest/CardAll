@@ -19,7 +19,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { imageProcessor } from '@/services/image-processor'
-import { db } from '@/services/database-simple'
+import { db } from '@/services/database'
 import './editor-styles.css'
 
 interface RichTextEditorV2Props {

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
-import { db, DbCard } from '@/services/database-simple'
+import { db, DbCard } from '@/services/database'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { authService } from '@/services/auth'
 import { fileSystemService } from '@/services/file-system'

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction, FolderFilter } from '@/types/card'
-import { db, DbFolder } from '@/services/database-simple'
+import { db, DbFolder } from '@/services/database'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { authService } from '@/services/auth'
 

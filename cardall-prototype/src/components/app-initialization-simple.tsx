@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle, FolderOpen, Database } from 'lucide-react'
-import { initializeDatabase } from '@/services/database-simple'
+import { initializeDatabase } from '@/services/database'
 
 interface SimpleInitializationProps {
   onInitialized: () => void
