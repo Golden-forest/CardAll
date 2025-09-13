@@ -21,21 +21,21 @@ class AuthService {
     this.initialize()
     // 延迟设置认证服务到同步服务，避免循环依赖
     setTimeout(() => {
-      this.setupCloudSync()
+      this.setupSyncService()
     }, 0)
   }
 
-  // 设置云同步服务（解决循环依赖）
-  private setupCloudSync() {
+  // 设置统一同步服务（解决循环依赖）
+  private setupSyncService() {
     try {
       // 动态导入避免循环依赖
-      import('./cloud-sync').then(({ cloudSyncService }) => {
-        cloudSyncService.setAuthService(this)
+      import('./unified-sync-service').then(({ unifiedSyncService }) => {
+        unifiedSyncService.setAuthService(this)
       }).catch(error => {
-        console.warn('Failed to setup cloud sync service:', error)
+        console.warn('Failed to setup unified sync service:', error)
       })
     } catch (error) {
-      console.warn('Failed to setup cloud sync service:', error)
+      console.warn('Failed to setup unified sync service:', error)
     }
   }
 
@@ -70,10 +70,10 @@ class AuthService {
           // 用户登出，清理同步状态但保留本地数据
           try {
             // 动态获取同步服务
-            const { cloudSyncService } = await import('./cloud-sync')
-            await cloudSyncService.clearSyncQueue()
+            const { unifiedSyncService } = await import('./unified-sync-service')
+            await unifiedSyncService.clearHistory()
           } catch (error) {
-            console.warn('Failed to clear sync queue on signout:', error)
+            console.warn('Failed to clear sync history on signout:', error)
           }
           
           this.updateState({ 
@@ -94,8 +94,8 @@ class AuthService {
           // 触发完整同步
           if (event === 'SIGNED_IN') {
             try {
-              const { cloudSyncService } = await import('./cloud-sync')
-              await cloudSyncService.performFullSync()
+              const { unifiedSyncService } = await import('./unified-sync-service')
+              await unifiedSyncService.performFullSync()
             } catch (error) {
               console.warn('Failed to perform full sync after signin:', error)
             }

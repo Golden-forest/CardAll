@@ -654,7 +654,7 @@ export class SyncPerformanceOptimizer {
   }
 
   // 分组操作
-  private groupOperations(operations: LocalSyncOperation[]): LocalSyncOperation[][] {
+  private groupOperations(operations: LocalSyncOperation[]): Array<Array<LocalSyncOperation>> {
     const groups = new Map<string, LocalSyncOperation[]>()
     
     // 按优先级分组
@@ -670,7 +670,7 @@ export class SyncPerformanceOptimizer {
     
     // 按优先级排序
     const priorityOrder = ['critical', 'high', 'normal', 'low']
-    const sortedGroups: LocalSyncOperation[][] = []
+    const sortedGroups: Array<Array<LocalSyncOperation>> = []
     
     for (const priority of priorityOrder) {
       if (groups.has(priority)) {
@@ -1233,7 +1233,7 @@ export class SyncPerformanceOptimizer {
   }
 
   // 自适应批处理
-  async adaptiveBatching(operations: LocalSyncOperation[]): Promise<LocalSyncOperation[][] {
+  async adaptiveBatching(operations: LocalSyncOperation[]): Promise<LocalSyncOperation[][]> {
     // 根据当前网络条件和性能指标动态调整批处理策略
     const networkQuality = await this.assessNetworkQuality()
     const currentLoad = this.activeOperations.size
@@ -1248,7 +1248,7 @@ export class SyncPerformanceOptimizer {
     }
     
     // 分批处理
-    const batches: LocalSyncOperation[][] = []
+    const batches: Array<Array<LocalSyncOperation>> = []
     for (let i = 0; i < operations.length; i += optimalBatchSize) {
       batches.push(operations.slice(i, i + optimalBatchSize))
     }

@@ -1,0 +1,40 @@
+73608c3bfa0faf00ae41a618111a68e2
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.useCollector = useCollector;
+const fast_deep_equal_1 = require("fast-deep-equal");
+const react_1 = require("react");
+const useIsomorphicLayoutEffect_js_1 = require("./useIsomorphicLayoutEffect.js");
+/**
+ *
+ * @param monitor The monitor to collect state from
+ * @param collect The collecting function
+ * @param onUpdate A method to invoke when updates occur
+ */ function useCollector(monitor, collect, onUpdate) {
+    const [collected, setCollected] = (0, react_1.useState)(() => collect(monitor));
+    const updateCollected = (0, react_1.useCallback)(() => {
+        const nextValue = collect(monitor);
+        // This needs to be a deep-equality check because some monitor-collected values
+        // include XYCoord objects that may be equivalent, but do not have instance equality.
+        if (!(0, fast_deep_equal_1.default)(collected, nextValue)) {
+            setCollected(nextValue);
+            if (onUpdate) {
+                onUpdate();
+            }
+        }
+    }, [
+        collected,
+        monitor,
+        onUpdate
+    ]);
+    // update the collected properties after react renders.
+    // Note that the "Dustbin Stress Test" fails if this is not
+    // done when the component updates
+    (0, useIsomorphicLayoutEffect_js_1.useIsomorphicLayoutEffect)(updateCollected);
+    return [
+        collected,
+        updateCollected
+    ];
+}
+//# sourceMappingURL=useCollector.js.map
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xccmVhY3QtZG5kXFxkaXN0XFxob29rc1xcdXNlQ29sbGVjdG9yLmpzIiwibWFwcGluZ3MiOiI7O0FBUUksb0NBMEJIO0FBbENELHFEQUFvQztBQUNwQyxpQ0FBOEM7QUFDOUMsaUZBQTJFO0FBQzNFOzs7OztHQUtHLENBQUMsU0FBZ0IsWUFBWSxDQUFDLE9BQU8sRUFBRSxPQUFPLEVBQUUsUUFBUTtJQUN2RCxNQUFNLENBQUMsU0FBUyxFQUFFLFlBQVksQ0FBQyxHQUFHLElBQUEsZ0JBQVEsRUFBQyxHQUFFLEVBQUUsQ0FBQSxPQUFPLENBQUMsT0FBTyxDQUFDLENBQzlELENBQUM7SUFDRixNQUFNLGVBQWUsR0FBRyxJQUFBLG1CQUFXLEVBQUMsR0FBRSxFQUFFO1FBQ3BDLE1BQU0sU0FBUyxHQUFHLE9BQU8sQ0FBQyxPQUFPLENBQUMsQ0FBQztRQUNuQywrRUFBK0U7UUFDL0UscUZBQXFGO1FBQ3JGLElBQUksQ0FBQyxJQUFBLHlCQUFLLEVBQUMsU0FBUyxFQUFFLFNBQVMsQ0FBQyxFQUFFLENBQUM7WUFDL0IsWUFBWSxDQUFDLFNBQVMsQ0FBQyxDQUFDO1lBQ3hCLElBQUksUUFBUSxFQUFFLENBQUM7Z0JBQ1gsUUFBUSxFQUFFLENBQUM7WUFDZixDQUFDO1FBQ0wsQ0FBQztJQUNMLENBQUMsRUFBRTtRQUNDLFNBQVM7UUFDVCxPQUFPO1FBQ1AsUUFBUTtLQUNYLENBQUMsQ0FBQztJQUNILHVEQUF1RDtJQUN2RCwyREFBMkQ7SUFDM0Qsa0NBQWtDO0lBQ2xDLElBQUEsd0RBQXlCLEVBQUMsZUFBZSxDQUFDLENBQUM7SUFDM0MsT0FBTztRQUNILFNBQVM7UUFDVCxlQUFlO0tBQ2xCLENBQUM7QUFDTixDQUFDO0FBRUQsd0NBQXdDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkQ6XFxQcm9qZWN0c1xcQ2FyZEV2ZXJ5dGhpbmdcXGNhcmRhbGwtcHJvdG90eXBlXFxub2RlX21vZHVsZXNcXHJlYWN0LWRuZFxcZGlzdFxcaG9va3NcXHVzZUNvbGxlY3Rvci5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgZXF1YWwgZnJvbSAnZmFzdC1kZWVwLWVxdWFsJztcbmltcG9ydCB7IHVzZUNhbGxiYWNrLCB1c2VTdGF0ZSB9IGZyb20gJ3JlYWN0JztcbmltcG9ydCB7IHVzZUlzb21vcnBoaWNMYXlvdXRFZmZlY3QgfSBmcm9tICcuL3VzZUlzb21vcnBoaWNMYXlvdXRFZmZlY3QuanMnO1xuLyoqXG4gKlxuICogQHBhcmFtIG1vbml0b3IgVGhlIG1vbml0b3IgdG8gY29sbGVjdCBzdGF0ZSBmcm9tXG4gKiBAcGFyYW0gY29sbGVjdCBUaGUgY29sbGVjdGluZyBmdW5jdGlvblxuICogQHBhcmFtIG9uVXBkYXRlIEEgbWV0aG9kIHRvIGludm9rZSB3aGVuIHVwZGF0ZXMgb2NjdXJcbiAqLyBleHBvcnQgZnVuY3Rpb24gdXNlQ29sbGVjdG9yKG1vbml0b3IsIGNvbGxlY3QsIG9uVXBkYXRlKSB7XG4gICAgY29uc3QgW2NvbGxlY3RlZCwgc2V0Q29sbGVjdGVkXSA9IHVzZVN0YXRlKCgpPT5jb2xsZWN0KG1vbml0b3IpXG4gICAgKTtcbiAgICBjb25zdCB1cGRhdGVDb2xsZWN0ZWQgPSB1c2VDYWxsYmFjaygoKT0+e1xuICAgICAgICBjb25zdCBuZXh0VmFsdWUgPSBjb2xsZWN0KG1vbml0b3IpO1xuICAgICAgICAvLyBUaGlzIG5lZWRzIHRvIGJlIGEgZGVlcC1lcXVhbGl0eSBjaGVjayBiZWNhdXNlIHNvbWUgbW9uaXRvci1jb2xsZWN0ZWQgdmFsdWVzXG4gICAgICAgIC8vIGluY2x1ZGUgWFlDb29yZCBvYmplY3RzIHRoYXQgbWF5IGJlIGVxdWl2YWxlbnQsIGJ1dCBkbyBub3QgaGF2ZSBpbnN0YW5jZSBlcXVhbGl0eS5cbiAgICAgICAgaWYgKCFlcXVhbChjb2xsZWN0ZWQsIG5leHRWYWx1ZSkpIHtcbiAgICAgICAgICAgIHNldENvbGxlY3RlZChuZXh0VmFsdWUpO1xuICAgICAgICAgICAgaWYgKG9uVXBkYXRlKSB7XG4gICAgICAgICAgICAgICAgb25VcGRhdGUoKTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfVxuICAgIH0sIFtcbiAgICAgICAgY29sbGVjdGVkLFxuICAgICAgICBtb25pdG9yLFxuICAgICAgICBvblVwZGF0ZVxuICAgIF0pO1xuICAgIC8vIHVwZGF0ZSB0aGUgY29sbGVjdGVkIHByb3BlcnRpZXMgYWZ0ZXIgcmVhY3QgcmVuZGVycy5cbiAgICAvLyBOb3RlIHRoYXQgdGhlIFwiRHVzdGJpbiBTdHJlc3MgVGVzdFwiIGZhaWxzIGlmIHRoaXMgaXMgbm90XG4gICAgLy8gZG9uZSB3aGVuIHRoZSBjb21wb25lbnQgdXBkYXRlc1xuICAgIHVzZUlzb21vcnBoaWNMYXlvdXRFZmZlY3QodXBkYXRlQ29sbGVjdGVkKTtcbiAgICByZXR1cm4gW1xuICAgICAgICBjb2xsZWN0ZWQsXG4gICAgICAgIHVwZGF0ZUNvbGxlY3RlZFxuICAgIF07XG59XG5cbi8vIyBzb3VyY2VNYXBwaW5nVVJMPXVzZUNvbGxlY3Rvci5qcy5tYXAiXSwidmVyc2lvbiI6M30=

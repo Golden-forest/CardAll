@@ -2,7 +2,7 @@ import Dexie, { Table } from 'dexie'
 import { Card, Folder, Tag, ImageData } from '@/types/card'
 
 // ============================================================================
-// 统一数据库类型定义 - 解决 database.ts 和 database-simple.ts 的冲突
+// 统一数据库类型定义 - 解决数据库架构统一
 // ============================================================================
 
 // 基础同步接口
@@ -544,6 +544,25 @@ export const db = new CardAllUnifiedDatabase()
 // 数据库初始化
 export const initializeDatabase = async (): Promise<void> => {
   try {
+    // 添加事件监听器
+    db.on('error', (error) => {
+      console.error('Database error:', error)
+    })
+
+    db.on('blocked', () => {
+      console.warn('Database operation blocked')
+    })
+
+    db.on('versionchange', () => {
+      console.warn('Database version changed, reloading page...')
+      window.location.reload()
+    })
+
+    db.on('ready', () => {
+      console.log('Database is ready')
+    })
+    
+    // 打开数据库连接
     await db.open()
     console.log('CardAll unified database initialized successfully')
     
@@ -563,24 +582,6 @@ export const initializeDatabase = async (): Promise<void> => {
     throw error
   }
 }
-
-// 数据库错误处理
-db.on('error', (error) => {
-  console.error('Database error:', error)
-})
-
-db.on('blocked', () => {
-  console.warn('Database operation blocked')
-})
-
-db.on('versionchange', () => {
-  console.warn('Database version changed, reloading page...')
-  window.location.reload()
-})
-
-db.on('ready', () => {
-  console.log('Database is ready')
-})
 
 // ============================================================================
 // 导出工具函数

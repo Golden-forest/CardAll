@@ -1,5 +1,5 @@
 // 数据库集成测试
-import { db } from '@/services/database-simple'
+import { db } from '@/services/database'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { mockServer } from '@/tests/fixtures/mock-services'
 import { testData, mockDataUtils } from '@/tests/test-utils'

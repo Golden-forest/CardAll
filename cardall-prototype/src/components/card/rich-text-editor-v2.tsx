@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { imageProcessor } from '@/services/image-processor'
-import { db } from '@/services/database'
 import './editor-styles.css'
 
 interface RichTextEditorV2Props {
@@ -99,23 +98,28 @@ export function RichTextEditorV2({
         }).run()
 
         // 保存图片信息到数据库
-        await db.images?.add({
-          id: result.id,
-          cardId,
-          fileName: result.metadata.originalName,
-          filePath: result.filePaths.webp,
-          metadata: {
-            originalName: result.metadata.originalName,
-            size: result.metadata.processedSize,
-            width: result.metadata.width,
-            height: result.metadata.height,
-            format: result.metadata.format,
-            compressed: true
-          },
-          createdAt: new Date(),
-          syncVersion: 1,
-          pendingSync: true
-        })
+        try {
+          const { db } = await import('@/services/database')
+          await db.images?.add({
+            id: result.id,
+            cardId,
+            fileName: result.metadata.originalName,
+            filePath: result.filePaths.webp,
+            metadata: {
+              originalName: result.metadata.originalName,
+              size: result.metadata.processedSize,
+              width: result.metadata.width,
+              height: result.metadata.height,
+              format: result.metadata.format,
+              compressed: true
+            },
+            createdAt: new Date(),
+            syncVersion: 1,
+            pendingSync: true
+          })
+        } catch (dbError) {
+          console.warn('Failed to save image to database:', dbError)
+        }
       }
 
       console.log(`Successfully uploaded ${results.length} images`)

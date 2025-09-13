@@ -1,5 +1,8 @@
 import { supabase, type SyncStatus } from './supabase'
 import { db } from './database'
+import { networkStateDetector } from './network-state-detector'
+import { errorRecoveryStrategy } from './network-error-handler'
+import { databaseNetworkAdapter } from './database-network-adapter'
 import type { DbCard, DbFolder, DbTag } from './database'
 
 export interface SyncOperation {
@@ -23,12 +26,12 @@ export interface ConflictResolution {
 
 class CloudSyncService {
   private syncQueue: SyncOperation[] = []
-  private isOnline = navigator.onLine
   private syncInProgress = false
   private lastSyncTime: Date | null = null
   private conflicts: ConflictResolution[] = []
   private listeners: ((status: SyncStatus) => void)[] = []
   private authService: any = null // 延迟初始化
+  private networkInitialized = false
 
   constructor() {
     this.initialize()
@@ -36,34 +39,119 @@ class CloudSyncService {
 
   // 初始化同步服务
   private initialize() {
-    // 监听网络状态
-    window.addEventListener('online', () => {
-      this.isOnline = true
-      this.notifyStatusChange()
+    // 使用网络状态检测器替代原生事件监听
+    this.initializeNetworkIntegration()
+    
+    // 定期同步（每5分钟）- 现在基于网络质量动态调整
+    this.startAdaptiveSync()
+  }
+
+  // 初始化网络集成
+  private initializeNetworkIntegration() {
+    if (this.networkInitialized) return
+    
+    // 监听网络状态检测器
+    networkStateDetector.addListener({
+      onNetworkStateChanged: this.handleNetworkStateChange.bind(this),
+      onNetworkError: this.handleNetworkError.bind(this),
+      onSyncCompleted: this.handleSyncCompleted.bind(this),
+      onSyncStrategyChanged: this.handleSyncStrategyChanged.bind(this)
+    })
+    
+    this.networkInitialized = true
+    console.log('Cloud sync service integrated with network state detector')
+  }
+
+  // 处理网络状态变化
+  private handleNetworkStateChange(state: any): void {
+    console.log('Network state changed:', state.isOnline, state.quality)
+    
+    // 如果网络恢复且可靠，立即尝试同步
+    if (state.isOnline && state.isReliable && state.canSync) {
       this.processSyncQueue()
-    })
+    }
+    
+    this.notifyStatusChange()
+  }
 
-    window.addEventListener('offline', () => {
-      this.isOnline = false
-      this.notifyStatusChange()
-    })
+  // 处理网络错误
+  private handleNetworkError(error: any, context?: string): void {
+    console.warn('Network error in sync service:', error.message, context)
+    
+    // 根据错误类型调整同步策略
+    if (error.type === 'connection_lost' || error.type === 'network_slow') {
+      // 网络问题，暂停同步队列
+      this.pauseSyncQueue()
+    }
+  }
 
-    // 定期同步（每5分钟）
-    setInterval(() => {
-      if (this.isOnline && this.authService?.isAuthenticated()) {
+  // 处理同步完成
+  private handleSyncCompleted(request: any, response: any): void {
+    if (response.success) {
+      // 同步成功，更新相关状态
+      this.lastSyncTime = new Date()
+    }
+    
+    this.notifyStatusChange()
+  }
+
+  // 处理同步策略变化
+  private handleSyncStrategyChanged(strategy: any): void {
+    console.log('Sync strategy changed:', strategy)
+    
+    // 根据新的策略调整同步行为
+    if (strategy.backgroundSyncEnabled) {
+      this.startAdaptiveSync()
+    }
+  }
+
+  // 启动自适应同步
+  private startAdaptiveSync(): void {
+    // 清除现有定时器
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval)
+    }
+    
+    // 获取当前同步策略
+    const syncStrategy = networkStateDetector.getSyncStrategy()
+    
+    // 基于网络质量动态调整同步间隔
+    const networkState = networkStateDetector.getCurrentState()
+    let syncInterval = 5 * 60 * 1000 // 默认5分钟
+    
+    if (networkState.quality === 'excellent') {
+      syncInterval = 1 * 60 * 1000 // 1分钟
+    } else if (networkState.quality === 'good') {
+      syncInterval = 2 * 60 * 1000 // 2分钟
+    } else if (networkState.quality === 'fair') {
+      syncInterval = 5 * 60 * 1000 // 5分钟
+    } else if (networkState.quality === 'poor') {
+      syncInterval = 10 * 60 * 1000 // 10分钟
+    }
+    
+    this.syncInterval = setInterval(() => {
+      const currentState = networkStateDetector.getCurrentState()
+      if (currentState.canSync && this.authService?.isAuthenticated()) {
         this.processSyncQueue()
       }
-    }, 5 * 60 * 1000)
+    }, syncInterval)
+    
+    console.log(`Adaptive sync started with interval: ${syncInterval / 1000}s`)
   }
+
+  private syncInterval: NodeJS.Timeout | null = null
 
   // 设置认证服务（解决循环依赖）
   setAuthService(authService: any) {
     this.authService = authService
     
-    // 监听认证状态变化
+    // 监听认证状态变化 - 现在使用网络状态检测器
     authService.onAuthStateChange((authState: any) => {
-      if (authState.user && this.isOnline) {
-        this.performFullSync()
+      if (authState.user) {
+        const networkState = networkStateDetector.getCurrentState()
+        if (networkState.canSync) {
+          this.performFullSync()
+        }
       }
     })
   }
@@ -87,10 +175,11 @@ class CloudSyncService {
     this.listeners.forEach(listener => listener(status))
   }
 
-  // 获取当前同步状态
+  // 获取当前同步状态 - 现在使用网络状态检测器
   getCurrentStatus(): SyncStatus {
+    const networkState = networkStateDetector.getCurrentState()
     return {
-      isOnline: this.isOnline,
+      isOnline: networkState.isOnline,
       lastSyncTime: this.lastSyncTime,
       pendingOperations: this.syncQueue.length,
       syncInProgress: this.syncInProgress,

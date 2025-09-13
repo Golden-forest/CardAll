@@ -87,6 +87,7 @@ export interface QueueStats {
   averageProcessingTime: number
   failureRate: number
   oldestPendingAge: number
+  averageRetryCount: number
 }
 
 // 队列配置选项
@@ -171,6 +172,9 @@ export class LocalOperationService {
       // 确保数据库已初始化
       await db.open()
       
+      // 从本地存储恢复队列
+      await this.restoreQueueFromStorage()
+      
       // 启动定期处理
       this.startProcessing()
       
@@ -183,6 +187,60 @@ export class LocalOperationService {
     }
   }
 
+  // 从本地存储恢复队列
+  private async restoreQueueFromStorage(): Promise<void> {
+    try {
+      const storedQueue = localStorage.getItem('syncQueue')
+      if (storedQueue) {
+        const queue = JSON.parse(storedQueue)
+        
+        // 将存储的操作添加到数据库
+        for (const operation of queue) {
+          // 转换旧格式到新格式（如果需要）
+          const convertedOperation = this.convertOperationFormat(operation)
+          
+          try {
+            await db.syncQueue.add(convertedOperation)
+          } catch (error) {
+            // 如果操作已存在，跳过
+            console.warn('Operation already exists in database, skipping:', operation.id)
+          }
+        }
+        
+        // 清空本地存储
+        localStorage.removeItem('syncQueue')
+        console.log(`Restored ${queue.length} operations from local storage`)
+      }
+    } catch (error) {
+      console.error('Failed to restore queue from storage:', error)
+    }
+  }
+
+  // 转换操作格式（旧格式到新格式）
+  private convertOperationFormat(operation: any): LocalSyncOperation {
+    // 如果是新格式，直接返回
+    if (operation.entityType && operation.operationType && operation.entityId) {
+      return operation as LocalSyncOperation
+    }
+    
+    // 转换旧格式到新格式
+    return {
+      id: operation.id,
+      entityType: operation.table === 'cards' ? 'card' : 
+                operation.table === 'folders' ? 'folder' : 
+                operation.table === 'tags' ? 'tag' : 'image',
+      operationType: operation.type,
+      entityId: operation.localId,
+      data: operation.data,
+      timestamp: operation.timestamp,
+      retryCount: operation.retryCount || 0,
+      status: operation.status || 'pending',
+      localVersion: operation.localVersion || 1,
+      priority: operation.priority || 'normal',
+      dependsOn: operation.dependsOn || []
+    }
+  }
+
   // ============================================================================
   // 核心队列操作
   // ============================================================================
@@ -191,6 +249,20 @@ export class LocalOperationService {
   async addOperation(
     operation: Omit<LocalSyncOperation, 'id' | 'timestamp' | 'retryCount' | 'status' | 'localVersion'>
   ): Promise<string> {
+    // 验证必需字段
+    if (!operation.entityId || operation.entityId.trim() === '') {
+      throw new Error('Local ID is required')
+    }
+    if (!operation.entityType || !['card', 'folder', 'tag', 'image'].includes(operation.entityType)) {
+      throw new Error('Invalid entity type')
+    }
+    if (!operation.operationType || !['create', 'update', 'delete'].includes(operation.operationType)) {
+      throw new Error('Invalid operation type')
+    }
+    if (!operation.data) {
+      throw new Error('Operation data is required')
+    }
+
     const id = crypto.randomUUID()
     const now = new Date()
     
@@ -210,7 +282,26 @@ export class LocalOperationService {
       fullOperation.networkInfo = await this.getNetworkInfo()
     }
 
+    // 检查重复操作
+    const existingOperation = await db.syncQueue
+      .where('entityId')
+      .equals(operation.entityId)
+      .and(op => op.entityType === operation.entityType && op.status === 'pending')
+      .first()
+
     try {
+      if (existingOperation) {
+        // 更新现有操作而不是创建新操作
+        await db.syncQueue.update(existingOperation.id!, {
+          data: operation.data,
+          previousData: operation.previousData,
+          timestamp: now,
+          localVersion: Date.now()
+        })
+        console.log(`Operation updated in queue: ${existingOperation.id}`)
+        return existingOperation.id!
+      }
+
       await db.syncQueue.add(fullOperation)
       
       // 通知监听器
@@ -275,7 +366,8 @@ export class LocalOperationService {
       if (!operation) return
 
       await db.syncQueue.update(operationId, {
-        status: 'completed'
+        status: 'completed',
+        processingEndedAt: new Date()
       })
 
       // 通知监听器
@@ -381,7 +473,7 @@ export class LocalOperationService {
       }
 
       // 分批处理
-      const batches = this.createBatches(operations)
+      const batches = await this.createBatches(operations)
       
       for (const batch of batches) {
         const batchId = crypto.randomUUID()
@@ -405,7 +497,7 @@ export class LocalOperationService {
   }
 
   // 创建批处理组
-  private createBatches(operations: LocalSyncOperation[]): LocalSyncOperation[][] {
+  private async createBatches(operations: LocalSyncOperation[]): Promise<LocalSyncOperation[][]> {
     const batches: LocalSyncOperation[][] = []
     let currentBatch: LocalSyncOperation[] = []
     
@@ -455,9 +547,8 @@ export class LocalOperationService {
         this.notifyListeners('operationStarted', op)
       })
 
-      // 这里应该调用实际的同步逻辑
-      // 暂时模拟处理
-      await this.simulateBatchProcessing(operations, batchId)
+      // 调用实际的同步逻辑
+      await this.executeBatchSync(operations, batchId)
 
       // 标记所有操作为完成
       await Promise.all(
@@ -475,15 +566,242 @@ export class LocalOperationService {
     }
   }
 
-  // 模拟批处理（实际应用中替换为真实的同步逻辑）
-  private async simulateBatchProcessing(operations: LocalSyncOperation[], batchId: string): Promise<void> {
-    // 模拟网络延迟
-    const processingTime = Math.random() * 2000 + 1000 // 1-3秒
-    await new Promise(resolve => setTimeout(resolve, processingTime))
+  // 执行批处理同步逻辑
+  private async executeBatchSync(operations: LocalSyncOperation[], batchId: string): Promise<void> {
+    try {
+      // 导入统一同步服务（延迟导入避免循环依赖）
+      const { unifiedSyncService } = await import('./unified-sync-service')
+      
+      // 按操作类型分组处理
+      const operationGroups = this.groupOperationsByType(operations)
+      
+      // 处理每个操作组
+      for (const [entityType, entityOperations] of Object.entries(operationGroups)) {
+        await this.processEntityGroup(entityType, entityOperations, unifiedSyncService)
+      }
+      
+      console.log(`Batch ${batchId} sync execution completed`)
+    } catch (error) {
+      console.error(`Batch ${batchId} sync execution failed:`, error)
+      throw error
+    }
+  }
+
+  // 按实体类型分组操作
+  private groupOperationsByType(operations: LocalSyncOperation[]): Record<string, LocalSyncOperation[]> {
+    const groups: Record<string, LocalSyncOperation[]> = {}
     
-    // 模拟偶尔的失败
-    if (Math.random() < 0.05) { // 5%失败率
-      throw new Error(`Simulated network error in batch ${batchId}`)
+    for (const operation of operations) {
+      if (!groups[operation.entityType]) {
+        groups[operation.entityType] = []
+      }
+      groups[operation.entityType].push(operation)
+    }
+    
+    return groups
+  }
+
+  // 处理实体操作组
+  private async processEntityGroup(
+    entityType: string, 
+    operations: LocalSyncOperation[], 
+    syncService: any
+  ): Promise<void> {
+    switch (entityType) {
+      case 'card':
+        await this.processCardOperations(operations, syncService)
+        break
+      case 'folder':
+        await this.processFolderOperations(operations, syncService)
+        break
+      case 'tag':
+        await this.processTagOperations(operations, syncService)
+        break
+      case 'image':
+        await this.processImageOperations(operations, syncService)
+        break
+      default:
+        console.warn(`Unknown entity type: ${entityType}`)
+    }
+  }
+
+  // 处理卡片操作
+  private async processCardOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    for (const operation of operations) {
+      try {
+        switch (operation.operationType) {
+          case 'create':
+            await syncService.addOperation({
+              type: 'create',
+              entity: 'card',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'update':
+            await syncService.addOperation({
+              type: 'update',
+              entity: 'card',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'delete':
+            await syncService.addOperation({
+              type: 'delete',
+              entity: 'card',
+              entityId: operation.entityId,
+              data: { userId: operation.userId },
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+        }
+      } catch (error) {
+        console.error(`Failed to process card operation ${operation.id}:`, error)
+        throw error
+      }
+    }
+  }
+
+  // 处理文件夹操作
+  private async processFolderOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    for (const operation of operations) {
+      try {
+        switch (operation.operationType) {
+          case 'create':
+            await syncService.addOperation({
+              type: 'create',
+              entity: 'folder',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'update':
+            await syncService.addOperation({
+              type: 'update',
+              entity: 'folder',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'delete':
+            await syncService.addOperation({
+              type: 'delete',
+              entity: 'folder',
+              entityId: operation.entityId,
+              data: { userId: operation.userId },
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+        }
+      } catch (error) {
+        console.error(`Failed to process folder operation ${operation.id}:`, error)
+        throw error
+      }
+    }
+  }
+
+  // 处理标签操作
+  private async processTagOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    for (const operation of operations) {
+      try {
+        switch (operation.operationType) {
+          case 'create':
+            await syncService.addOperation({
+              type: 'create',
+              entity: 'tag',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'update':
+            await syncService.addOperation({
+              type: 'update',
+              entity: 'tag',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'delete':
+            await syncService.addOperation({
+              type: 'delete',
+              entity: 'tag',
+              entityId: operation.entityId,
+              data: { userId: operation.userId },
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+        }
+      } catch (error) {
+        console.error(`Failed to process tag operation ${operation.id}:`, error)
+        throw error
+      }
+    }
+  }
+
+  // 处理图片操作
+  private async processImageOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    for (const operation of operations) {
+      try {
+        switch (operation.operationType) {
+          case 'create':
+            await syncService.addOperation({
+              type: 'create',
+              entity: 'image',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'update':
+            await syncService.addOperation({
+              type: 'update',
+              entity: 'image',
+              entityId: operation.entityId,
+              data: operation.data,
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+            
+          case 'delete':
+            await syncService.addOperation({
+              type: 'delete',
+              entity: 'image',
+              entityId: operation.entityId,
+              data: { userId: operation.userId },
+              priority: operation.priority,
+              userId: operation.userId
+            })
+            break
+        }
+      } catch (error) {
+        console.error(`Failed to process image operation ${operation.id}:`, error)
+        throw error
+      }
     }
   }
 
@@ -656,7 +974,8 @@ export class LocalOperationService {
         
         averageProcessingTime: 0,
         failureRate: 0,
-        oldestPendingAge: 0
+        oldestPendingAge: 0,
+        averageRetryCount: 0
       }
 
       // 计算各类统计
@@ -675,6 +994,9 @@ export class LocalOperationService {
           const processingTime = operation.timestamp.getTime() - operation.processingStartedAt.getTime()
           stats.averageProcessingTime += processingTime
         }
+        
+        // 计算平均重试次数
+        stats.averageRetryCount += operation.retryCount
       }
 
       // 计算衍生统计
@@ -689,6 +1011,11 @@ export class LocalOperationService {
         stats.averageProcessingTime /= completedCount
       }
       
+      // 计算平均重试次数
+      if (allOperations.length > 0) {
+        stats.averageRetryCount /= allOperations.length
+      }
+      
       // 计算失败率
       const totalWithStatus = allOperations.filter(op => 
         ['completed', 'failed'].includes(op.status)
@@ -700,10 +1027,13 @@ export class LocalOperationService {
       // 计算最老的待处理操作年龄
       const pendingOperations = allOperations.filter(op => op.status === 'pending')
       if (pendingOperations.length > 0) {
-        const oldest = pendingOperations.reduce((oldest, current) => 
-          current.timestamp < oldest.timestamp ? current : oldest
-        )
-        stats.oldestPendingAge = Date.now() - oldest.timestamp.getTime()
+        const oldest = pendingOperations.reduce((oldest, current) => {
+          const oldestTime = typeof oldest.timestamp === 'string' ? new Date(oldest.timestamp).getTime() : oldest.timestamp.getTime()
+          const currentTime = typeof current.timestamp === 'string' ? new Date(current.timestamp).getTime() : current.timestamp.getTime()
+          return currentTime < oldestTime ? current : oldest
+        })
+        const oldestTime = typeof oldest.timestamp === 'string' ? new Date(oldest.timestamp).getTime() : oldest.timestamp.getTime()
+        stats.oldestPendingAge = Date.now() - oldestTime
       }
 
       return stats
@@ -726,7 +1056,8 @@ export class LocalOperationService {
       byStatus: { pending: 0, processing: 0, completed: 0, failed: 0, cancelled: 0 },
       averageProcessingTime: 0,
       failureRate: 0,
-      oldestPendingAge: 0
+      oldestPendingAge: 0,
+      averageRetryCount: 0
     }
   }
 
@@ -799,6 +1130,17 @@ export class LocalOperationService {
     }
   }
 
+  // 删除操作
+  async removeOperation(id: string): Promise<void> {
+    try {
+      await db.syncQueue.delete(id)
+      await this.updateQueueStats()
+    } catch (error) {
+      console.error(`Failed to remove operation ${id}:`, error)
+      throw error
+    }
+  }
+
   // 重试失败的操作
   async retryFailedOperations(): Promise<number> {
     try {
@@ -848,6 +1190,39 @@ export class LocalOperationService {
       console.error('Failed to clear completed operations:', error)
       return 0
     }
+  }
+
+  // 更新配置
+  updateConfig(newConfig: Partial<QueueConfig>): void {
+    // 验证配置参数
+    if (newConfig.maxRetries !== undefined && newConfig.maxRetries < 0) {
+      throw new Error('maxRetries must be non-negative')
+    }
+    if (newConfig.batchSize !== undefined && newConfig.batchSize <= 0) {
+      throw new Error('batchSize must be positive')
+    }
+    if (newConfig.maxQueueSize !== undefined && newConfig.maxQueueSize < 0) {
+      throw new Error('maxQueueSize must be non-negative')
+    }
+    if (newConfig.processingTimeout !== undefined && newConfig.processingTimeout <= 0) {
+      throw new Error('processingTimeout must be positive')
+    }
+    if (newConfig.idleCheckInterval !== undefined && newConfig.idleCheckInterval <= 0) {
+      throw new Error('idleCheckInterval must be positive')
+    }
+    
+    // 更新配置
+    this.config = { ...this.config, ...newConfig }
+    
+    // 如果定时器间隔改变，重新启动定时器
+    if (newConfig.idleCheckInterval !== undefined) {
+      this.startProcessing()
+    }
+    if (newConfig.cleanupInterval !== undefined) {
+      this.startCleanup()
+    }
+    
+    console.log('LocalOperationService config updated')
   }
 
   // 销毁服务

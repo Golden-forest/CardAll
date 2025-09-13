@@ -1,0 +1,35 @@
+fb3ee0031e8d88321b44d024c67f9bfb
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createDragDropActions = createDragDropActions;
+const beginDrag_js_1 = require("./beginDrag.js");
+const drop_js_1 = require("./drop.js");
+const endDrag_js_1 = require("./endDrag.js");
+const hover_js_1 = require("./hover.js");
+const publishDragSource_js_1 = require("./publishDragSource.js");
+__exportStar(require("./types.js"), exports);
+function createDragDropActions(manager) {
+    return {
+        beginDrag: (0, beginDrag_js_1.createBeginDrag)(manager),
+        publishDragSource: (0, publishDragSource_js_1.createPublishDragSource)(manager),
+        hover: (0, hover_js_1.createHover)(manager),
+        drop: (0, drop_js_1.createDrop)(manager),
+        endDrag: (0, endDrag_js_1.createEndDrag)(manager)
+    };
+}
+//# sourceMappingURL=index.js.map
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xcZG5kLWNvcmVcXGRpc3RcXGFjdGlvbnNcXGRyYWdEcm9wXFxpbmRleC5qcyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7Ozs7O0FBTUEsc0RBUUM7QUFkRCxpREFBaUQ7QUFDakQsdUNBQXVDO0FBQ3ZDLDZDQUE2QztBQUM3Qyx5Q0FBeUM7QUFDekMsaUVBQWlFO0FBQ2pFLDZDQUEyQjtBQUMzQixTQUFnQixxQkFBcUIsQ0FBQyxPQUFPO0lBQ3pDLE9BQU87UUFDSCxTQUFTLEVBQUUsSUFBQSw4QkFBZSxFQUFDLE9BQU8sQ0FBQztRQUNuQyxpQkFBaUIsRUFBRSxJQUFBLDhDQUF1QixFQUFDLE9BQU8sQ0FBQztRQUNuRCxLQUFLLEVBQUUsSUFBQSxzQkFBVyxFQUFDLE9BQU8sQ0FBQztRQUMzQixJQUFJLEVBQUUsSUFBQSxvQkFBVSxFQUFDLE9BQU8sQ0FBQztRQUN6QixPQUFPLEVBQUUsSUFBQSwwQkFBYSxFQUFDLE9BQU8sQ0FBQztLQUNsQyxDQUFDO0FBQ04sQ0FBQztBQUVELGlDQUFpQyIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJEOlxcUHJvamVjdHNcXENhcmRFdmVyeXRoaW5nXFxjYXJkYWxsLXByb3RvdHlwZVxcbm9kZV9tb2R1bGVzXFxkbmQtY29yZVxcZGlzdFxcYWN0aW9uc1xcZHJhZ0Ryb3BcXGluZGV4LmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGNyZWF0ZUJlZ2luRHJhZyB9IGZyb20gJy4vYmVnaW5EcmFnLmpzJztcbmltcG9ydCB7IGNyZWF0ZURyb3AgfSBmcm9tICcuL2Ryb3AuanMnO1xuaW1wb3J0IHsgY3JlYXRlRW5kRHJhZyB9IGZyb20gJy4vZW5kRHJhZy5qcyc7XG5pbXBvcnQgeyBjcmVhdGVIb3ZlciB9IGZyb20gJy4vaG92ZXIuanMnO1xuaW1wb3J0IHsgY3JlYXRlUHVibGlzaERyYWdTb3VyY2UgfSBmcm9tICcuL3B1Ymxpc2hEcmFnU291cmNlLmpzJztcbmV4cG9ydCAqIGZyb20gJy4vdHlwZXMuanMnO1xuZXhwb3J0IGZ1bmN0aW9uIGNyZWF0ZURyYWdEcm9wQWN0aW9ucyhtYW5hZ2VyKSB7XG4gICAgcmV0dXJuIHtcbiAgICAgICAgYmVnaW5EcmFnOiBjcmVhdGVCZWdpbkRyYWcobWFuYWdlciksXG4gICAgICAgIHB1Ymxpc2hEcmFnU291cmNlOiBjcmVhdGVQdWJsaXNoRHJhZ1NvdXJjZShtYW5hZ2VyKSxcbiAgICAgICAgaG92ZXI6IGNyZWF0ZUhvdmVyKG1hbmFnZXIpLFxuICAgICAgICBkcm9wOiBjcmVhdGVEcm9wKG1hbmFnZXIpLFxuICAgICAgICBlbmREcmFnOiBjcmVhdGVFbmREcmFnKG1hbmFnZXIpXG4gICAgfTtcbn1cblxuLy8jIHNvdXJjZU1hcHBpbmdVUkw9aW5kZXguanMubWFwIl0sInZlcnNpb24iOjN9

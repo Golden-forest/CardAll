@@ -625,6 +625,16 @@ export class NetworkMonitorService {
       }
     }
     
+    // 使用增强的网络状态检测
+    if (baseInfo.online) {
+      try {
+        const enhancedInfo = await this.getEnhancedNetworkInfo()
+        return { ...baseInfo, ...enhancedInfo }
+      } catch (error) {
+        console.warn('Enhanced network info failed, using basic info:', error)
+      }
+    }
+    
     return baseInfo
   }
 
@@ -717,17 +727,335 @@ export class NetworkMonitorService {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
       
+      const startTime = performance.now()
       const response = await fetch(`${endpoint}/favicon.ico`, {
         method: 'HEAD',
         signal: controller.signal,
-        mode: 'no-cors'
+        mode: 'no-cors',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
       })
       
       clearTimeout(timeoutId)
+      const duration = performance.now() - startTime
+      
+      // 记录响应时间用于网络质量评估
+      this.recordResponseTime(duration)
+      
       return true
     } catch (error) {
+      this.recordError('ping_failed', { endpoint, error: error instanceof Error ? error.message : String(error) })
       return false
     }
+  }
+
+  // ============================================================================
+  // 增强网络状态检测方法
+  // ============================================================================
+
+  /**
+   * 记录响应时间用于质量评估
+   */
+  private recordResponseTime(duration: number): void {
+    // 更新平均RTT统计
+    if (this.stats.averageRtt === 0) {
+      this.stats.averageRtt = duration
+    } else {
+      // 指数移动平均
+      this.stats.averageRtt = this.stats.averageRtt * 0.8 + duration * 0.2
+    }
+    
+    // 记录到历史记录
+    this.stats.qualityHistory.push({
+      timestamp: new Date(),
+      quality: this.calculateQuality(this.currentState),
+      score: this.calculateQualityScore(this.currentState)
+    })
+    
+    // 保持历史记录在合理范围内
+    if (this.stats.qualityHistory.length > 100) {
+      this.stats.qualityHistory = this.stats.qualityHistory.slice(-50)
+    }
+  }
+
+  /**
+   * 记录错误信息
+   */
+  private recordError(type: string, details: any): void {
+    this.stats.errorCount++
+    this.stats.lastError = new Error(`${type}: ${JSON.stringify(details)}`)
+    
+    // 发送错误事件
+    this.emitEvent({
+      type: 'error',
+      timestamp: new Date(),
+      currentState: this.currentState,
+      details: { type, details }
+    })
+  }
+
+  /**
+   * 增强的网络状态评估
+   */
+  private async getEnhancedNetworkInfo(): Promise<NetworkInfo> {
+    const baseInfo = await this.getCurrentNetworkInfo()
+    
+    // 执行更深入的网络质量分析
+    const qualityAnalysis = await this.performQualityAnalysis()
+    
+    return {
+      ...baseInfo,
+      ...qualityAnalysis
+    }
+  }
+
+  /**
+   * 执行网络质量分析
+   */
+  private async performQualityAnalysis(): Promise<Partial<NetworkInfo>> {
+    const analysis: Partial<NetworkInfo> = {}
+    
+    try {
+      // 测量实际下载速度
+      const downloadSpeed = await this.measureDownloadSpeed()
+      if (downloadSpeed > 0) {
+        analysis.downlink = downloadSpeed
+      }
+      
+      // 测量实际延迟
+      const latency = await this.measureLatency()
+      if (latency > 0) {
+        analysis.rtt = latency
+      }
+      
+      // 检测网络抖动
+      const jitter = await this.measureJitter()
+      if (jitter > 0) {
+        // 将抖动信息添加到扩展属性
+        (analysis as any).jitter = jitter
+      }
+      
+      // 检测丢包率
+      const packetLoss = await this.estimatePacketLoss()
+      if (packetLoss >= 0) {
+        this.stats.packetLoss = packetLoss
+      }
+      
+    } catch (error) {
+      console.warn('Quality analysis failed:', error)
+    }
+    
+    return analysis
+  }
+
+  /**
+   * 测量下载速度
+   */
+  private async measureDownloadSpeed(): Promise<number> {
+    try {
+      const testData = new Array(1024).fill('test').join('') // ~4KB test data
+      const testUrl = `data:text/plain;base64,${btoa(testData)}`
+      
+      const startTime = performance.now()
+      const response = await fetch(testUrl)
+      await response.text()
+      const duration = performance.now() - startTime
+      
+      // 计算速度 (KB/s)
+      const speedKbPerSec = (testData.length / 1024) / (duration / 1000)
+      return speedKbPerSec * 8 / 1024 // 转换为 Mbps
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * 测量延迟
+   */
+  private async measureLatency(): Promise<number> {
+    try {
+      const measurements: number[] = []
+      
+      // 进行3次测量取平均值
+      for (let i = 0; i < 3; i++) {
+        const startTime = performance.now()
+        await fetch('https://www.google.com/favicon.ico', {
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal: AbortSignal.timeout(3000)
+        })
+        measurements.push(performance.now() - startTime)
+      }
+      
+      return measurements.reduce((sum, time) => sum + time, 0) / measurements.length
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * 测量网络抖动
+   */
+  private async measureJitter(): Promise<number> {
+    try {
+      const measurements: number[] = []
+      
+      // 进行5次延迟测量
+      for (let i = 0; i < 5; i++) {
+        const startTime = performance.now()
+        await fetch('https://www.cloudflare.com/favicon.ico', {
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal: AbortSignal.timeout(2000)
+        })
+        measurements.push(performance.now() - startTime)
+      }
+      
+      // 计算标准差作为抖动
+      const mean = measurements.reduce((sum, time) => sum + time, 0) / measurements.length
+      const variance = measurements.reduce((sum, time) => sum + Math.pow(time - mean, 2), 0) / measurements.length
+      
+      return Math.sqrt(variance)
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * 估算丢包率
+   */
+  private async estimatePacketLoss(): Promise<number> {
+    try {
+      const totalPings = 10
+      let successfulPings = 0
+      
+      const pingPromises = Array(totalPings).fill(0).map(async () => {
+        try {
+          await fetch('https://www.github.com/favicon.ico', {
+            method: 'HEAD',
+            mode: 'no-cors',
+            signal: AbortSignal.timeout(1000)
+          })
+          successfulPings++
+        } catch {
+          // Ping失败，不增加计数
+        }
+      })
+      
+      await Promise.allSettled(pingPromises)
+      
+      return 1 - (successfulPings / totalPings)
+    } catch {
+      return 0
+    }
+  }
+
+  /**
+   * 智能网络状态预测
+   */
+  async predictNetworkStability(): Promise<{
+    isStable: boolean
+    confidence: number
+    predictedDuration: number
+    recommendations: string[]
+  }> {
+    const recentHistory = this.stats.qualityHistory.slice(-10)
+    
+    if (recentHistory.length < 5) {
+      return {
+        isStable: this.currentState.online,
+        confidence: 0.5,
+        predictedDuration: 300, // 5分钟
+        recommendations: ['需要更多数据来进行准确预测']
+      }
+    }
+    
+    // 分析趋势
+    const qualityTrend = this.analyzeQualityTrend(recentHistory)
+    const stabilityScore = this.calculateStabilityScore(recentHistory)
+    
+    const isStable = stabilityScore > 0.7 && qualityTrend !== 'degrading'
+    const confidence = Math.min(stabilityScore, recentHistory.length / 10)
+    
+    const recommendations = this.generateNetworkRecommendations(qualityTrend, stabilityScore)
+    
+    return {
+      isStable,
+      confidence,
+      predictedDuration: this.predictStableDuration(stabilityScore),
+      recommendations
+    }
+  }
+
+  /**
+   * 分析质量趋势
+   */
+  private analyzeQualityTrend(history: Array<{ timestamp: Date; score: number }>): 'improving' | 'stable' | 'degrading' {
+    if (history.length < 3) return 'stable'
+    
+    const recentScores = history.slice(-3).map(h => h.score)
+    const olderScores = history.slice(-6, -3).map(h => h.score)
+    
+    const recentAvg = recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length
+    const olderAvg = olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length
+    
+    const change = recentAvg - olderAvg
+    
+    if (change > 0.1) return 'improving'
+    if (change < -0.1) return 'degrading'
+    return 'stable'
+  }
+
+  /**
+   * 计算稳定性得分
+   */
+  private calculateStabilityScore(history: Array<{ timestamp: Date; score: number }>): number {
+    if (history.length === 0) return 0
+    
+    const scores = history.map(h => h.score)
+    const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length
+    const standardDeviation = Math.sqrt(variance)
+    
+    // 稳定性得分基于标准差，标准差越小越稳定
+    return Math.max(0, 1 - (standardDeviation / mean))
+  }
+
+  /**
+   * 生成网络建议
+   */
+  private generateNetworkRecommendations(trend: string, stability: number): string[] {
+    const recommendations: string[] = []
+    
+    if (trend === 'degrading') {
+      recommendations.push('网络质量正在下降，建议检查网络连接')
+      if (stability < 0.5) {
+        recommendations.push('网络连接不稳定，建议切换到更稳定的网络')
+      }
+    } else if (trend === 'improving') {
+      recommendations.push('网络质量正在改善')
+    }
+    
+    if (stability > 0.8) {
+      recommendations.push('网络连接稳定，可以进行大量数据同步')
+    } else if (stability < 0.5) {
+      recommendations.push('建议启用数据压缩和离线模式')
+    }
+    
+    return recommendations
+  }
+
+  /**
+   * 预测稳定持续时间
+   */
+  private predictStableDuration(stabilityScore: number): number {
+    // 基于稳定性得分预测稳定持续时间（秒）
+    if (stabilityScore > 0.9) return 3600 // 1小时
+    if (stabilityScore > 0.7) return 1800 // 30分钟
+    if (stabilityScore > 0.5) return 600  // 10分钟
+    return 300 // 5分钟
   }
 
   // 销毁服务

@@ -325,7 +325,7 @@ export function FlipCard({
   // 焦点管理
   useEffect(() => {
     if (isEditing && editingField) {
-      const editor = cardRef.current?.querySelector(`[data-editor-field=\"${editingField}\"]`) as HTMLElement
+      const editor = cardRef.current?.querySelector(`[data-editor-field="${editingField}"]`) as HTMLElement
       editor?.focus()
     }
   }, [isEditing, editingField])

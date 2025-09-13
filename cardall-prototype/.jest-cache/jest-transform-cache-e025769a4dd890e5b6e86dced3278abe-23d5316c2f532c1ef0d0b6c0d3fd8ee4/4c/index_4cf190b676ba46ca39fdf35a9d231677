@@ -1,0 +1,65 @@
+b1d7413957972751af615640f2792022
+'use strict';
+Object.defineProperty(exports, '__esModule', {
+    value: true
+});
+exports.getType = getType;
+exports.isPrimitive = void 0;
+/**
+ * Copyright (c) Meta Platforms, Inc. and affiliates.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+// get the type of a value with handling the edge cases like `typeof []`
+// and `typeof null`
+function getType(value) {
+    if (value === undefined) {
+        return 'undefined';
+    }
+    else if (value === null) {
+        return 'null';
+    }
+    else if (Array.isArray(value)) {
+        return 'array';
+    }
+    else if (typeof value === 'boolean') {
+        return 'boolean';
+    }
+    else if (typeof value === 'function') {
+        return 'function';
+    }
+    else if (typeof value === 'number') {
+        return 'number';
+    }
+    else if (typeof value === 'string') {
+        return 'string';
+    }
+    else if (typeof value === 'bigint') {
+        return 'bigint';
+    }
+    else if (typeof value === 'object') {
+        if (value != null) {
+            if (value.constructor === RegExp) {
+                return 'regexp';
+            }
+            else if (value.constructor === Map) {
+                return 'map';
+            }
+            else if (value.constructor === Set) {
+                return 'set';
+            }
+            else if (value.constructor === Date) {
+                return 'date';
+            }
+        }
+        return 'object';
+    }
+    else if (typeof value === 'symbol') {
+        return 'symbol';
+    }
+    throw new Error(`value of unknown type: ${value}`);
+}
+const isPrimitive = value => Object(value) !== value;
+exports.isPrimitive = isPrimitive;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xcamVzdC1nZXQtdHlwZVxcYnVpbGRcXGluZGV4LmpzIiwibWFwcGluZ3MiOiJBQUFBLFlBQVksQ0FBQztBQUViLE1BQU0sQ0FBQyxjQUFjLENBQUMsT0FBTyxFQUFFLFlBQVksRUFBRTtJQUMzQyxLQUFLLEVBQUUsSUFBSTtDQUNaLENBQUMsQ0FBQztBQUNILE9BQU8sQ0FBQyxPQUFPLEdBQUcsT0FBTyxDQUFDO0FBQzFCLE9BQU8sQ0FBQyxXQUFXLEdBQUcsS0FBSyxDQUFDLENBQUM7QUFDN0I7Ozs7O0dBS0c7QUFFSCx3RUFBd0U7QUFDeEUsb0JBQW9CO0FBQ3BCLFNBQVMsT0FBTyxDQUFDLEtBQUs7SUFDcEIsSUFBSSxLQUFLLEtBQUssU0FBUyxFQUFFLENBQUM7UUFDeEIsT0FBTyxXQUFXLENBQUM7SUFDckIsQ0FBQztTQUFNLElBQUksS0FBSyxLQUFLLElBQUksRUFBRSxDQUFDO1FBQzFCLE9BQU8sTUFBTSxDQUFDO0lBQ2hCLENBQUM7U0FBTSxJQUFJLEtBQUssQ0FBQyxPQUFPLENBQUMsS0FBSyxDQUFDLEVBQUUsQ0FBQztRQUNoQyxPQUFPLE9BQU8sQ0FBQztJQUNqQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxTQUFTLEVBQUUsQ0FBQztRQUN0QyxPQUFPLFNBQVMsQ0FBQztJQUNuQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxVQUFVLEVBQUUsQ0FBQztRQUN2QyxPQUFPLFVBQVUsQ0FBQztJQUNwQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxRQUFRLEVBQUUsQ0FBQztRQUNyQyxPQUFPLFFBQVEsQ0FBQztJQUNsQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxRQUFRLEVBQUUsQ0FBQztRQUNyQyxPQUFPLFFBQVEsQ0FBQztJQUNsQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxRQUFRLEVBQUUsQ0FBQztRQUNyQyxPQUFPLFFBQVEsQ0FBQztJQUNsQixDQUFDO1NBQU0sSUFBSSxPQUFPLEtBQUssS0FBSyxRQUFRLEVBQUUsQ0FBQztRQUNyQyxJQUFJLEtBQUssSUFBSSxJQUFJLEVBQUUsQ0FBQztZQUNsQixJQUFJLEtBQUssQ0FBQyxXQUFXLEtBQUssTUFBTSxFQUFFLENBQUM7Z0JBQ2pDLE9BQU8sUUFBUSxDQUFDO1lBQ2xCLENBQUM7aUJBQU0sSUFBSSxLQUFLLENBQUMsV0FBVyxLQUFLLEdBQUcsRUFBRSxDQUFDO2dCQUNyQyxPQUFPLEtBQUssQ0FBQztZQUNmLENBQUM7aUJBQU0sSUFBSSxLQUFLLENBQUMsV0FBVyxLQUFLLEdBQUcsRUFBRSxDQUFDO2dCQUNyQyxPQUFPLEtBQUssQ0FBQztZQUNmLENBQUM7aUJBQU0sSUFBSSxLQUFLLENBQUMsV0FBVyxLQUFLLElBQUksRUFBRSxDQUFDO2dCQUN0QyxPQUFPLE1BQU0sQ0FBQztZQUNoQixDQUFDO1FBQ0gsQ0FBQztRQUNELE9BQU8sUUFBUSxDQUFDO0lBQ2xCLENBQUM7U0FBTSxJQUFJLE9BQU8sS0FBSyxLQUFLLFFBQVEsRUFBRSxDQUFDO1FBQ3JDLE9BQU8sUUFBUSxDQUFDO0lBQ2xCLENBQUM7SUFDRCxNQUFNLElBQUksS0FBSyxDQUFDLDBCQUEwQixLQUFLLEVBQUUsQ0FBQyxDQUFDO0FBQ3JELENBQUM7QUFDRCxNQUFNLFdBQVcsR0FBRyxLQUFLLENBQUMsRUFBRSxDQUFDLE1BQU0sQ0FBQyxLQUFLLENBQUMsS0FBSyxLQUFLLENBQUM7QUFDckQsT0FBTyxDQUFDLFdBQVcsR0FBRyxXQUFXLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xcamVzdC1nZXQtdHlwZVxcYnVpbGRcXGluZGV4LmpzIl0sInNvdXJjZXNDb250ZW50IjpbIid1c2Ugc3RyaWN0JztcblxuT2JqZWN0LmRlZmluZVByb3BlcnR5KGV4cG9ydHMsICdfX2VzTW9kdWxlJywge1xuICB2YWx1ZTogdHJ1ZVxufSk7XG5leHBvcnRzLmdldFR5cGUgPSBnZXRUeXBlO1xuZXhwb3J0cy5pc1ByaW1pdGl2ZSA9IHZvaWQgMDtcbi8qKlxuICogQ29weXJpZ2h0IChjKSBNZXRhIFBsYXRmb3JtcywgSW5jLiBhbmQgYWZmaWxpYXRlcy5cbiAqXG4gKiBUaGlzIHNvdXJjZSBjb2RlIGlzIGxpY2Vuc2VkIHVuZGVyIHRoZSBNSVQgbGljZW5zZSBmb3VuZCBpbiB0aGVcbiAqIExJQ0VOU0UgZmlsZSBpbiB0aGUgcm9vdCBkaXJlY3Rvcnkgb2YgdGhpcyBzb3VyY2UgdHJlZS5cbiAqL1xuXG4vLyBnZXQgdGhlIHR5cGUgb2YgYSB2YWx1ZSB3aXRoIGhhbmRsaW5nIHRoZSBlZGdlIGNhc2VzIGxpa2UgYHR5cGVvZiBbXWBcbi8vIGFuZCBgdHlwZW9mIG51bGxgXG5mdW5jdGlvbiBnZXRUeXBlKHZhbHVlKSB7XG4gIGlmICh2YWx1ZSA9PT0gdW5kZWZpbmVkKSB7XG4gICAgcmV0dXJuICd1bmRlZmluZWQnO1xuICB9IGVsc2UgaWYgKHZhbHVlID09PSBudWxsKSB7XG4gICAgcmV0dXJuICdudWxsJztcbiAgfSBlbHNlIGlmIChBcnJheS5pc0FycmF5KHZhbHVlKSkge1xuICAgIHJldHVybiAnYXJyYXknO1xuICB9IGVsc2UgaWYgKHR5cGVvZiB2YWx1ZSA9PT0gJ2Jvb2xlYW4nKSB7XG4gICAgcmV0dXJuICdib29sZWFuJztcbiAgfSBlbHNlIGlmICh0eXBlb2YgdmFsdWUgPT09ICdmdW5jdGlvbicpIHtcbiAgICByZXR1cm4gJ2Z1bmN0aW9uJztcbiAgfSBlbHNlIGlmICh0eXBlb2YgdmFsdWUgPT09ICdudW1iZXInKSB7XG4gICAgcmV0dXJuICdudW1iZXInO1xuICB9IGVsc2UgaWYgKHR5cGVvZiB2YWx1ZSA9PT0gJ3N0cmluZycpIHtcbiAgICByZXR1cm4gJ3N0cmluZyc7XG4gIH0gZWxzZSBpZiAodHlwZW9mIHZhbHVlID09PSAnYmlnaW50Jykge1xuICAgIHJldHVybiAnYmlnaW50JztcbiAgfSBlbHNlIGlmICh0eXBlb2YgdmFsdWUgPT09ICdvYmplY3QnKSB7XG4gICAgaWYgKHZhbHVlICE9IG51bGwpIHtcbiAgICAgIGlmICh2YWx1ZS5jb25zdHJ1Y3RvciA9PT0gUmVnRXhwKSB7XG4gICAgICAgIHJldHVybiAncmVnZXhwJztcbiAgICAgIH0gZWxzZSBpZiAodmFsdWUuY29uc3RydWN0b3IgPT09IE1hcCkge1xuICAgICAgICByZXR1cm4gJ21hcCc7XG4gICAgICB9IGVsc2UgaWYgKHZhbHVlLmNvbnN0cnVjdG9yID09PSBTZXQpIHtcbiAgICAgICAgcmV0dXJuICdzZXQnO1xuICAgICAgfSBlbHNlIGlmICh2YWx1ZS5jb25zdHJ1Y3RvciA9PT0gRGF0ZSkge1xuICAgICAgICByZXR1cm4gJ2RhdGUnO1xuICAgICAgfVxuICAgIH1cbiAgICByZXR1cm4gJ29iamVjdCc7XG4gIH0gZWxzZSBpZiAodHlwZW9mIHZhbHVlID09PSAnc3ltYm9sJykge1xuICAgIHJldHVybiAnc3ltYm9sJztcbiAgfVxuICB0aHJvdyBuZXcgRXJyb3IoYHZhbHVlIG9mIHVua25vd24gdHlwZTogJHt2YWx1ZX1gKTtcbn1cbmNvbnN0IGlzUHJpbWl0aXZlID0gdmFsdWUgPT4gT2JqZWN0KHZhbHVlKSAhPT0gdmFsdWU7XG5leHBvcnRzLmlzUHJpbWl0aXZlID0gaXNQcmltaXRpdmU7XG4iXSwidmVyc2lvbiI6M30=

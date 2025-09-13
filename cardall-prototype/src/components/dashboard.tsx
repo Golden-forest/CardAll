@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  LogIn
+  LogIn,
+  AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -41,6 +42,10 @@ import {
   ConnectedTagPanel
 } from '@/components/tag'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
+import { useConflicts } from '@/hooks/use-conflicts'
+import { ConflictBanner } from '@/components/conflict/conflict-banner'
+import { ConflictPanel } from '@/components/conflict/conflict-panel'
+import { ConflictDetail } from '@/components/conflict/conflict-detail'
 
 interface DashboardProps {
   className?: string
@@ -92,6 +97,18 @@ export function Dashboard({ className }: DashboardProps) {
     gap: 16,
     showLayoutControls: false
   })
+
+  // Conflict resolution system
+  const { 
+    stats, 
+    getPendingConflicts, 
+    getHighPriorityConflicts,
+    selectedConflict: selectedConflictId,
+    setSelectedConflict,
+    detectConflicts 
+  } = useConflicts()
+  const [showConflictPanel, setShowConflictPanel] = useState(false)
+  const [showConflictDetail, setShowConflictDetail] = useState(false)
 
   // Listen for auth state changes
   useEffect(() => {
@@ -595,6 +612,27 @@ export function Dashboard({ className }: DashboardProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
+              {/* Conflict Notification */}
+              {stats.pendingConflicts > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowConflictPanel(true)}
+                  className="relative text-orange-600 hover:bg-orange-50"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  {stats.pendingConflicts > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {stats.pendingConflicts > 99 ? '99+' : stats.pendingConflicts}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Conflict Notifications</span>
+                </Button>
+              )}
+
               {/* Layout Controls Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -685,6 +723,12 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Main Content */}
         <main className="flex h-[calc(100vh-4rem)]">
+          {/* Conflict Banner */}
+          <div className="absolute top-16 left-0 right-0 z-30 bg-background border-b">
+            <ConflictBanner 
+              onOpenConflictPanel={() => setShowConflictPanel(true)}
+            />
+          </div>
           {/* Sidebar */}
           <aside 
             className={cn(
@@ -964,6 +1008,22 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Tag Panel */}
         <ConnectedTagPanel />
+
+        {/* Conflict Management Modals */}
+        <ConflictPanel 
+          isOpen={showConflictPanel}
+          onClose={() => setShowConflictPanel(false)}
+        />
+
+        {selectedConflictId && (
+          <ConflictDetail 
+            conflictId={selectedConflictId}
+            onClose={() => {
+              setShowConflictDetail(false)
+              setSelectedConflict(null)
+            }}
+          />
+        )}
       </div>
     </FolderPanelProvider>
   )

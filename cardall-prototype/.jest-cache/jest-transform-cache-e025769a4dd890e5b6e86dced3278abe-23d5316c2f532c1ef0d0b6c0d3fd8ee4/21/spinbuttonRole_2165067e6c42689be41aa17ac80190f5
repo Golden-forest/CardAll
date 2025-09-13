@@ -1,0 +1,40 @@
+49bb9cb6c5f71929d346afe0d268eaca
+"use strict";
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.default = void 0;
+var spinbuttonRole = {
+    abstract: false,
+    accessibleNameRequired: true,
+    baseConcepts: [],
+    childrenPresentational: false,
+    nameFrom: ['author'],
+    prohibitedProps: [],
+    props: {
+        'aria-errormessage': null,
+        'aria-invalid': null,
+        'aria-readonly': null,
+        'aria-required': null,
+        'aria-valuetext': null,
+        'aria-valuenow': '0'
+    },
+    relatedConcepts: [{
+            concept: {
+                attributes: [{
+                        name: 'type',
+                        value: 'number'
+                    }],
+                name: 'input'
+            },
+            module: 'HTML'
+        }],
+    requireContextRole: [],
+    requiredContextRole: [],
+    requiredOwnedElements: [],
+    requiredProps: {},
+    superClass: [['roletype', 'widget', 'composite'], ['roletype', 'widget', 'input'], ['roletype', 'structure', 'range']]
+};
+var _default = spinbuttonRole;
+exports.default = _default;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xcYXJpYS1xdWVyeVxcbGliXFxldGNcXHJvbGVzXFxsaXRlcmFsXFxzcGluYnV0dG9uUm9sZS5qcyIsIm1hcHBpbmdzIjoiQUFBQSxZQUFZLENBQUM7QUFFYixNQUFNLENBQUMsY0FBYyxDQUFDLE9BQU8sRUFBRSxZQUFZLEVBQUU7SUFDM0MsS0FBSyxFQUFFLElBQUk7Q0FDWixDQUFDLENBQUM7QUFDSCxPQUFPLENBQUMsT0FBTyxHQUFHLEtBQUssQ0FBQyxDQUFDO0FBQ3pCLElBQUksY0FBYyxHQUFHO0lBQ25CLFFBQVEsRUFBRSxLQUFLO0lBQ2Ysc0JBQXNCLEVBQUUsSUFBSTtJQUM1QixZQUFZLEVBQUUsRUFBRTtJQUNoQixzQkFBc0IsRUFBRSxLQUFLO0lBQzdCLFFBQVEsRUFBRSxDQUFDLFFBQVEsQ0FBQztJQUNwQixlQUFlLEVBQUUsRUFBRTtJQUNuQixLQUFLLEVBQUU7UUFDTCxtQkFBbUIsRUFBRSxJQUFJO1FBQ3pCLGNBQWMsRUFBRSxJQUFJO1FBQ3BCLGVBQWUsRUFBRSxJQUFJO1FBQ3JCLGVBQWUsRUFBRSxJQUFJO1FBQ3JCLGdCQUFnQixFQUFFLElBQUk7UUFDdEIsZUFBZSxFQUFFLEdBQUc7S0FDckI7SUFDRCxlQUFlLEVBQUUsQ0FBQztZQUNoQixPQUFPLEVBQUU7Z0JBQ1AsVUFBVSxFQUFFLENBQUM7d0JBQ1gsSUFBSSxFQUFFLE1BQU07d0JBQ1osS0FBSyxFQUFFLFFBQVE7cUJBQ2hCLENBQUM7Z0JBQ0YsSUFBSSxFQUFFLE9BQU87YUFDZDtZQUNELE1BQU0sRUFBRSxNQUFNO1NBQ2YsQ0FBQztJQUNGLGtCQUFrQixFQUFFLEVBQUU7SUFDdEIsbUJBQW1CLEVBQUUsRUFBRTtJQUN2QixxQkFBcUIsRUFBRSxFQUFFO0lBQ3pCLGFBQWEsRUFBRSxFQUFFO0lBQ2pCLFVBQVUsRUFBRSxDQUFDLENBQUMsVUFBVSxFQUFFLFFBQVEsRUFBRSxXQUFXLENBQUMsRUFBRSxDQUFDLFVBQVUsRUFBRSxRQUFRLEVBQUUsT0FBTyxDQUFDLEVBQUUsQ0FBQyxVQUFVLEVBQUUsV0FBVyxFQUFFLE9BQU8sQ0FBQyxDQUFDO0NBQ3ZILENBQUM7QUFDRixJQUFJLFFBQVEsR0FBRyxjQUFjLENBQUM7QUFDOUIsT0FBTyxDQUFDLE9BQU8sR0FBRyxRQUFRLENBQUMiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xcYXJpYS1xdWVyeVxcbGliXFxldGNcXHJvbGVzXFxsaXRlcmFsXFxzcGluYnV0dG9uUm9sZS5qcyJdLCJzb3VyY2VzQ29udGVudCI6WyJcInVzZSBzdHJpY3RcIjtcblxuT2JqZWN0LmRlZmluZVByb3BlcnR5KGV4cG9ydHMsIFwiX19lc01vZHVsZVwiLCB7XG4gIHZhbHVlOiB0cnVlXG59KTtcbmV4cG9ydHMuZGVmYXVsdCA9IHZvaWQgMDtcbnZhciBzcGluYnV0dG9uUm9sZSA9IHtcbiAgYWJzdHJhY3Q6IGZhbHNlLFxuICBhY2Nlc3NpYmxlTmFtZVJlcXVpcmVkOiB0cnVlLFxuICBiYXNlQ29uY2VwdHM6IFtdLFxuICBjaGlsZHJlblByZXNlbnRhdGlvbmFsOiBmYWxzZSxcbiAgbmFtZUZyb206IFsnYXV0aG9yJ10sXG4gIHByb2hpYml0ZWRQcm9wczogW10sXG4gIHByb3BzOiB7XG4gICAgJ2FyaWEtZXJyb3JtZXNzYWdlJzogbnVsbCxcbiAgICAnYXJpYS1pbnZhbGlkJzogbnVsbCxcbiAgICAnYXJpYS1yZWFkb25seSc6IG51bGwsXG4gICAgJ2FyaWEtcmVxdWlyZWQnOiBudWxsLFxuICAgICdhcmlhLXZhbHVldGV4dCc6IG51bGwsXG4gICAgJ2FyaWEtdmFsdWVub3cnOiAnMCdcbiAgfSxcbiAgcmVsYXRlZENvbmNlcHRzOiBbe1xuICAgIGNvbmNlcHQ6IHtcbiAgICAgIGF0dHJpYnV0ZXM6IFt7XG4gICAgICAgIG5hbWU6ICd0eXBlJyxcbiAgICAgICAgdmFsdWU6ICdudW1iZXInXG4gICAgICB9XSxcbiAgICAgIG5hbWU6ICdpbnB1dCdcbiAgICB9LFxuICAgIG1vZHVsZTogJ0hUTUwnXG4gIH1dLFxuICByZXF1aXJlQ29udGV4dFJvbGU6IFtdLFxuICByZXF1aXJlZENvbnRleHRSb2xlOiBbXSxcbiAgcmVxdWlyZWRPd25lZEVsZW1lbnRzOiBbXSxcbiAgcmVxdWlyZWRQcm9wczoge30sXG4gIHN1cGVyQ2xhc3M6IFtbJ3JvbGV0eXBlJywgJ3dpZGdldCcsICdjb21wb3NpdGUnXSwgWydyb2xldHlwZScsICd3aWRnZXQnLCAnaW5wdXQnXSwgWydyb2xldHlwZScsICdzdHJ1Y3R1cmUnLCAncmFuZ2UnXV1cbn07XG52YXIgX2RlZmF1bHQgPSBzcGluYnV0dG9uUm9sZTtcbmV4cG9ydHMuZGVmYXVsdCA9IF9kZWZhdWx0OyJdLCJ2ZXJzaW9uIjozfQ==

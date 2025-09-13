@@ -1,0 +1,19 @@
+4a8375f47f54f19c654f41f4347c567f
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.useDropTarget = useDropTarget;
+const react_1 = require("react");
+const DropTargetImpl_js_1 = require("./DropTargetImpl.js");
+function useDropTarget(spec, monitor) {
+    const dropTarget = (0, react_1.useMemo)(() => new DropTargetImpl_js_1.DropTargetImpl(spec, monitor), [
+        monitor
+    ]);
+    (0, react_1.useEffect)(() => {
+        dropTarget.spec = spec;
+    }, [
+        spec
+    ]);
+    return dropTarget;
+}
+//# sourceMappingURL=useDropTarget.js.map
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xccmVhY3QtZG5kXFxkaXN0XFxob29rc1xcdXNlRHJvcFxcdXNlRHJvcFRhcmdldC5qcyIsIm1hcHBpbmdzIjoiOztBQUVBLHNDQVdDO0FBYkQsaUNBQTJDO0FBQzNDLDJEQUFxRDtBQUNyRCxTQUFnQixhQUFhLENBQUMsSUFBSSxFQUFFLE9BQU87SUFDdkMsTUFBTSxVQUFVLEdBQUcsSUFBQSxlQUFPLEVBQUMsR0FBRSxFQUFFLENBQUEsSUFBSSxrQ0FBYyxDQUFDLElBQUksRUFBRSxPQUFPLENBQUMsRUFDOUQ7UUFDRSxPQUFPO0tBQ1YsQ0FBQyxDQUFDO0lBQ0gsSUFBQSxpQkFBUyxFQUFDLEdBQUUsRUFBRTtRQUNWLFVBQVUsQ0FBQyxJQUFJLEdBQUcsSUFBSSxDQUFDO0lBQzNCLENBQUMsRUFBRTtRQUNDLElBQUk7S0FDUCxDQUFDLENBQUM7SUFDSCxPQUFPLFVBQVUsQ0FBQztBQUN0QixDQUFDO0FBRUQseUNBQXlDIiwibmFtZXMiOltdLCJzb3VyY2VzIjpbIkQ6XFxQcm9qZWN0c1xcQ2FyZEV2ZXJ5dGhpbmdcXGNhcmRhbGwtcHJvdG90eXBlXFxub2RlX21vZHVsZXNcXHJlYWN0LWRuZFxcZGlzdFxcaG9va3NcXHVzZURyb3BcXHVzZURyb3BUYXJnZXQuanMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgdXNlRWZmZWN0LCB1c2VNZW1vIH0gZnJvbSAncmVhY3QnO1xuaW1wb3J0IHsgRHJvcFRhcmdldEltcGwgfSBmcm9tICcuL0Ryb3BUYXJnZXRJbXBsLmpzJztcbmV4cG9ydCBmdW5jdGlvbiB1c2VEcm9wVGFyZ2V0KHNwZWMsIG1vbml0b3IpIHtcbiAgICBjb25zdCBkcm9wVGFyZ2V0ID0gdXNlTWVtbygoKT0+bmV3IERyb3BUYXJnZXRJbXBsKHNwZWMsIG1vbml0b3IpXG4gICAgLCBbXG4gICAgICAgIG1vbml0b3JcbiAgICBdKTtcbiAgICB1c2VFZmZlY3QoKCk9PntcbiAgICAgICAgZHJvcFRhcmdldC5zcGVjID0gc3BlYztcbiAgICB9LCBbXG4gICAgICAgIHNwZWNcbiAgICBdKTtcbiAgICByZXR1cm4gZHJvcFRhcmdldDtcbn1cblxuLy8jIHNvdXJjZU1hcHBpbmdVUkw9dXNlRHJvcFRhcmdldC5qcy5tYXAiXSwidmVyc2lvbiI6M30=
