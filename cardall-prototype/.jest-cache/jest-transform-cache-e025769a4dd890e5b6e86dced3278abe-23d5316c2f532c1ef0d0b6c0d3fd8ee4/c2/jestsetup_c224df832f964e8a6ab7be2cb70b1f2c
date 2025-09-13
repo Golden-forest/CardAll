@@ -1,0 +1,489 @@
+484a73750467100094ffc0737f43578e
+// Jest 增强设置文件
+require('@testing-library/jest-dom')
+require('jest-axe/extend-expect')
+
+// 模拟 Vite 环境变量
+Object.defineProperty(global, 'import.meta', {
+  value: {
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+      NODE_ENV: 'test',
+    },
+  },
+  writable: true,
+})
+
+// 模拟 IndexedDB (Dexie 兼容)
+class MockIndexedDB {
+  constructor(name, version) {
+    this.name = name
+    this.version = version
+    this.objectStoreNames = {
+      contains: () => false,
+      length: 0,
+    }
+    this.close = jest.fn()
+  }
+
+  static deleteDatabase(name) {
+    return Promise.resolve()
+  }
+}
+
+Object.defineProperty(window, 'indexedDB', {
+  value: {
+    open: jest.fn((name, version) => {
+      const request = {
+        onsuccess: null,
+        onerror: null,
+        onupgradeneeded: null,
+        result: new MockIndexedDB(name, version),
+      }
+      setTimeout(() => {
+        if (request.onupgradeneeded) {
+          request.onupgradeneeded({
+            target: { result: request.result },
+          })
+        }
+        if (request.onsuccess) {
+          request.onsuccess({ target: { result: request.result } })
+        }
+      }, 0)
+      return request
+    }),
+    deleteDatabase: MockIndexedDB.deleteDatabase,
+  },
+})
+
+// 模拟 localStorage
+const localStorageMock = (() => {
+  let store = {}
+  return {
+    getItem: (key) => store[key] || null,
+    setItem: (key, value) => {
+      store[key] = value.toString()
+    },
+    removeItem: (key) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+    length: Object.keys(store).length,
+    key: (index) => Object.keys(store)[index],
+  }
+})()
+
+Object.defineProperty(window, 'localStorage', {
+  value: localStorageMock,
+})
+
+// 模拟 sessionStorage
+const sessionStorageMock = (() => {
+  let store = {}
+  return {
+    getItem: (key) => store[key] || null,
+    setItem: (key, value) => {
+      store[key] = value.toString()
+    },
+    removeItem: (key) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+  }
+})()
+
+Object.defineProperty(window, 'sessionStorage', {
+  value: sessionStorageMock,
+})
+
+// 模拟 Canvas API
+class MockCanvas {
+  constructor(width, height) {
+    this.width = width
+    this.height = height
+    this.getContext = jest.fn(() => ({
+      fillRect: jest.fn(),
+      clearRect: jest.fn(),
+      getImageData: jest.fn(() => ({
+        data: new Uint8ClampedArray(),
+      })),
+      putImageData: jest.fn(),
+      createImageData: jest.fn(() => ({
+        data: new Uint8ClampedArray(),
+      })),
+      setTransform: jest.fn(),
+      drawImage: jest.fn(),
+      save: jest.fn(),
+      fillText: jest.fn(),
+      restore: jest.fn(),
+      beginPath: jest.fn(),
+      moveTo: jest.fn(),
+      lineTo: jest.fn(),
+      closePath: jest.fn(),
+      stroke: jest.fn(),
+      translate: jest.fn(),
+      scale: jest.fn(),
+      rotate: jest.fn(),
+      arc: jest.fn(),
+      fill: jest.fn(),
+      measureText: jest.fn(() => ({
+        width: 0,
+      })),
+      transform: jest.fn(),
+      rect: jest.fn(),
+      clip: jest.fn(),
+    }))
+  }
+
+  toDataURL() {
+    return 'data:image/png;base64,mock'
+  }
+}
+
+Object.defineProperty(window, 'HTMLCanvasElement', {
+  value: MockCanvas,
+  writable: true,
+})
+
+// 模拟 IntersectionObserver
+class MockIntersectionObserver {
+  constructor(callback) {
+    this.callback = callback
+  }
+
+  observe = jest.fn()
+  unobserve = jest.fn()
+  disconnect = jest.fn()
+}
+
+Object.defineProperty(window, 'IntersectionObserver', {
+  value: MockIntersectionObserver,
+})
+
+// 模拟 ResizeObserver
+class MockResizeObserver {
+  constructor(callback) {
+    this.callback = callback
+  }
+
+  observe = jest.fn()
+  unobserve = jest.fn()
+  disconnect = jest.fn()
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  value: MockResizeObserver,
+})
+
+// 模拟 Media Query API
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: jest.fn().mockImplementation(query => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: jest.fn(), // Deprecated
+    removeListener: jest.fn(), // Deprecated
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  })),
+})
+
+// 模拟 scrollTo
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: jest.fn(),
+})
+
+// 模拟 getComputedStyle
+Object.defineProperty(window, 'getComputedStyle', {
+  value: () => ({
+    getPropertyValue: (prop) => {
+      return ''
+    },
+  }),
+})
+
+// 模拟 getBoundingClientRect
+Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+  value: () => ({
+    width: 120,
+    height: 120,
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+  }),
+})
+
+// 模拟 requestAnimationFrame
+global.requestAnimationFrame = (callback) => {
+  return setTimeout(callback, 0)
+}
+
+// 模拟 cancelAnimationFrame
+global.cancelAnimationFrame = (id) => {
+  clearTimeout(id)
+}
+
+// 模拟 URL.createObjectURL
+global.URL.createObjectURL = jest.fn(() => 'mock-url')
+global.URL.revokeObjectURL = jest.fn()
+
+// 模拟 File API
+global.File = jest.fn(() => ({
+  size: 1024,
+  type: 'image/png',
+  name: 'mock-file.png',
+}))
+
+// 模拟 FileReader
+class MockFileReader {
+  constructor() {
+    this.result = null
+    this.onload = null
+    this.onerror = null
+  }
+
+  readAsDataURL = jest.fn((file) => {
+    setTimeout(() => {
+      this.result = 'data:image/png;base64,mock'
+      if (this.onload) {
+        this.onload({ target: { result: this.result } })
+      }
+    }, 0)
+  })
+
+  readAsArrayBuffer = jest.fn((file) => {
+    setTimeout(() => {
+      this.result = new ArrayBuffer(1024)
+      if (this.onload) {
+        this.onload({ target: { result: this.result } })
+      }
+    }, 0)
+  })
+}
+
+Object.defineProperty(window, 'FileReader', {
+  value: MockFileReader,
+})
+
+// 模拟 fetch
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    blob: () => Promise.resolve(new Blob()),
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(0)),
+  })
+)
+
+// 模拟 WebSocket
+class MockWebSocket {
+  constructor(url) {
+    this.url = url
+    this.readyState = 1
+    this.onopen = null
+    this.onmessage = null
+    this.onclose = null
+    this.onerror = null
+  }
+
+  send = jest.fn()
+  close = jest.fn()
+}
+
+Object.defineProperty(window, 'WebSocket', {
+  value: MockWebSocket,
+})
+
+// 模拟 performance API
+Object.defineProperty(window, 'performance', {
+  value: {
+    now: jest.fn(() => Date.now()),
+    mark: jest.fn(),
+    measure: jest.fn(),
+    getEntriesByName: jest.fn(() => []),
+    getEntriesByType: jest.fn(() => []),
+    clearMarks: jest.fn(),
+    clearMeasures: jest.fn(),
+    setResourceTimingBufferSize: jest.fn(),
+    toJSON: jest.fn(() => ({})),
+    timing: {
+      navigationStart: 0,
+      unloadEventStart: 0,
+      unloadEventEnd: 0,
+      redirectStart: 0,
+      redirectEnd: 0,
+      fetchStart: 0,
+      domainLookupStart: 0,
+      domainLookupEnd: 0,
+      connectStart: 0,
+      connectEnd: 0,
+      secureConnectionStart: 0,
+      requestStart: 0,
+      responseStart: 0,
+      responseEnd: 0,
+      domLoading: 0,
+      domInteractive: 0,
+      domContentLoadedEventStart: 0,
+      domContentLoadedEventEnd: 0,
+      domComplete: 0,
+      loadEventStart: 0,
+      loadEventEnd: 0,
+    },
+    memory: {
+      usedJSHeapSize: 1000000,
+      totalJSHeapSize: 2000000,
+      jsHeapSizeLimit: 3000000,
+    },
+  },
+})
+
+// 模拟 console.error 和 console.warn 来检测错误
+const originalError = console.error
+const originalWarn = console.warn
+
+console.error = jest.fn((...args) => {
+  originalError(...args)
+})
+
+console.warn = jest.fn((...args) => {
+  originalWarn(...args)
+})
+
+// 模拟 navigator 对象
+Object.defineProperty(navigator, 'onLine', {
+  value: true,
+  writable: true,
+})
+
+Object.defineProperty(navigator, 'userAgent', {
+  value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+})
+
+Object.defineProperty(navigator, 'languages', {
+  value: ['en-US', 'en'],
+})
+
+Object.defineProperty(navigator, 'language', {
+  value: 'en-US',
+})
+
+// 模拟 screen 对象
+Object.defineProperty(window, 'screen', {
+  value: {
+    width: 1920,
+    height: 1080,
+    availWidth: 1920,
+    availHeight: 1040,
+    colorDepth: 24,
+    pixelDepth: 24,
+  },
+})
+
+// 模拟 navigator.clipboard
+Object.assign(navigator, {
+  clipboard: {
+    writeText: jest.fn(),
+    readText: jest.fn(),
+  },
+})
+
+// 模拟 navigator.vibrate
+Object.assign(navigator, {
+  vibrate: jest.fn(),
+})
+
+// 模拟 Notification API
+global.Notification = {
+  permission: 'granted',
+  requestPermission: jest.fn(),
+} as any
+
+// 模拟 Screen Orientation API
+Object.assign(screen, {
+  orientation: {
+    type: 'portrait-primary',
+    angle: 0,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  },
+})
+
+// 模拟 Web Animations API
+Element.prototype.animate = jest.fn(() => ({
+  finished: Promise.resolve(),
+  cancel: jest.fn(),
+  onfinish: null,
+}))
+
+// 模拟 Visual Viewport API
+Object.defineProperty(window, 'visualViewport', {
+  value: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    offsetLeft: 0,
+    offsetTop: 0,
+    pageLeft: 0,
+    pageTop: 0,
+    scale: 1,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  },
+  writable: true,
+})
+
+// 设置测试环境变量
+process.env.NODE_ENV = 'test'
+process.env.VITE_SUPABASE_URL = 'https://test.supabase.co'
+process.env.VITE_SUPABASE_ANON_KEY = 'test-anon-key'
+
+// 全局测试超时
+jest.setTimeout(10000)
+
+// 忽略特定的警告
+const ignoredWarnings = [
+  /Warning: An update to .* inside a test was not wrapped in act/,
+  /Warning: ReactDOM.render is no longer supported/,
+  /Warning: ReactDOM.unmountComponentAtNode is no longer supported/,
+  /Warning: An invalid container/,
+  /Warning: Cannot update a component/,
+]
+
+beforeEach(() => {
+  const originalWarn = console.warn
+  console.warn = (...args) => {
+    const message = args.join(' ')
+    const shouldIgnore = ignoredWarnings.some(regex => regex.test(message))
+    if (!shouldIgnore) {
+      originalWarn(...args)
+    }
+  }
+
+  return () => {
+    console.warn = originalWarn
+  }
+})
+
+// 清理所有模拟
+afterEach(() => {
+  jest.clearAllMocks()
+})
+
+// 恢复原始console方法
+afterAll(() => {
+  console.error = originalError
+  console.warn = originalWarn
+})
+
+console.log('Enhanced Jest setup completed')

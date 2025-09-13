@@ -1,5 +1,5 @@
 import { initializeDatabase } from './database'
-import { cloudSyncService } from './cloud-sync'
+import { unifiedSyncService } from './unified-sync-service'
 import { migrationService } from './migration'
 import { fileSystemService } from './file-system'
 import { authService } from './auth'
@@ -118,12 +118,12 @@ class AppInitializationService {
         hasError: false
       })
 
-      // 恢复同步队列
-      await cloudSyncService.restoreSyncQueue()
+      // 设置认证服务到同步服务
+      unifiedSyncService.setAuthService(authService)
       
       // 如果用户已登录，执行完整同步
       if (authService.isAuthenticated()) {
-        await cloudSyncService.performFullSync()
+        await unifiedSyncService.performFullSync()
       }
 
       // 步骤5: 完成初始化
@@ -172,7 +172,7 @@ class AppInitializationService {
   }> {
     try {
       const migrationStatus = await migrationService.getMigrationStatus()
-      const syncStatus = cloudSyncService.getCurrentStatus()
+      const syncStatus = unifiedSyncService.getCurrentStatus()
       
       return {
         databaseReady: true, // 如果能调用说明数据库已就绪

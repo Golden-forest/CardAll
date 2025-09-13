@@ -232,51 +232,51 @@ export function ImageZoomModal({
   }
 
   return (
-    <div className=\"fixed inset-0 z-50 bg-black/90 backdrop-blur-sm\">
+    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm">
       {/* 顶部控制栏 */}
-      <div className=\"absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent\">
-        <div className=\"flex items-center space-x-2 text-white\">
-          <span className=\"text-sm\">
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
+        <div className="flex items-center space-x-2 text-white">
+          <span className="text-sm">
             {currentIndex + 1} / {images.length}
           </span>
-          <span className=\"text-sm text-gray-300 truncate max-w-md\">
+          <span className="text-sm text-gray-300 truncate max-w-md">
             {currentImage.alt || `Image ${currentIndex + 1}`}
           </span>
         </div>
         
-        <div className=\"flex items-center space-x-2\">
+        <div className="flex items-center space-x-2">
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={toggleFullscreen}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            {isFullscreen ? <Minimize className=\"h-4 w-4\" /> : <Fullscreen className=\"h-4 w-4\" />}
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Fullscreen className="h-4 w-4" />}
           </Button>
           
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={downloadImage}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            <Download className=\"h-4 w-4\" />
+            <Download className="h-4 w-4" />
           </Button>
           
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            <X className=\"h-4 w-4\" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* 主图片区域 */}
       <div 
-        className=\"flex items-center justify-center h-screen\"
+        className="flex items-center justify-center h-screen"
         onMouseDown={handleDragStart}
         onMouseMove={handleDrag}
         onMouseUp={handleDragEnd}
@@ -286,7 +286,7 @@ export function ImageZoomModal({
         <img
           src={currentImage.url}
           alt={currentImage.alt || `Image ${currentIndex + 1}`}
-          className=\"max-w-full max-h-full object-contain select-none\"
+          className="max-w-full max-h-full object-contain select-none"
           style={transformStyle}
           draggable={false}
         />
@@ -296,68 +296,68 @@ export function ImageZoomModal({
       {images.length > 1 && (
         <>
           <Button
-            variant=\"ghost\"
-            size=\"lg\"
+            variant="ghost"
+            size="lg"
             onClick={previousImage}
-            className=\"absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/20 h-12 w-12 rounded-full\"
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/20 h-12 w-12 rounded-full"
           >
-            <ChevronLeft className=\"h-6 w-6\" />
+            <ChevronLeft className="h-6 w-6" />
           </Button>
           
           <Button
-            variant=\"ghost\"
-            size=\"lg\"
+            variant="ghost"
+            size="lg"
             onClick={nextImage}
-            className=\"absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/20 h-12 w-12 rounded-full\"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-white hover:bg-white/20 h-12 w-12 rounded-full"
           >
-            <ChevronRight className=\"h-6 w-6\" />
+            <ChevronRight className="h-6 w-6" />
           </Button>
         </>
       )}
 
       {/* 底部工具栏 */}
-      <div className=\"absolute bottom-0 left-0 right-0 z-10 flex items-center justify-center p-4 bg-gradient-to-t from-black/50 to-transparent\">
-        <div className=\"flex items-center space-x-2 bg-black/50 rounded-lg p-2\">
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-center p-4 bg-gradient-to-t from-black/50 to-transparent">
+        <div className="flex items-center space-x-2 bg-black/50 rounded-lg p-2">
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={zoomOut}
             disabled={transform.scale <= 0.1}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            <ZoomOut className=\"h-4 w-4\" />
+            <ZoomOut className="h-4 w-4" />
           </Button>
           
-          <span className=\"text-white text-sm min-w-[60px] text-center\">
+          <span className="text-white text-sm min-w-[60px] text-center">
             {Math.round(transform.scale * 100)}%
           </span>
           
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={zoomIn}
             disabled={transform.scale >= 5}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            <ZoomIn className=\"h-4 w-4\" />
+            <ZoomIn className="h-4 w-4" />
           </Button>
           
-          <div className=\"w-px h-6 bg-white/30 mx-2\" />
+          <div className="w-px h-6 bg-white/30 mx-2" />
           
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={rotate}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
-            <RotateCcw className=\"h-4 w-4\" />
+            <RotateCcw className="h-4 w-4" />
           </Button>
           
           <Button
-            variant=\"ghost\"
-            size=\"sm\"
+            variant="ghost"
+            size="sm"
             onClick={resetTransform}
-            className=\"text-white hover:text-white hover:bg-white/20\"
+            className="text-white hover:text-white hover:bg-white/20"
           >
             重置
           </Button>
@@ -366,7 +366,7 @@ export function ImageZoomModal({
 
       {/* 缩略图导航 */}
       {images.length > 1 && (
-        <div className=\"absolute bottom-20 left-1/2 -translate-x-1/2 flex space-x-2 bg-black/50 rounded-lg p-2\">
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex space-x-2 bg-black/50 rounded-lg p-2">
           {images.map((image, index) => (
             <button
               key={index}
@@ -375,16 +375,16 @@ export function ImageZoomModal({
                 resetTransform()
               }}
               className={cn(
-                \"w-12 h-12 rounded overflow-hidden border-2 transition-all\",
+                "w-12 h-12 rounded overflow-hidden border-2 transition-all",
                 index === currentIndex 
-                  ? \"border-white scale-110\" 
-                  : \"border-transparent hover:border-white/50\"
+                  ? "border-white scale-110" 
+                  : "border-transparent hover:border-white/50"
               )}
             >
               <img
                 src={image.url}
                 alt={`Thumbnail ${index + 1}`}
-                className=\"w-full h-full object-cover\"
+                className="w-full h-full object-cover"
               />
             </button>
           ))}
@@ -392,7 +392,7 @@ export function ImageZoomModal({
       )}
 
       {/* 快捷键提示 */}
-      <div className=\"absolute top-20 right-4 bg-black/50 text-white text-xs rounded p-2 space-y-1\">
+      <div className="absolute top-20 right-4 bg-black/50 text-white text-xs rounded p-2 space-y-1">
         <div>←/→: 切换图片</div>
         <div>+/-: 缩放</div>
         <div>R: 旋转</div>

@@ -1,0 +1,12 @@
+5224ff3a4f58468b5b0b128d371872f9
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.DndContext = void 0;
+const react_1 = require("react");
+/**
+ * Create the React Context
+ */ exports.DndContext = (0, react_1.createContext)({
+    dragDropManager: undefined
+});
+//# sourceMappingURL=DndContext.js.map
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xccmVhY3QtZG5kXFxkaXN0XFxjb3JlXFxEbmRDb250ZXh0LmpzIiwibWFwcGluZ3MiOiI7OztBQUFBLGlDQUFzQztBQUN0Qzs7R0FFRyxDQUFjLFFBQUEsVUFBVSxHQUFHLElBQUEscUJBQWEsRUFBQztJQUN4QyxlQUFlLEVBQUUsU0FBUztDQUM3QixDQUFDLENBQUM7QUFFSCxzQ0FBc0MiLCJuYW1lcyI6W10sInNvdXJjZXMiOlsiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXG5vZGVfbW9kdWxlc1xccmVhY3QtZG5kXFxkaXN0XFxjb3JlXFxEbmRDb250ZXh0LmpzIl0sInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IGNyZWF0ZUNvbnRleHQgfSBmcm9tICdyZWFjdCc7XG4vKipcbiAqIENyZWF0ZSB0aGUgUmVhY3QgQ29udGV4dFxuICovIGV4cG9ydCBjb25zdCBEbmRDb250ZXh0ID0gY3JlYXRlQ29udGV4dCh7XG4gICAgZHJhZ0Ryb3BNYW5hZ2VyOiB1bmRlZmluZWRcbn0pO1xuXG4vLyMgc291cmNlTWFwcGluZ1VSTD1EbmRDb250ZXh0LmpzLm1hcCJdLCJ2ZXJzaW9uIjozfQ==

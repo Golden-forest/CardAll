@@ -214,7 +214,7 @@ class QueryPerformanceService {
       
       // 转换为前端格式
       results = results.map(dbCard => {
-        const { userId, syncVersion, lastSyncAt, pendingSync, ...card } = dbCard
+        const { userId, lastSyncAt, ...card } = dbCard
         return {
           ...card,
           id: card.id || '',
@@ -261,7 +261,7 @@ class QueryPerformanceService {
       
       // 转换为前端格式
       results = results.map(dbFolder => {
-        const { userId, syncVersion, lastSyncAt, pendingSync, ...folder } = dbFolder
+        const { userId, lastSyncAt, ...folder } = dbFolder
         return {
           ...folder,
           id: folder.id || '',
@@ -307,7 +307,7 @@ class QueryPerformanceService {
       
       // 转换为前端格式
       results = results.map(dbTag => {
-        const { userId, syncVersion, lastSyncAt, pendingSync, ...tag } = dbTag
+        const { userId, lastSyncAt, ...tag } = dbTag
         return {
           ...tag,
           id: tag.id || '',
@@ -540,11 +540,11 @@ class QueryPerformanceService {
 
   // 获取缓存统计
   getCacheStats(): {
-    size: number
-    maxSize: number
-    hitRate: number
-    entries: Array<{ key: string; hits: number; age: number }>
-  }> {
+    size: number;
+    maxSize: number;
+    hitRate: number;
+    entries: Array<{ key: string; hits: number; age: number }>;
+  } {
     const totalQueries = this.queryMetrics.length
     const cacheHits = this.queryMetrics.filter(m => m.cacheHit).length
     const hitRate = totalQueries > 0 ? cacheHits / totalQueries : 0

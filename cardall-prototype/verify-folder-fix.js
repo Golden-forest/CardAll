@@ -15,7 +15,7 @@ console.log('==================================');
 const filesToCheck = [
   'src/hooks/use-folders.ts',
   'src/components/dashboard.tsx',
-  'src/services/database-simple.ts',
+  'src/services/database.ts',
   'src/types/card.ts'
 ];
 

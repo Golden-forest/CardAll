@@ -50,11 +50,37 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-popover'],
-          editor: ['@tiptap/react', '@tiptap/starter-kit'],
-          supabase: ['@supabase/supabase-js']
+          radix: [
+            '@radix-ui/react-dialog', '@radix-ui/react-popover', '@radix-ui/react-tooltip',
+            '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs',
+            '@radix-ui/react-toast', '@radix-ui/react-alert-dialog', '@radix-ui/react-avatar',
+            '@radix-ui/react-checkbox', '@radix-ui/react-collapsible', '@radix-ui/react-context-menu',
+            '@radix-ui/react-hover-card', '@radix-ui/react-label', '@radix-ui/react-menubar',
+            '@radix-ui/react-navigation-menu', '@radix-ui/react-progress', '@radix-ui/react-radio-group',
+            '@radix-ui/react-scroll-area', '@radix-ui/react-separator', '@radix-ui/react-slider',
+            '@radix-ui/react-slot', '@radix-ui/react-switch', '@radix-ui/react-toggle',
+            '@radix-ui/react-toggle-group', '@radix-ui/react-accordion', '@radix-ui/react-aspect-ratio'
+          ],
+          editor: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-blockquote', '@tiptap/extension-code', '@tiptap/extension-image', '@tiptap/extension-link', '@tiptap/extension-placeholder', '@tiptap/extension-strike', '@tiptap/extension-task-item', '@tiptap/extension-task-list', 'tiptap-markdown-3'],
+          supabase: ['@supabase/supabase-js', '@supabase/auth-ui-react', '@supabase/auth-ui-shared'],
+          database: ['dexie'],
+          form: ['react-hook-form', '@hookform/resolvers'],
+          charts: ['recharts'],
+          icons: ['lucide-react'],
+          utils: ['clsx', 'tailwind-merge', 'class-variance-authority', 'date-fns'],
+          sync: [
+            './src/services/database-unified.ts',
+            './src/services/sync-performance.ts', 
+            './src/services/query-performance.ts',
+            './src/services/unified-sync-service.ts',
+            './src/services/cloud-sync.ts',
+            './src/services/local-operation.ts',
+            './src/services/network-monitor.ts',
+            './src/services/offline-manager.ts'
+          ]
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 1000
   }
 })

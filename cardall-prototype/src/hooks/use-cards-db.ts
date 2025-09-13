@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
 import { db, DbCard } from '@/services/database'
-import { cloudSyncService } from '@/services/cloud-sync'
+import { unifiedSyncService } from '@/services/unified-sync-service'
 import { authService } from '@/services/auth'
 import { fileSystemService } from '@/services/file-system'
 
@@ -178,11 +178,12 @@ export function useCardsDb() {
           await db.cards.add(newCardData)
           
           // 添加到同步队列
-          await cloudSyncService.queueOperation({
+          await unifiedSyncService.addOperation({
             type: 'create',
-            table: 'cards',
+            entity: 'card',
+            entityId: cardId,
             data: newCardData,
-            localId: cardId
+            priority: 'normal'
           })
           
           // 重新加载数据
@@ -202,11 +203,12 @@ export function useCardsDb() {
           await db.cards.update(action.payload.id, updates)
           
           // 添加到同步队列
-          await cloudSyncService.queueOperation({
+          await unifiedSyncService.addOperation({
             type: 'update',
-            table: 'cards',
+            entity: 'card',
+            entityId: action.payload.id,
             data: { ...action.payload.updates, userId },
-            localId: action.payload.id
+            priority: 'normal'
           })
           
           await loadCards()
@@ -232,11 +234,12 @@ export function useCardsDb() {
           await db.cards.delete(action.payload)
           
           // 添加到同步队列
-          await cloudSyncService.queueOperation({
+          await unifiedSyncService.addOperation({
             type: 'delete',
-            table: 'cards',
+            entity: 'card',
+            entityId: action.payload,
             data: { userId },
-            localId: action.payload
+            priority: 'high'
           })
           
           await loadCards()
@@ -256,7 +259,7 @@ export function useCardsDb() {
             await db.cards.update(action.payload, updates)
             
             // 添加到同步队列
-            await cloudSyncService.queueOperation({
+            await unifiedSyncService.addOperation({
               type: 'update',
               table: 'cards',
               data: updates,
@@ -297,7 +300,7 @@ export function useCardsDb() {
             await db.cards.add(duplicatedCard)
             
             // 添加到同步队列
-            await cloudSyncService.queueOperation({
+            await unifiedSyncService.addOperation({
               type: 'create',
               table: 'cards',
               data: duplicatedCard,
@@ -321,7 +324,7 @@ export function useCardsDb() {
           await db.cards.update(action.payload.cardId, updates)
           
           // 添加到同步队列
-          await cloudSyncService.queueOperation({
+          await unifiedSyncService.addOperation({
             type: 'update',
             table: 'cards',
             data: updates,
@@ -403,7 +406,7 @@ export function useCardsDb() {
         await db.cards.update(card.id!, updates)
         
         // 添加到同步队列
-        await cloudSyncService.queueOperation({
+        await unifiedSyncService.addOperation({
           type: 'update',
           table: 'cards',
           data: updates,
@@ -472,7 +475,7 @@ export function useCardsDb() {
       })
 
       // 添加卡片更新到同步队列
-      await cloudSyncService.queueOperation({
+      await unifiedSyncService.addOperation({
         type: 'update',
         table: 'cards',
         data: { 
@@ -484,7 +487,7 @@ export function useCardsDb() {
       })
       
       // 添加图片创建到同步队列（如果需要的话）
-      // await cloudSyncService.queueOperation({
+      // await unifiedSyncService.addOperation({
       //   type: 'create',
       //   table: 'images',
       //   data: processedImage,

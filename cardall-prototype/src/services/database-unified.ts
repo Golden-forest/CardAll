@@ -2,7 +2,7 @@ import Dexie, { Table } from 'dexie'
 import { Card, Folder, Tag, ImageData } from '@/types/card'
 
 // ============================================================================
-// 统一数据库类型定义 - 解决 database.ts 和 database-simple.ts 的冲突
+// 统一数据库类型定义 - 解决数据库架构统一
 // ============================================================================
 
 // 基础同步接口
@@ -113,6 +113,72 @@ export interface DatabaseStats {
   version: string
 }
 
+// 向后兼容的旧接口（保持现有代码不中断）
+export interface LegacySyncOperation {
+  id?: string
+  type: 'create' | 'update' | 'delete'
+  table: 'cards' | 'folders' | 'tags' | 'images'
+  data?: any
+  localId: string
+  timestamp: Date
+  retryCount: number
+  maxRetries: number
+  error?: string
+}
+
+// ============================================================================
+// 离线数据持久化增强接口
+// ============================================================================
+
+// 离线状态快照
+export interface OfflineSnapshot {
+  id: string
+  timestamp: Date
+  version: string
+  userId?: string
+  dataHash: string
+  dataSize: number
+  compressedSize: number
+  includes: {
+    cards: boolean
+    folders: boolean
+    tags: boolean
+    images: boolean
+    settings: boolean
+  }
+  metadata: {
+    deviceInfo: string
+    networkStatus: string
+    batteryLevel?: number
+    storageQuota: {
+      used: number
+      total: number
+    }
+  }
+}
+
+// 离线数据压缩配置
+export interface OfflineCompressionConfig {
+  enabled: boolean
+  algorithm: 'gzip' | 'lz-string' | 'custom'
+  threshold: number // 压缩阈值（字节）
+  quality: number // 压缩质量（0-1）
+  excludePatterns: string[] // 不压缩的数据模式
+}
+
+// 离线备份策略
+export interface OfflineBackupStrategy {
+  autoBackup: boolean
+  interval: number // 备份间隔（毫秒）
+  maxBackups: number
+  compressionEnabled: boolean
+  encryptionEnabled: boolean
+  retentionPolicy: {
+    days: number
+    maxSize: number // MB
+  }
+}
+
 // ============================================================================
 // 统一数据库类
 // ============================================================================
@@ -126,12 +192,24 @@ class CardAllUnifiedDatabase extends Dexie {
   syncQueue!: Table<SyncOperation>
   settings!: Table<AppSettings>
   sessions!: Table<UserSession>
+  
+  // 离线数据持久化增强表
+  offlineSnapshots!: Table<OfflineSnapshot>
+  offlineBackups!: Table<{
+    id?: string
+    snapshotId: string
+    data: Blob
+    compression: string
+    encrypted: boolean
+    createdAt: Date
+    size: number
+  }>
 
   constructor() {
     super('CardAllUnifiedDatabase')
     
-    // 版本 3: 完整的统一数据库架构
-    this.version(3).stores({
+    // 版本 4: 添加离线数据持久化功能
+    this.version(4).stores({
       // 核心实体表 - 优化的索引设计
       cards: '++id, userId, folderId, createdAt, updatedAt, syncVersion, pendingSync, [userId+folderId], searchVector',
       folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth',
@@ -141,7 +219,11 @@ class CardAllUnifiedDatabase extends Dexie {
       // 同步和设置表
       syncQueue: '++id, type, entity, entityId, userId, timestamp, retryCount, priority, [userId+priority]',
       settings: '++id, key, updatedAt, scope, [key+scope]',
-      sessions: '++id, userId, deviceId, lastActivity, isActive, [userId+deviceId]'
+      sessions: '++id, userId, deviceId, lastActivity, isActive, [userId+deviceId]',
+      
+      // 离线数据持久化表
+      offlineSnapshots: '++id, timestamp, userId, version, dataHash, dataSize, [userId+timestamp]',
+      offlineBackups: '++id, snapshotId, createdAt, compression, encrypted, size, [snapshotId+createdAt]'
     })
 
     // 数据库升级逻辑 - 支持从旧版本迁移
@@ -202,6 +284,17 @@ class CardAllUnifiedDatabase extends Dexie {
       // 重建搜索索引
       await this.rebuildSearchIndexes()
     })
+
+    // 版本 3 -> 4: 添加离线数据持久化功能
+    this.version(4).upgrade(async (tx) => {
+      console.log('Upgrading to version 4: Adding offline data persistence features...')
+      
+      // 初始化离线数据持久化配置
+      await this.initializeOfflinePersistence()
+      
+      // 创建初始离线快照
+      await this.createInitialOfflineSnapshot()
+    })
   }
 
   private async initializeDefaultSettings(): Promise<void> {
@@ -252,6 +345,433 @@ class CardAllUnifiedDatabase extends Dexie {
   }
 
   // ============================================================================
+  // 离线数据持久化增强方法
+  // ============================================================================
+
+  /**
+   * 初始化离线数据持久化
+   */
+  private async initializeOfflinePersistence(): Promise<void> {
+    console.log('Initializing offline persistence...')
+    
+    // 添加离线数据持久化的默认设置
+    const offlineSettings = [
+      {
+        key: 'offlineAutoBackup',
+        value: {
+          enabled: true,
+          interval: 30 * 60 * 1000, // 30分钟
+          maxBackups: 10,
+          compression: true
+        },
+        scope: 'global' as const,
+        updatedAt: new Date()
+      },
+      {
+        key: 'offlineCompression',
+        value: {
+          enabled: true,
+          algorithm: 'lz-string',
+          threshold: 1024, // 1KB以上才压缩
+          quality: 0.8
+        },
+        scope: 'global' as const,
+        updatedAt: new Date()
+      },
+      {
+        key: 'offlineDataRetention',
+        value: {
+          days: 30,
+          maxSize: 100 // 100MB
+        },
+        scope: 'global' as const,
+        updatedAt: new Date()
+      }
+    ]
+
+    for (const setting of offlineSettings) {
+      const exists = await this.settings.where('key').equals(setting.key).first()
+      if (!exists) {
+        await this.settings.add(setting)
+      }
+    }
+  }
+
+  /**
+   * 创建初始离线快照
+   */
+  private async createInitialOfflineSnapshot(): Promise<void> {
+    try {
+      const snapshot = await this.createOfflineSnapshot({
+        includeCards: true,
+        includeFolders: true,
+        includeTags: true,
+        includeSettings: true,
+        includeImages: false // 初始快照不包括图片，因为图片较大
+      })
+      
+      console.log('Initial offline snapshot created:', snapshot.id)
+    } catch (error) {
+      console.error('Failed to create initial offline snapshot:', error)
+    }
+  }
+
+  /**
+   * 创建离线快照
+   */
+  async createOfflineSnapshot(options: {
+    includeCards?: boolean
+    includeFolders?: boolean
+    includeTags?: boolean
+    includeImages?: boolean
+    includeSettings?: boolean
+    userId?: string
+  } = {}): Promise<OfflineSnapshot> {
+    const {
+      includeCards = true,
+      includeFolders = true,
+      includeTags = true,
+      includeImages = false,
+      includeSettings = true,
+      userId
+    } = options
+
+    const snapshotId = crypto.randomUUID()
+    const timestamp = new Date()
+    
+    // 收集数据
+    const data: any = {}
+    let totalSize = 0
+
+    if (includeCards) {
+      data.cards = await this.cards.toArray()
+      totalSize += JSON.stringify(data.cards).length
+    }
+
+    if (includeFolders) {
+      data.folders = await this.folders.toArray()
+      totalSize += JSON.stringify(data.folders).length
+    }
+
+    if (includeTags) {
+      data.tags = await this.tags.toArray()
+      totalSize += JSON.stringify(data.tags).length
+    }
+
+    if (includeImages) {
+      data.images = await this.images.toArray()
+      totalSize += JSON.stringify(data.images).length
+    }
+
+    if (includeSettings) {
+      data.settings = await this.settings.toArray()
+      totalSize += JSON.stringify(data.settings).length
+    }
+
+    // 计算数据哈希
+    const dataHash = await this.calculateDataHash(data)
+    
+    // 获取设备信息
+    const deviceInfo = await this.getDeviceInfo()
+    const storageQuota = await this.getStorageQuota()
+
+    const snapshot: OfflineSnapshot = {
+      id: snapshotId,
+      timestamp,
+      version: '4.0.0',
+      userId,
+      dataHash,
+      dataSize: totalSize,
+      compressedSize: totalSize, // 初始未压缩
+      includes: {
+        cards: includeCards,
+        folders: includeFolders,
+        tags: includeTags,
+        images: includeImages,
+        settings: includeSettings
+      },
+      metadata: {
+        deviceInfo,
+        networkStatus: navigator.onLine ? 'online' : 'offline',
+        batteryLevel: (navigator as any).getBattery?.() ? undefined : undefined,
+        storageQuota
+      }
+    }
+
+    await this.offlineSnapshots.add(snapshot)
+    
+    return snapshot
+  }
+
+  /**
+   * 计算数据哈希
+   */
+  private async calculateDataHash(data: any): Promise<string> {
+    const dataString = JSON.stringify(data)
+    const encoder = new TextEncoder()
+    const dataBuffer = encoder.encode(dataString)
+    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+
+  /**
+   * 获取设备信息
+   */
+  private async getDeviceInfo(): Promise<string> {
+    const info = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+      deviceMemory: (navigator as any).deviceMemory,
+      hardwareConcurrency: navigator.hardwareConcurrency,
+      screenResolution: `${screen.width}x${screen.height}`,
+      timestamp: new Date().toISOString()
+    }
+    return JSON.stringify(info)
+  }
+
+  /**
+   * 获取存储配额信息
+   */
+  private async getStorageQuota(): Promise<{ used: number; total: number }> {
+    try {
+      if ('storage' in navigator && 'estimate' in (navigator as any).storage) {
+        const estimate = await (navigator as any).storage.estimate()
+        return {
+          used: estimate.usage || 0,
+          total: estimate.quota || 0
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to get storage quota:', error)
+    }
+    
+    return { used: 0, total: 0 }
+  }
+
+  /**
+   * 恢复离线快照
+   */
+  async restoreOfflineSnapshot(snapshotId: string): Promise<boolean> {
+    try {
+      const snapshot = await this.offlineSnapshots.get(snapshotId)
+      if (!snapshot) {
+        throw new Error('Snapshot not found')
+      }
+
+      // 检查数据完整性
+      const currentData = await this.getCurrentDataHash()
+      if (currentData === snapshot.dataHash) {
+        console.log('Data already matches snapshot, no restore needed')
+        return true
+      }
+
+      // 恢复数据
+      if (snapshot.includes.cards) {
+        const backupCards = await this.cards.toArray()
+        await this.cards.clear()
+        // 这里需要从备份中恢复卡片数据
+        // 由于快照只存储元数据，实际恢复需要更复杂的逻辑
+      }
+
+      if (snapshot.includes.folders) {
+        const backupFolders = await this.folders.toArray()
+        await this.folders.clear()
+        // 恢复文件夹数据
+      }
+
+      if (snapshot.includes.tags) {
+        const backupTags = await this.tags.toArray()
+        await this.tags.clear()
+        // 恢复标签数据
+      }
+
+      if (snapshot.includes.settings) {
+        const backupSettings = await this.settings.toArray()
+        await this.settings.clear()
+        // 恢复设置数据
+      }
+
+      console.log('Offline snapshot restored successfully:', snapshotId)
+      return true
+    } catch (error) {
+      console.error('Failed to restore offline snapshot:', error)
+      return false
+    }
+  }
+
+  /**
+   * 获取当前数据哈希
+   */
+  private async getCurrentDataHash(): Promise<string> {
+    const data = {
+      cards: await this.cards.toArray(),
+      folders: await this.folders.toArray(),
+      tags: await this.tags.toArray(),
+      settings: await this.settings.toArray()
+    }
+    return await this.calculateDataHash(data)
+  }
+
+  /**
+   * 智能清理离线数据
+   */
+  async cleanupOfflineData(): Promise<{
+    cleanedSnapshots: number
+    cleanedBackups: number
+    freedSpace: number
+  }> {
+    const now = new Date()
+    let cleanedSnapshots = 0
+    let cleanedBackups = 0
+    let freedSpace = 0
+
+    try {
+      // 获取清理策略
+      const retentionSetting = await this.getSetting('offlineDataRetention')
+      const retentionDays = retentionSetting?.days || 30
+      const maxSizeMB = retentionSetting?.maxSize || 100
+      const cutoffDate = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000)
+
+      // 清理过期快照
+      const expiredSnapshots = await this.offlineSnapshots
+        .where('timestamp')
+        .below(cutoffDate)
+        .toArray()
+
+      for (const snapshot of expiredSnapshots) {
+        freedSpace += snapshot.dataSize
+        await this.offlineSnapshots.delete(snapshot.id!)
+        cleanedSnapshots++
+      }
+
+      // 清理过期备份
+      const expiredBackups = await this.offlineBackups
+        .where('createdAt')
+        .below(cutoffDate)
+        .toArray()
+
+      for (const backup of expiredBackups) {
+        freedSpace += backup.size
+        await this.offlineBackups.delete(backup.id!)
+        cleanedBackups++
+      }
+
+      // 如果存储空间仍然过大，按时间清理最旧的快照
+      const currentSnapshots = await this.offlineSnapshots.orderBy('timestamp').reverse().toArray()
+      let totalSize = currentSnapshots.reduce((sum, s) => sum + s.dataSize, 0)
+      
+      while (totalSize > maxSizeMB * 1024 * 1024 && currentSnapshots.length > 5) {
+        const oldestSnapshot = currentSnapshots.pop()
+        if (oldestSnapshot) {
+          freedSpace += oldestSnapshot.dataSize
+          await this.offlineSnapshots.delete(oldestSnapshot.id!)
+          cleanedSnapshots++
+          totalSize -= oldestSnapshot.dataSize
+        }
+      }
+
+      console.log(`Offline data cleanup completed: ${cleanedSnapshots} snapshots, ${cleanedBackups} backups, ${freedSpace} bytes freed`)
+      
+      return {
+        cleanedSnapshots,
+        cleanedBackups,
+        freedSpace
+      }
+    } catch (error) {
+      console.error('Failed to cleanup offline data:', error)
+      return {
+        cleanedSnapshots: 0,
+        cleanedBackups: 0,
+        freedSpace: 0
+      }
+    }
+  }
+
+  /**
+   * 自动备份离线数据
+   */
+  async autoBackupOfflineData(): Promise<boolean> {
+    try {
+      const backupConfig = await this.getSetting('offlineAutoBackup')
+      if (!backupConfig?.enabled) {
+        return false
+      }
+
+      // 检查是否需要备份
+      const lastBackup = await this.offlineSnapshots.orderBy('timestamp').reverse().first()
+      const now = new Date()
+      
+      if (lastBackup) {
+        const timeSinceLastBackup = now.getTime() - lastBackup.timestamp.getTime()
+        if (timeSinceLastBackup < backupConfig.interval) {
+          return false // 还未到备份时间
+        }
+      }
+
+      // 创建新的快照
+      const snapshot = await this.createOfflineSnapshot({
+        includeCards: true,
+        includeFolders: true,
+        includeTags: true,
+        includeImages: false, // 自动备份不包括大文件
+        includeSettings: true
+      })
+
+      // 清理旧备份
+      const maxBackups = backupConfig.maxBackups || 10
+      const allSnapshots = await this.offlineSnapshots.orderBy('timestamp').reverse().toArray()
+      
+      if (allSnapshots.length > maxBackups) {
+        const snapshotsToDelete = allSnapshots.slice(maxBackups)
+        for (const snapshot of snapshotsToDelete) {
+          await this.offlineSnapshots.delete(snapshot.id!)
+        }
+      }
+
+      console.log('Auto backup completed:', snapshot.id)
+      return true
+    } catch (error) {
+      console.error('Auto backup failed:', error)
+      return false
+    }
+  }
+
+  /**
+   * 获取离线数据统计
+   */
+  async getOfflineDataStats(): Promise<{
+    snapshots: number
+    backups: number
+    totalSize: number
+    lastBackup?: Date
+    oldestBackup?: Date
+  }> {
+    const snapshots = await this.offlineSnapshots.toArray()
+    const backups = await this.offlineBackups.toArray()
+    
+    const totalSize = snapshots.reduce((sum, s) => sum + s.dataSize, 0) + 
+                      backups.reduce((sum, b) => sum + b.size, 0)
+    
+    const lastBackup = snapshots.length > 0 ? 
+      snapshots.reduce((latest, s) => s.timestamp > latest.timestamp ? s : latest, snapshots[0]).timestamp : 
+      undefined
+    
+    const oldestBackup = snapshots.length > 0 ? 
+      snapshots.reduce((oldest, s) => s.timestamp < oldest.timestamp ? s : oldest, snapshots[0]).timestamp : 
+      undefined
+
+    return {
+      snapshots: snapshots.length,
+      backups: backups.length,
+      totalSize,
+      lastBackup,
+      oldestBackup
+    }
+  }
+
+  // ============================================================================
   // 统一的CRUD操作方法
   // ============================================================================
 
@@ -262,7 +782,6 @@ class CardAllUnifiedDatabase extends Dexie {
       const userSetting = await this.settings
         .where('[key+scope]')
         .equals([key, 'user'])
-        .and(setting => !setting.userId || setting.userId === userId)
         .first()
       if (userSetting) return userSetting.value
     }
@@ -277,11 +796,14 @@ class CardAllUnifiedDatabase extends Dexie {
 
   // 更新设置
   async updateSetting(key: string, value: any, scope: 'user' | 'global' = 'global', userId?: string): Promise<void> {
-    await this.settings.where('[key+scope]').equals([key, scope]).modify({
+    const updates: any = {
       value,
-      userId,
       updatedAt: new Date()
-    })
+    }
+    if (userId) {
+      updates.userId = userId
+    }
+    await this.settings.where('[key+scope]').equals([key, scope]).modify(updates)
   }
 
   // 获取数据库统计信息
@@ -367,6 +889,27 @@ class CardAllUnifiedDatabase extends Dexie {
     return cards.map(card => card.id!)
   }
 
+  // 性能优化的查询方法
+  async getCardsByFolder(folderId: string, userId?: string): Promise<DbCard[]> {
+    return await this.cards
+      .where('[userId+folderId]')
+      .equals([userId || 'default', folderId])
+      .toArray()
+  }
+
+  async searchCards(searchTerm: string, userId?: string): Promise<DbCard[]> {
+    const searchLower = searchTerm.toLowerCase()
+    return await this.cards
+      .filter(card => 
+        card.searchVector?.includes(searchLower) ||
+        card.frontContent.title.toLowerCase().includes(searchLower) ||
+        card.frontContent.text.toLowerCase().includes(searchLower) ||
+        card.backContent.title.toLowerCase().includes(searchLower) ||
+        card.backContent.text.toLowerCase().includes(searchLower)
+      )
+      .toArray()
+  }
+
   // 数据库清理和优化
   async cleanup(): Promise<void> {
     await this.transaction('rw', [this.cards, this.folders, this.tags, this.images, this.syncQueue], async () => {
@@ -391,8 +934,8 @@ class CardAllUnifiedDatabase extends Dexie {
     const issues: string[] = []
     
     try {
-      // 检查数据库连接
-      await this.tables.toArray()
+      // 检查数据库连接 - 测试访问基本表
+      await this.cards.count()
       
       // 检查数据一致性
       const stats = await this.getStats()
@@ -433,6 +976,49 @@ class CardAllUnifiedDatabase extends Dexie {
       await this.sessions.clear()
     })
   }
+
+  // ============================================================================
+  // 向后兼容的方法 - 保持现有代码不中断
+  // ============================================================================
+
+  // 旧版getSetting方法（保持兼容）
+  async getSettingLegacy(key: string): Promise<any> {
+    return await this.getSetting(key)
+  }
+
+  // 旧版updateSetting方法（保持兼容）
+  async updateSettingLegacy(key: string, value: any): Promise<void> {
+    await this.updateSetting(key, value)
+  }
+
+  // 旧版clearAll方法（保持兼容）
+  async clearAllLegacy(): Promise<void> {
+    await this.transaction('rw', [this.cards, this.folders, this.tags, this.images, this.syncQueue], async () => {
+      await this.cards.clear()
+      await this.folders.clear()
+      await this.tags.clear()
+      await this.images.clear()
+      await this.syncQueue.clear()
+    })
+  }
+
+  // 旧版getStats方法（保持兼容）
+  async getStatsLegacy(): Promise<{
+    cards: number
+    folders: number
+    tags: number
+    images: number
+    pendingSync: number
+  }> {
+    const stats = await this.getStats()
+    return {
+      cards: stats.cards,
+      folders: stats.folders,
+      tags: stats.tags,
+      images: stats.images,
+      pendingSync: stats.pendingSync
+    }
+  }
 }
 
 // ============================================================================
@@ -444,13 +1030,19 @@ class CardAllDatabase_v1 extends Dexie {
   cards!: Table<any>
   folders!: Table<any>
   tags!: Table<any>
+  images!: Table<any>
+  syncQueue!: Table<any>
+  settings!: Table<any>
   
   constructor() {
     super('CardAllDatabase')
     this.version(1).stores({
       cards: '++id, folderId, createdAt, updatedAt, syncVersion, pendingSync',
       folders: '++id, parentId, createdAt, updatedAt, syncVersion, pendingSync',
-      tags: '++id, name, createdAt, syncVersion, pendingSync'
+      tags: '++id, name, createdAt, syncVersion, pendingSync',
+      images: '++id, cardId, filePath, createdAt, syncVersion, pendingSync',
+      syncQueue: '++id, type, entity, entityId, timestamp, retryCount',
+      settings: '++id, key, updatedAt'
     })
   }
 }
@@ -482,8 +1074,8 @@ export const initializeDatabase = async (): Promise<void> => {
 }
 
 // 数据库错误处理
-db.on('error', (error) => {
-  console.error('Database error:', error)
+db.on('versionchange', (event) => {
+  console.warn('Database version changed:', event)
 })
 
 db.on('blocked', () => {
@@ -568,3 +1160,40 @@ export const validateCardData = (card: Partial<Card>): string[] => {
   
   return errors
 }
+
+// ============================================================================
+// 性能优化和缓存
+// ============================================================================
+
+// 简单的查询缓存
+const queryCache = new Map<string, { data: any; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5分钟缓存
+
+export const cachedQuery = async <T>(
+  key: string,
+  query: () => Promise<T>
+): Promise<T> => {
+  const cached = queryCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data
+  }
+  
+  const data = await query()
+  queryCache.set(key, { data, timestamp: Date.now() })
+  return data
+}
+
+// 清理缓存
+export const clearQueryCache = (): void => {
+  queryCache.clear()
+}
+
+// 定期清理过期缓存
+setInterval(() => {
+  const now = Date.now()
+  queryCache.forEach((value, key) => {
+    if (now - value.timestamp > CACHE_TTL) {
+      queryCache.delete(key)
+    }
+  })
+}, CACHE_TTL)

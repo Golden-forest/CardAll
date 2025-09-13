@@ -1,0 +1,10 @@
+4bdeee7b0e968a35f91674b9d80f6d37
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ToastProvider = void 0;
+// Toast Provider Mock for testing
+const ToastProvider = ({ children }) => {
+    return children;
+};
+exports.ToastProvider = ToastProvider;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJmaWxlIjoiRDpcXFByb2plY3RzXFxDYXJkRXZlcnl0aGluZ1xcY2FyZGFsbC1wcm90b3R5cGVcXHNyY1xcY29tcG9uZW50c1xcdWlcXHRvYXN0LXByb3ZpZGVyLnRzeCIsIm1hcHBpbmdzIjoiOzs7QUFBQSxrQ0FBa0M7QUFDM0IsTUFBTSxhQUFhLEdBQUcsQ0FBQyxFQUFFLFFBQVEsRUFBRSxFQUFFLEVBQUU7SUFDNUMsT0FBTyxRQUFRLENBQUE7QUFDakIsQ0FBQyxDQUFBO0FBRlksUUFBQSxhQUFhLGlCQUV6QiIsIm5hbWVzIjpbXSwic291cmNlcyI6WyJEOlxcUHJvamVjdHNcXENhcmRFdmVyeXRoaW5nXFxjYXJkYWxsLXByb3RvdHlwZVxcc3JjXFxjb21wb25lbnRzXFx1aVxcdG9hc3QtcHJvdmlkZXIudHN4Il0sInNvdXJjZXNDb250ZW50IjpbIi8vIFRvYXN0IFByb3ZpZGVyIE1vY2sgZm9yIHRlc3RpbmdcclxuZXhwb3J0IGNvbnN0IFRvYXN0UHJvdmlkZXIgPSAoeyBjaGlsZHJlbiB9KSA9PiB7XHJcbiAgcmV0dXJuIGNoaWxkcmVuXHJcbn0iXSwidmVyc2lvbiI6M30=
