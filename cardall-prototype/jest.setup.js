@@ -41,31 +41,54 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock
 })
 
-// 模拟 IndexedDB
-class MockIndexedDB {
-  constructor() {
-    this.databases = new Map()
-  }
-  
-  async open(name, version) {
-    if (!this.databases.has(name)) {
-      this.databases.set(name, {
-        version: version || 1,
-        tables: new Map()
-      })
-    }
-    return Promise.resolve(this.databases.get(name))
-  }
-  
-  async deleteDatabase(name) {
-    this.databases.delete(name)
-    return Promise.resolve()
+// 使用 fake-indexeddb 模拟 IndexedDB
+const FIDB = require('fake-indexeddb')
+
+// 设置全局 IndexedDB
+global.indexedDB = FIDB.indexedDB
+global.IDBKeyRange = FIDB.IDBKeyRange
+global.IDBTransaction = FIDB.IDBTransaction
+global.IDBDatabase = FIDB.IDBDatabase
+global.IDBObjectStore = FIDB.IDBObjectStore
+global.IDBCursor = FIDB.IDBCursor
+global.IDBCursorWithValue = FIDB.IDBCursorWithValue
+global.IDBOpenDBRequest = FIDB.IDBOpenDBRequest
+global.IDBRequest = FIDB.IDBRequest
+global.IDBFactory = FIDB.IDBFactory
+
+Object.defineProperty(window, 'indexedDB', {
+  value: FIDB.indexedDB
+})
+
+// 模拟 structuredClone
+if (!global.structuredClone) {
+  global.structuredClone = (obj) => {
+    return JSON.parse(JSON.stringify(obj))
   }
 }
 
-Object.defineProperty(window, 'indexedDB', {
-  value: new MockIndexedDB()
-})
+// 模拟 TextEncoder
+if (!global.TextEncoder) {
+  global.TextEncoder = class TextEncoder {
+    encode(string) {
+      const chars = encodeURIComponent(string).split(/%..|./)
+      const byteArray = new Uint8Array(chars.length)
+      for (let i = 0; i < chars.length; i++) {
+        byteArray[i] = chars[i].charCodeAt(0)
+      }
+      return byteArray
+    }
+  }
+}
+
+// 模拟 TextDecoder
+if (!global.TextDecoder) {
+  global.TextDecoder = class TextDecoder {
+    decode(byteArray) {
+      return String.fromCharCode.apply(null, byteArray)
+    }
+  }
+}
 
 // 模拟 crypto.randomUUID
 Object.defineProperty(crypto, 'randomUUID', {
@@ -77,6 +100,19 @@ Object.defineProperty(crypto, 'randomUUID', {
     })
   }
 })
+
+// 模拟 crypto.subtle
+if (!crypto.subtle) {
+  crypto.subtle = {
+    async digest(algorithm, data) {
+      // 简单的模拟哈希函数，用于测试
+      const crypto = require('crypto')
+      const hash = crypto.createHash('sha256')
+      hash.update(Buffer.from(data))
+      return Buffer.from(hash.digest())
+    }
+  }
+}
 
 // 模拟 performance API
 Object.defineProperty(window, 'performance', {

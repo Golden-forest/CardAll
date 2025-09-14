@@ -4,7 +4,7 @@ describe('NetworkMonitorService', () => {
   let service: NetworkMonitorService
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     service = new NetworkMonitorService()
     
     // 模拟网络相关 API
@@ -15,8 +15,8 @@ describe('NetworkMonitorService', () => {
         downlink: 10,
         rtt: 100,
         saveData: false,
-        addEventListener: jest.fn(),
-        removeEventListener: jest.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
       },
       writable: true,
     })
@@ -52,7 +52,7 @@ describe('NetworkMonitorService', () => {
 
   describe('网络状态监测', () => {
     it('应该检测在线状态变化', async () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       service.onNetworkChange(mockListener)
       
       await service.initialize()
@@ -73,7 +73,7 @@ describe('NetworkMonitorService', () => {
     })
 
     it('应该检测连接类型变化', async () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       service.onNetworkChange(mockListener)
       
       await service.initialize()
@@ -98,17 +98,17 @@ describe('NetworkMonitorService', () => {
     })
 
     it('应该定期检测网络质量', async () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       
       await service.initialize()
       service.startMonitoring()
       
       // 模拟质量检测
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       service.onNetworkChange(mockListener)
       
       // 等待第一次质量检测
-      jest.advanceTimersByTime(31000) // 31秒，超过默认的30秒间隔
+      vi.advanceTimersByTime(31000) // 31秒，超过默认的30秒间隔
       
       expect(mockListener).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -116,7 +116,7 @@ describe('NetworkMonitorService', () => {
         })
       )
       
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
   })
 
@@ -184,7 +184,7 @@ describe('NetworkMonitorService', () => {
 
   describe('连接测试', () => {
     it('应该成功测试连接到端点', async () => {
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         headers: new Map([['content-type', 'application/json']]),
@@ -199,7 +199,7 @@ describe('NetworkMonitorService', () => {
     })
 
     it('应该处理连接测试失败', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'))
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
       
       const result = await (service as any).testConnection('https://api.example.com/health')
       
@@ -209,7 +209,7 @@ describe('NetworkMonitorService', () => {
 
     it('应该测量下载带宽', async () => {
       const mockData = new Array(1024 * 1024).join('x') // 1MB 数据
-      global.fetch = jest.fn().mockResolvedValue({
+      global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         headers: new Map([['content-length', mockData.length.toString()]]),
@@ -332,7 +332,7 @@ describe('NetworkMonitorService', () => {
       await service.initialize()
       service.startMonitoring()
       
-      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener')
+      const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener')
       
       service.stopMonitoring()
       
@@ -343,7 +343,7 @@ describe('NetworkMonitorService', () => {
 
   describe('事件处理', () => {
     it('应该能够添加和移除事件监听器', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       const unsubscribe = service.onNetworkChange(mockListener)
       
       expect(typeof unsubscribe).toBe('function')
@@ -359,8 +359,8 @@ describe('NetworkMonitorService', () => {
     })
 
     it('应该正确通知多个监听器', () => {
-      const mockListener1 = jest.fn()
-      const mockListener2 = jest.fn()
+      const mockListener1 = vi.fn()
+      const mockListener2 = vi.fn()
       
       service.onNetworkChange(mockListener1)
       service.onNetworkChange(mockListener2)
@@ -383,7 +383,7 @@ describe('NetworkMonitorService', () => {
   describe('错误处理', () => {
     it('应该处理网络测试中的异常', async () => {
       // 模拟 fetch 抛出异常
-      global.fetch = jest.fn().mockImplementation(() => {
+      global.fetch = vi.fn().mockImplementation(() => {
         throw new Error('Connection timeout')
       })
       

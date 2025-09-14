@@ -199,6 +199,14 @@ export class SyncStrategyService {
     this.initializeConflictResolvers()
   }
 
+  // 初始化服务
+  public async initialize(): Promise<void> {
+    // 在测试环境中确保基本的初始化
+    console.log('SyncStrategyService initialized')
+    // 冲突解决器已在构造函数中初始化
+    // 这里可以添加其他必要的初始化逻辑
+  }
+
   // 初始化冲突解决器
   private initializeConflictResolvers(): void {
     this.conflictResolvers.set('local-wins', this.resolveLocalWins.bind(this))
@@ -1546,26 +1554,7 @@ export class SyncStrategyService {
     this.notifyListeners('syncProgress', progress)
   }
 
-  // 处理远程增量数据
-  private async processRemoteDelta(
-    userId: string,
-    entityType: 'card' | 'folder' | 'tag' | 'image',
-    remoteData: any[],
-    progress: SyncProgress
-  ): Promise<void> {
-    for (const remoteItem of remoteData) {
-      try {
-        await this.processRemoteItem(userId, entityType, remoteItem)
-        progress.successfulItems++
-      } catch (error) {
-        console.error(`Failed to process remote ${entityType}:`, remoteItem.id, error)
-        progress.failedItems++
-      }
-      
-      this.updateProgress(progress, 1)
-    }
-  }
-
+  
   // ============================================================================
   // 事件监听器管理
   // ============================================================================

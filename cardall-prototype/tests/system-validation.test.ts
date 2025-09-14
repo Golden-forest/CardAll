@@ -6,7 +6,7 @@ describe('Test System Validation', () => {
   })
 
   test('Mock services are available', () => {
-    expect(jest.fn()).toBeDefined()
+    expect(vi.fn()).toBeDefined()
     expect(global.fetch).toBeDefined()
   })
 

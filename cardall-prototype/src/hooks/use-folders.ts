@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction } from '@/types/card'
+import { secureStorage } from '@/utils/secure-storage'
 
 // Mock data for development
 const mockFolders: Folder[] = [
@@ -186,7 +187,10 @@ export function useFolders() {
   // Auto-save to localStorage
   useEffect(() => {
     const saveTimer = setTimeout(() => {
-      localStorage.setItem('cardall-folders', JSON.stringify(folders))
+      secureStorage.set('folders', folders, {
+        validate: true,
+        encrypt: true
+      })
     }, 1000)
 
     return () => clearTimeout(saveTimer)
@@ -194,14 +198,13 @@ export function useFolders() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('cardall-folders')
-    if (saved) {
-      try {
-        const parsedFolders = JSON.parse(saved)
-        setFolders(parsedFolders)
-      } catch (error) {
-        console.error('Failed to load saved folders:', error)
-      }
+    const savedFolders = secureStorage.get<Folder[]>('folders', {
+      validate: true,
+      encrypt: true
+    })
+
+    if (savedFolders) {
+      setFolders(savedFolders)
     }
   }, [])
 

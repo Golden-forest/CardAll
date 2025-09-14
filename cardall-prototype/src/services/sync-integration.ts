@@ -6,6 +6,8 @@ import { networkMonitorService } from './network-monitor'
 import { db, type DbCard, type DbFolder, type DbTag, type DbImage } from './database'
 import { authService } from './auth'
 import { supabase } from './supabase'
+import { dataConsistencyChecker } from './data-consistency-checker'
+import { consistencyMonitor } from './consistency-monitor'
 
 // ============================================================================
 // 同步系统集成服务 - 统一接口
@@ -56,6 +58,8 @@ export interface SyncSystemConfig {
     syncStrategy: boolean
     performanceOptimizer: boolean
     conflictResolution: boolean
+    consistencyChecker: boolean
+    consistencyMonitor: boolean
   }
   
   // 同步策略
@@ -89,7 +93,9 @@ export const DEFAULT_SYNC_CONFIG: SyncSystemConfig = {
     networkMonitor: true,
     syncStrategy: true,
     performanceOptimizer: true,
-    conflictResolution: true
+    conflictResolution: true,
+    consistencyChecker: true,
+    consistencyMonitor: true
   },
   
   strategy: {
@@ -144,7 +150,9 @@ export class SyncIntegrationService {
     localQueue: false,
     networkMonitor: false,
     syncStrategy: false,
-    performanceOptimizer: false
+    performanceOptimizer: false,
+    consistencyChecker: false,
+    consistencyMonitor: false
   }
 
   constructor(config: Partial<SyncSystemConfig> = {}) {
@@ -153,22 +161,22 @@ export class SyncIntegrationService {
   }
 
   // 初始化服务
-  private async initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     try {
       console.log('Initializing SyncIntegrationService...')
-      
+
       // 初始化各个组件
       await this.initializeComponents()
-      
+
       // 设置组件间的事件监听
       this.setupComponentIntegration()
-      
+
       // 启动定时任务
       this.startScheduledTasks()
-      
+
       this.isInitialized = true
       console.log('SyncIntegrationService initialized successfully')
-      
+
       this.emitEvent({
         type: 'sync-completed',
         timestamp: new Date(),
@@ -206,6 +214,16 @@ export class SyncIntegrationService {
     // 初始化性能优化器
     if (this.config.components.performanceOptimizer) {
       initPromises.push(this.initializePerformanceOptimizer())
+    }
+
+    // 初始化一致性检查器
+    if (this.config.components.consistencyChecker) {
+      initPromises.push(this.initializeConsistencyChecker())
+    }
+
+    // 初始化一致性监控器
+    if (this.config.components.consistencyMonitor) {
+      initPromises.push(this.initializeConsistencyMonitor())
     }
 
     await Promise.allSettled(initPromises)
@@ -320,6 +338,72 @@ export class SyncIntegrationService {
     }
   }
 
+  // 初始化一致性检查器
+  private async initializeConsistencyChecker(): Promise<void> {
+    try {
+      // 设置一致性检查器事件监听
+      dataConsistencyChecker.addEventListener('inconsistencyFound', (result) => {
+        this.emitEvent({
+          type: 'conflict-detected',
+          timestamp: new Date(),
+          data: { inconsistency: result }
+        })
+      })
+
+      dataConsistencyChecker.addEventListener('checkCompleted', (result) => {
+        // 一致性检查完成时的处理
+        if (result.status === 'inconsistent' || result.status === 'error') {
+          this.emitEvent({
+            type: 'sync-failed',
+            timestamp: new Date(),
+            data: {
+              error: `Consistency check failed: ${result.title}`,
+              type: 'consistency'
+            }
+          })
+        }
+      })
+
+      this.componentsReady.consistencyChecker = true
+      console.log('Consistency checker initialized')
+    } catch (error) {
+      console.error('Failed to initialize consistency checker:', error)
+    }
+  }
+
+  // 初始化一致性监控器
+  private async initializeConsistencyMonitor(): Promise<void> {
+    try {
+      // 设置一致性监控器事件监听
+      consistencyMonitor.addEventListener('alertTriggered', (alert) => {
+        this.emitEvent({
+          type: 'performance-alert',
+          timestamp: new Date(),
+          data: { alert }
+        })
+      })
+
+      consistencyMonitor.addEventListener('metricsUpdated', (metrics) => {
+        // 监控指标更新时的处理
+        if (metrics.systemHealth === 'critical') {
+          this.emitEvent({
+            type: 'sync-failed',
+            timestamp: new Date(),
+            data: {
+              error: 'System health is critical',
+              type: 'health'
+            }
+          })
+        }
+      })
+
+      this.componentsReady.consistencyMonitor = true
+      console.log('Consistency monitor initialized')
+    } catch (error) {
+      console.error('Failed to initialize consistency monitor:', error)
+    }
+  }
+
   // 设置组件间集成
   private setupComponentIntegration(): void {
     // 本地队列与性能优化器的集成
@@ -404,7 +488,17 @@ export class SyncIntegrationService {
       
       // 恢复本地队列
       await localOperationService.retryFailedOperations()
-      
+
+      // 启动一致性检查器
+      if (this.config.components.consistencyChecker && this.componentsReady.consistencyChecker) {
+        await dataConsistencyChecker.start()
+      }
+
+      // 启动一致性监控器
+      if (this.config.components.consistencyMonitor && this.componentsReady.consistencyMonitor) {
+        await consistencyMonitor.start()
+      }
+
       // 触发初始同步
       if (this.shouldAutoSync()) {
         await this.triggerSync()
@@ -447,6 +541,16 @@ export class SyncIntegrationService {
       // 停止网络监控
       if (this.config.components.networkMonitor) {
         networkMonitorService.stopMonitoring()
+      }
+
+      // 停止一致性检查器
+      if (this.config.components.consistencyChecker) {
+        await dataConsistencyChecker.stop()
+      }
+
+      // 停止一致性监控器
+      if (this.config.components.consistencyMonitor) {
+        await consistencyMonitor.stop()
       }
       
       this.emitEvent({
@@ -499,11 +603,22 @@ export class SyncIntegrationService {
       this.emitEvent({
         type: 'sync-completed',
         timestamp: new Date(),
-        data: { 
+        data: {
           message: 'Sync completed successfully',
           lastSyncTime: new Date()
         }
       })
+
+      // 同步完成后触发一致性检查
+      if (this.config.components.consistencyChecker) {
+        setTimeout(async () => {
+          try {
+            await dataConsistencyChecker.performQuickCheck()
+          } catch (error) {
+            console.error('Failed to perform consistency check after sync:', error)
+          }
+        }, 2000) // 延迟2秒确保数据稳定
+      }
     } catch (error) {
       this.emitEvent({
         type: 'sync-failed',
@@ -594,6 +709,28 @@ export class SyncIntegrationService {
     const performanceMetrics = syncPerformanceOptimizer.getCurrentMetrics()
     const queueStats = localOperationService.getQueueStats()
 
+    // 获取一致性验证状态
+    let consistencyStatus = {
+      checkerEnabled: false,
+      monitorEnabled: false,
+      score: 0,
+      health: 'unknown' as 'excellent' | 'good' | 'warning' | 'critical'
+    }
+
+    if (this.config.components.consistencyChecker && this.componentsReady.consistencyChecker) {
+      const consistencyStats = dataConsistencyChecker.getStats()
+      consistencyStatus.checkerEnabled = true
+      consistencyStatus.score = consistencyStats.totalChecks > 0
+        ? Math.round((consistencyStats.successfulChecks / consistencyStats.totalChecks) * 100)
+        : 100
+    }
+
+    if (this.config.components.consistencyMonitor && this.componentsReady.consistencyMonitor) {
+      const monitorMetrics = consistencyMonitor.getCurrentMetrics()
+      consistencyStatus.monitorEnabled = true
+      consistencyStatus.health = monitorMetrics.systemHealth
+    }
+
     // 确定系统健康状态
     let health: SyncSystemStatus['health'] = 'healthy'
     const issues: string[] = []
@@ -640,6 +777,9 @@ export class SyncIntegrationService {
       
       hasConflicts: false, // TODO: 实现冲突检测
       conflictCount: 0,
+
+      // 一致性验证状态
+      consistency: consistencyStatus,
       
       health,
       issues
@@ -814,6 +954,10 @@ export class SyncIntegrationService {
     performance: PerformanceMetrics
     network: any
     queue: any
+    consistency: {
+      checker: any
+      monitor: any
+    }
   }> {
     try {
       const userId = authService.getCurrentUser()?.id
@@ -823,7 +967,11 @@ export class SyncIntegrationService {
         sync: syncStats,
         performance: syncPerformanceOptimizer.getCurrentMetrics(),
         network: networkMonitorService.getCurrentState(),
-        queue: await localOperationService.getQueueStats()
+        queue: await localOperationService.getQueueStats(),
+        consistency: {
+          checker: this.config.components.consistencyChecker ? dataConsistencyChecker.getStats() : null,
+          monitor: this.config.components.consistencyMonitor ? consistencyMonitor.getCurrentMetrics() : null
+        }
       }
     } catch (error) {
       console.error('Failed to get detailed stats:', error)
@@ -948,13 +1096,21 @@ export class SyncIntegrationService {
       if (this.config.components.localQueue) {
         localOperationService.destroy()
       }
-      
+
       if (this.config.components.networkMonitor) {
         networkMonitorService.destroy()
       }
-      
+
       if (this.config.components.performanceOptimizer) {
         syncPerformanceOptimizer.destroy()
+      }
+
+      if (this.config.components.consistencyChecker) {
+        await dataConsistencyChecker.destroy()
+      }
+
+      if (this.config.components.consistencyMonitor) {
+        await consistencyMonitor.destroy()
       }
       
       this.listeners.clear()
@@ -1046,4 +1202,88 @@ export const addImageSyncOperation = async (
     image,
     options
   )
+}
+
+// ============================================================================
+// 一致性验证便利函数
+// ============================================================================
+
+// 执行快速一致性检查
+export const performQuickConsistencyCheck = async (): Promise<any[]> => {
+  try {
+    return await dataConsistencyChecker.performQuickCheck()
+  } catch (error) {
+    console.error('Failed to perform quick consistency check:', error)
+    return []
+  }
+}
+
+// 执行完整一致性检查
+export const performFullConsistencyCheck = async (
+  options?: {
+    entityTypes?: ('card' | 'folder' | 'tag' | 'image')[]
+    checkTypes?: import('./data-consistency-checker').ConsistencyCheckType[]
+  }
+): Promise<any[]> => {
+  try {
+    return await dataConsistencyChecker.performFullCheck(options)
+  } catch (error) {
+    console.error('Failed to perform full consistency check:', error)
+    return []
+  }
+}
+
+// 获取一致性统计
+export const getConsistencyStats = () => {
+  try {
+    return dataConsistencyChecker.getStats()
+  } catch (error) {
+    console.error('Failed to get consistency stats:', error)
+    return null
+  }
+}
+
+// 获取系统健康状态
+export const getConsistencyHealth = () => {
+  try {
+    return consistencyMonitor.getSystemStatus()
+  } catch (error) {
+    console.error('Failed to get consistency health:', error)
+    return null
+  }
+}
+
+// 获取当前监控指标
+export const getConsistencyMetrics = () => {
+  try {
+    return consistencyMonitor.getCurrentMetrics()
+  } catch (error) {
+    console.error('Failed to get consistency metrics:', error)
+    return null
+  }
+}
+
+// 手动触发一致性检查
+export const triggerConsistencyCheck = async (
+  entityType: 'card' | 'folder' | 'tag' | 'image' | 'system',
+  checkType: import('./data-consistency-checker').ConsistencyCheckType
+): Promise<any> => {
+  try {
+    return await dataConsistencyChecker.manualCheck({ entityType, checkType })
+  } catch (error) {
+    console.error('Failed to trigger consistency check:', error)
+    throw error
+  }
+}
+
+// 生成一致性报告
+export const generateConsistencyReport = async (
+  type: 'daily' | 'weekly' | 'monthly' = 'daily'
+): Promise<any> => {
+  try {
+    return await consistencyMonitor.generateReport(type)
+  } catch (error) {
+    console.error('Failed to generate consistency report:', error)
+    throw error
+  }
 }

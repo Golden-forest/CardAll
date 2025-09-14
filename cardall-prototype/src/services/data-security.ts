@@ -1,5 +1,10 @@
-import { db } from './database-unified'
+import { db } from './database'
 import { Card, Folder, Tag } from '@/types/card'
+
+// ============================================================================
+// 增强的数据安全和备份服务
+// 包含加密、威胁检测、审计日志和高级安全功能
+// ============================================================================
 
 // ============================================================================
 // 数据安全和备份服务
@@ -43,23 +48,39 @@ export interface BackupData {
 export interface SecurityConfig {
   encryption: {
     enabled: boolean
-    algorithm: string
+    algorithm: 'AES-256-GCM' | 'AES-128-GCM'
     keyLength: number
+    keyRotationDays: number
   }
   access: {
     sessionTimeout: number
     maxLoginAttempts: number
     requireAuthForBackup: boolean
+    ipWhitelist: string[]
+    rateLimiting: {
+      enabled: boolean
+      maxRequests: number
+      timeWindow: number // 秒
+    }
   }
   audit: {
     enabled: boolean
     logLevel: 'error' | 'warn' | 'info' | 'debug'
     maxLogEntries: number
+    syncToCloud: boolean
   }
   privacy: {
     anonymizeData: boolean
     dataRetentionDays: number
     autoCleanup: boolean
+    dataMasking: boolean
+  }
+  threatDetection: {
+    enabled: boolean
+    blockSuspiciousIP: boolean
+    monitorFailedLogins: boolean
+    scanForSQLInjection: boolean
+    scanForXSS: boolean
   }
 }
 
@@ -89,6 +110,16 @@ export interface SecurityReport {
     lastBackup?: Date
     backupCount: number
     backupSize: number
+  }
+  threatSummary: {
+    totalThreats: number
+    blockedIPs: string[]
+    recentThreats: any[]
+  }
+  encryptionStatus: {
+    enabled: boolean
+    algorithm: string
+    keyRotationDate?: Date
   }
 }
 

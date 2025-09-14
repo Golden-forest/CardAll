@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/1196</span>
+                <span class='fraction'>0/1199</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/1196</span>
+                <span class='fraction'>0/1199</span>
             </div>
         
             
@@ -1258,7 +1258,13 @@
 <a name='L1193'></a><a href='#L1193'>1193</a>
 <a name='L1194'></a><a href='#L1194'>1194</a>
 <a name='L1195'></a><a href='#L1195'>1195</a>
-<a name='L1196'></a><a href='#L1196'>1196</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L1196'></a><a href='#L1196'>1196</a>
+<a name='L1197'></a><a href='#L1197'>1197</a>
+<a name='L1198'></a><a href='#L1198'>1198</a>
+<a name='L1199'></a><a href='#L1199'>1199</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -3084,8 +3090,9 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      // 获取清理策略</span>
-<span class="cstat-no" title="statement not covered" >      const retentionDays = await this.getSetting('offlineDataRetention')?.days || 30</span>
-<span class="cstat-no" title="statement not covered" >      const maxSizeMB = await this.getSetting('offlineDataRetention')?.maxSize || 100</span>
+<span class="cstat-no" title="statement not covered" >      const retentionSetting = await this.getSetting('offlineDataRetention')</span>
+<span class="cstat-no" title="statement not covered" >      const retentionDays = retentionSetting?.days || 30</span>
+<span class="cstat-no" title="statement not covered" >      const maxSizeMB = retentionSetting?.maxSize || 100</span>
 <span class="cstat-no" title="statement not covered" >      const cutoffDate = new Date(now.getTime() - retentionDays * 24 * 60 * 60 * 1000)</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      // 清理过期快照</span>
@@ -3236,7 +3243,6 @@
 <span class="cstat-no" title="statement not covered" >      const userSetting = await this.settings</span>
 <span class="cstat-no" title="statement not covered" >        .where('[key+scope]')</span>
 <span class="cstat-no" title="statement not covered" >        .equals([key, 'user'])</span>
-<span class="cstat-no" title="statement not covered" >        .and(setting =&gt; !setting.userId || setting.userId === userId)</span>
 <span class="cstat-no" title="statement not covered" >        .first()</span>
 <span class="cstat-no" title="statement not covered" >      if (userSetting) return userSetting.value</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
@@ -3251,11 +3257,14 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  // 更新设置</span>
 <span class="cstat-no" title="statement not covered" >  async updateSetting(key: string, value: any, scope: 'user' | 'global' = 'global', userId?: string): Promise&lt;void&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    await this.settings.where('[key+scope]').equals([key, scope]).modify({</span>
+<span class="cstat-no" title="statement not covered" >    const updates: any = {</span>
 <span class="cstat-no" title="statement not covered" >      value,</span>
-<span class="cstat-no" title="statement not covered" >      userId,</span>
 <span class="cstat-no" title="statement not covered" >      updatedAt: new Date()</span>
-<span class="cstat-no" title="statement not covered" >    })</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    if (userId) {</span>
+<span class="cstat-no" title="statement not covered" >      updates.userId = userId</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    await this.settings.where('[key+scope]').equals([key, scope]).modify(updates)</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  // 获取数据库统计信息</span>
@@ -3386,8 +3395,8 @@
 <span class="cstat-no" title="statement not covered" >    const issues: string[] = []</span>
 <span class="cstat-no" title="statement not covered" >    </span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      // 检查数据库连接</span>
-<span class="cstat-no" title="statement not covered" >      await this.tables.toArray()</span>
+<span class="cstat-no" title="statement not covered" >      // 检查数据库连接 - 测试访问基本表</span>
+<span class="cstat-no" title="statement not covered" >      await this.cards.count()</span>
 <span class="cstat-no" title="statement not covered" >      </span>
 <span class="cstat-no" title="statement not covered" >      // 检查数据一致性</span>
 <span class="cstat-no" title="statement not covered" >      const stats = await this.getStats()</span>
@@ -3445,7 +3454,7 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  // 旧版clearAll方法（保持兼容）</span>
 <span class="cstat-no" title="statement not covered" >  async clearAllLegacy(): Promise&lt;void&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    await this.transaction('rw', this.cards, this.folders, this.tags, this.images, this.syncQueue, async () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    await this.transaction('rw', [this.cards, this.folders, this.tags, this.images, this.syncQueue], async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      await this.cards.clear()</span>
 <span class="cstat-no" title="statement not covered" >      await this.folders.clear()</span>
 <span class="cstat-no" title="statement not covered" >      await this.tags.clear()</span>
@@ -3526,8 +3535,8 @@
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// 数据库错误处理</span>
-<span class="cstat-no" title="statement not covered" >db.on('error', (error) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  console.error('Database error:', error)</span>
+<span class="cstat-no" title="statement not covered" >db.on('versionchange', (event) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  console.warn('Database version changed:', event)</span>
 <span class="cstat-no" title="statement not covered" >})</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >db.on('blocked', () =&gt; {</span>
@@ -3643,11 +3652,11 @@
 <span class="cstat-no" title="statement not covered" >// 定期清理过期缓存</span>
 <span class="cstat-no" title="statement not covered" >setInterval(() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const now = Date.now()</span>
-<span class="cstat-no" title="statement not covered" >  for (const [key, value] of queryCache.entries()) {</span>
+<span class="cstat-no" title="statement not covered" >  queryCache.forEach((value, key) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (now - value.timestamp &gt; CACHE_TTL) {</span>
 <span class="cstat-no" title="statement not covered" >      queryCache.delete(key)</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
-<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" >  })</span>
 <span class="cstat-no" title="statement not covered" >}, CACHE_TTL)</span></pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -3655,7 +3664,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-13T02:41:57.646Z
+                at 2025-09-13T15:54:57.028Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

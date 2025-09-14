@@ -2,31 +2,31 @@ import { LocalOperationService, type LocalSyncOperation, type QueueStats, type Q
 import { db } from '@/services/database'
 
 // 模拟数据库
-jest.mock('@/services/database', () => ({
+vi.mock('@/services/database', () => ({
   db: {
-    open: jest.fn().mockResolvedValue(undefined),
+    open: vi.fn().mockResolvedValue(undefined),
     syncQueue: {
-      add: jest.fn(),
-      get: jest.fn(),
-      getAll: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      clear: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      and: jest.fn().mockReturnThis(),
-      below: jest.fn().mockReturnThis(),
-      anyOf: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      reverse: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      filter: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      offset: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
-      count: jest.fn(),
-      bulkDelete: jest.fn(),
-      first: jest.fn(),
+      add: vi.fn(),
+      get: vi.fn(),
+      getAll: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      clear: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      and: vi.fn().mockReturnThis(),
+      below: vi.fn().mockReturnThis(),
+      anyOf: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      reverse: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      filter: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      offset: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
+      count: vi.fn(),
+      bulkDelete: vi.fn(),
+      first: vi.fn(),
     }
   }
 }))
@@ -36,16 +36,16 @@ describe('LocalOperationService', () => {
   let mockDb: any
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     mockDb = db.syncQueue
     service = new LocalOperationService()
     
     // 模拟 localStorage
     const localStorageMock = {
-      getItem: jest.fn(),
-      setItem: jest.fn(),
-      removeItem: jest.fn(),
-      clear: jest.fn(),
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
     }
     Object.defineProperty(window, 'localStorage', { value: localStorageMock })
   })
@@ -71,19 +71,19 @@ describe('LocalOperationService', () => {
         }
       ]
       
-      localStorage.getItem = jest.fn().mockReturnValue(JSON.stringify(mockQueue))
+      localStorage.getItem = vi.fn().mockReturnValue(JSON.stringify(mockQueue))
       
       // 初始化时不模拟 toArray，让它实际反映恢复的操作
       let restoredOperations: any[] = []
       
       // 模拟 add 方法来捕获恢复的操作
-      mockDb.add = jest.fn().mockImplementation((operation) => {
+      mockDb.add = vi.fn().mockImplementation((operation) => {
         restoredOperations.push(operation)
         return Promise.resolve(operation.id)
       })
       
       // 模拟 toArray 返回恢复的操作
-      mockDb.toArray = jest.fn().mockImplementation(() => {
+      mockDb.toArray = vi.fn().mockImplementation(() => {
         return Promise.resolve(restoredOperations)
       })
 
@@ -96,8 +96,8 @@ describe('LocalOperationService', () => {
 
   describe('添加操作', () => {
     it('应该成功添加操作到队列', async () => {
-      mockDb.add = jest.fn().mockResolvedValue('test-id')
-      mockDb.toArray = jest.fn().mockResolvedValue([])
+      mockDb.add = vi.fn().mockResolvedValue('test-id')
+      mockDb.toArray = vi.fn().mockResolvedValue([])
 
       const operationId = await service.addOperation({
         entityType: 'card',
@@ -128,8 +128,8 @@ describe('LocalOperationService', () => {
       }
 
       // 模拟 first 方法返回现有操作
-      mockDb.first = jest.fn().mockResolvedValue(mockOperation)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.first = vi.fn().mockResolvedValue(mockOperation)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       await service.addOperation({
         entityType: 'card',
@@ -192,7 +192,7 @@ describe('LocalOperationService', () => {
         }
       ]
 
-      mockDb.toArray = jest.fn().mockResolvedValue(mockOperations)
+      mockDb.toArray = vi.fn().mockResolvedValue(mockOperations)
 
       const stats = await service.getQueueStats()
 
@@ -210,7 +210,7 @@ describe('LocalOperationService', () => {
     })
 
     it('应该处理空队列', async () => {
-      mockDb.toArray = jest.fn().mockResolvedValue([])
+      mockDb.toArray = vi.fn().mockResolvedValue([])
 
       const stats = await service.getQueueStats()
 
@@ -249,7 +249,7 @@ describe('LocalOperationService', () => {
         }
       ]
 
-      mockDb.toArray = jest.fn().mockResolvedValue(mockOperations)
+      mockDb.toArray = vi.fn().mockResolvedValue(mockOperations)
 
       const pendingOps = await service.getPendingOperations()
 
@@ -286,12 +286,12 @@ describe('LocalOperationService', () => {
       ]
 
       // 模拟过滤逻辑
-      mockDb.filter = jest.fn().mockImplementation((filterFn) => ({
+      mockDb.filter = vi.fn().mockImplementation((filterFn) => ({
         ...mockDb,
         toArray: () => Promise.resolve(mockOperations.filter(filterFn))
       }))
       
-      mockDb.toArray = jest.fn().mockResolvedValue(mockOperations)
+      mockDb.toArray = vi.fn().mockResolvedValue(mockOperations)
 
       const highPriorityOps = await service.getPendingOperations(10, ['high'])
 
@@ -302,7 +302,7 @@ describe('LocalOperationService', () => {
 
   describe('队列管理', () => {
     it('应该能够清空队列', async () => {
-      mockDb.clear = jest.fn().mockResolvedValue(1)
+      mockDb.clear = vi.fn().mockResolvedValue(1)
 
       await service.clearQueue()
 
@@ -310,7 +310,7 @@ describe('LocalOperationService', () => {
     })
 
     it('应该能够删除指定操作', async () => {
-      mockDb.delete = jest.fn().mockResolvedValue(1)
+      mockDb.delete = vi.fn().mockResolvedValue(1)
 
       await service.removeOperation('test-op-id')
 
@@ -330,7 +330,7 @@ describe('LocalOperationService', () => {
         localVersion: 1
       }
 
-      mockDb.get = jest.fn().mockResolvedValue(mockOperation)
+      mockDb.get = vi.fn().mockResolvedValue(mockOperation)
 
       const operation = await service.getOperation('test-op')
 
@@ -341,7 +341,7 @@ describe('LocalOperationService', () => {
 
   describe('事件监听', () => {
     it('应该能够添加和移除事件监听器', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
 
       service.addEventListener('queueStatsChanged', mockListener)
       
@@ -350,7 +350,7 @@ describe('LocalOperationService', () => {
     })
 
     it('应该正确添加事件监听器', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
 
       service.addEventListener('operationAdded', mockListener)
       service.addEventListener('operationCompleted', mockListener)
@@ -363,8 +363,8 @@ describe('LocalOperationService', () => {
 
   describe('错误处理', () => {
     it('应该处理数据库操作失败', async () => {
-      mockDb.add = jest.fn().mockRejectedValue(new Error('Database error'))
-      mockDb.first = jest.fn().mockResolvedValue(null)
+      mockDb.add = vi.fn().mockRejectedValue(new Error('Database error'))
+      mockDb.first = vi.fn().mockResolvedValue(null)
 
       await expect(service.addOperation({
         entityType: 'card',
@@ -375,12 +375,12 @@ describe('LocalOperationService', () => {
     })
 
     it('应该处理本地存储操作失败', async () => {
-      mockDb.add = jest.fn().mockResolvedValue('test-id')
-      mockDb.toArray = jest.fn().mockResolvedValue([])
-      mockDb.first = jest.fn().mockResolvedValue(null)
+      mockDb.add = vi.fn().mockResolvedValue('test-id')
+      mockDb.toArray = vi.fn().mockResolvedValue([])
+      mockDb.first = vi.fn().mockResolvedValue(null)
       
       // 模拟 localStorage 失败
-      localStorage.setItem = jest.fn().mockImplementation(() => {
+      localStorage.setItem = vi.fn().mockImplementation(() => {
         throw new Error('Storage error')
       })
 
@@ -412,8 +412,8 @@ describe('LocalOperationService', () => {
         dependsOn: []
       }
 
-      mockDb.get = jest.fn().mockResolvedValue(mockOperation)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.get = vi.fn().mockResolvedValue(mockOperation)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       await service.markOperationProcessing('test-op')
 
@@ -439,8 +439,8 @@ describe('LocalOperationService', () => {
         processingStartedAt: new Date()
       }
 
-      mockDb.get = jest.fn().mockResolvedValue(mockOperation)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.get = vi.fn().mockResolvedValue(mockOperation)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       await service.markOperationCompleted('test-op')
 
@@ -467,8 +467,8 @@ describe('LocalOperationService', () => {
         retryDelay: 1000
       }
 
-      mockDb.get = jest.fn().mockResolvedValue(mockOperation)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.get = vi.fn().mockResolvedValue(mockOperation)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       const error = new Error('Test error')
       await service.markOperationFailed('test-op', error)
@@ -496,8 +496,8 @@ describe('LocalOperationService', () => {
         dependsOn: []
       }
 
-      mockDb.get = jest.fn().mockResolvedValue(mockOperation)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.get = vi.fn().mockResolvedValue(mockOperation)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       await service.cancelOperation('test-op', 'User cancelled')
 
@@ -539,8 +539,8 @@ describe('LocalOperationService', () => {
         }
       ]
 
-      mockDb.toArray = jest.fn().mockResolvedValue(mockOperations)
-      mockDb.update = jest.fn().mockResolvedValue(1)
+      mockDb.toArray = vi.fn().mockResolvedValue(mockOperations)
+      mockDb.update = vi.fn().mockResolvedValue(1)
 
       const retriedCount = await service.retryFailedOperations()
 
@@ -564,8 +564,8 @@ describe('LocalOperationService', () => {
         dependsOn: []
       }))
 
-      mockDb.toArray = jest.fn().mockResolvedValue(mockOperations)
-      mockDb.delete = jest.fn().mockResolvedValue(1)
+      mockDb.toArray = vi.fn().mockResolvedValue(mockOperations)
+      mockDb.delete = vi.fn().mockResolvedValue(1)
 
       const clearedCount = await service.clearCompletedOperations()
 

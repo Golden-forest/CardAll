@@ -1,5 +1,5 @@
 // 数据库操作单元测试
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MockDatabaseService } from '../mock-services'
 import { CardFixture, FolderFixture, TagFixture } from '../data-fixtures'
 import { TestDataGenerator } from '../advanced-test-utils'
@@ -104,15 +104,18 @@ describe('DatabaseOperations', () => {
 
     it('应该能够按文件夹查找卡片', async () => {
       const folderId = 'test-folder'
-      const cardsInFolder = CardFixture.list(2).map(card => 
+      const cardsInFolder = CardFixture.list(2).map(card =>
         CardFixture.inFolder(folderId, card)
       )
-      const otherCards = CardFixture.list(2)
-      
+      const otherCards = CardFixture.list(2).map((card, i) => ({
+        ...card,
+        id: `other-card-${i + 1}`, // 确保ID唯一
+      }))
+
       await databaseService.cards.bulkAdd([...cardsInFolder, ...otherCards])
-      
+
       const folderCards = await databaseService.cards.findByFolder(folderId)
-      
+
       expect(folderCards).toHaveLength(2)
       expect(folderCards.every(card => card.folderId === folderId)).toBe(true)
     })
@@ -125,15 +128,18 @@ describe('DatabaseOperations', () => {
           tags: ['特殊标签'],
         },
       }))
-      const otherCards = CardFixture.list(2)
-      
+      const otherCards = CardFixture.list(2).map((card, i) => ({
+        ...card,
+        id: `other-card-${i + 1}`, // 确保ID唯一
+      }))
+
       await databaseService.cards.bulkAdd([...cardsWithTag, ...otherCards])
-      
+
       const taggedCards = await databaseService.cards.findByTag('特殊标签')
-      
+
       expect(taggedCards).toHaveLength(2)
-      expect(taggedCards.every(card => 
-        card.frontContent.tags.includes('特殊标签') || 
+      expect(taggedCards.every(card =>
+        card.frontContent.tags.includes('特殊标签') ||
         card.backContent.tags.includes('特殊标签')
       )).toBe(true)
     })
@@ -532,8 +538,9 @@ describe('DatabaseOperations', () => {
       await databaseService.importData(importData)
       
       // 应该只有导入的数据
-      expect(await databaseService.cards.getAll()).toHaveLength(1)
-      expect(await databaseService.cards.getAll()[0].frontContent.title).toBe(importData.cards[0].frontContent.title)
+      const importedCards = await databaseService.cards.getAll()
+      expect(importedCards).toHaveLength(1)
+      expect(importedCards[0].frontContent.title).toBe(importData.cards[0].frontContent.title)
     })
   })
 

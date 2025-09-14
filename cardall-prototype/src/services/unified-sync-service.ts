@@ -6,11 +6,12 @@
 import { supabase, type SyncStatus } from './supabase'
 import { db } from './database'
 import { syncQueueManager, type QueueOperation, type BatchSyncResult } from './sync-queue'
-import { networkStateDetector } from './network-state-detector'
+import { networkManager, type UnifiedNetworkStatus, type SyncStrategy, type NetworkListener } from './network-manager'
 import { dataConverter } from './data-converter'
 import { queryOptimizer } from './query-optimizer'
 import { localOperationService, type LocalSyncOperation } from './local-operation'
 import { offlineManager, type OfflineOperation, type NetworkInfo } from './offline-manager'
+import { dataSyncService, type SyncSession, type SyncDirection, type SyncMetrics as DataSyncMetrics, type ConsistencyLevel } from './data-sync-service'
 import type { DbCard, DbFolder, DbTag } from './database'
 
 // ============================================================================
@@ -74,6 +75,7 @@ export class UnifiedSyncService {
   constructor() {
     this.initialize()
     this.setupOfflineIntegration()
+    this.setupDataSyncIntegration()
   }
 
   private getDefaultMetrics(): SyncMetrics {
@@ -98,23 +100,31 @@ export class UnifiedSyncService {
 
     // 集成网络状态检测
     this.initializeNetworkIntegration()
-    
+
     // 集成同步队列管理
     this.initializeQueueIntegration()
-    
+
+    // 集成数据同步服务
+    this.initializeDataSyncIntegration()
+
     // 启动后台同步
     this.startBackgroundSync()
-    
+
     this.isInitialized = true
     console.log('Unified sync service initialized')
   }
 
   private initializeNetworkIntegration(): void {
-    networkStateDetector.addListener({
+    // 启动网络监控
+    networkManager.startMonitoring()
+
+    // 添加网络监听器
+    networkManager.addListener({
       onNetworkStateChanged: this.handleNetworkStateChange.bind(this),
+      onNetworkEvent: this.handleNetworkEvent.bind(this),
       onNetworkError: this.handleNetworkError.bind(this),
-      onSyncCompleted: this.handleSyncCompleted.bind(this),
-      onSyncStrategyChanged: this.handleSyncStrategyChanged.bind(this)
+      onSyncReady: this.handleSyncReady.bind(this),
+      onNetworkPrediction: this.handleNetworkPrediction.bind(this)
     })
   }
 
@@ -126,6 +136,38 @@ export class UnifiedSyncService {
       onQueueError: this.handleQueueError.bind(this),
       onStatusChange: this.handleQueueStatusChange.bind(this)
     })
+  }
+
+  /**
+   * 设置DataSyncService集成
+   */
+  private setupDataSyncIntegration(): void {
+    // 监听DataSyncService的同步状态变化
+    dataSyncService.onSyncStatusChange((session: SyncSession) => {
+      this.handleDataSyncStatusChange(session)
+    })
+  }
+
+  /**
+   * 初始化DataSyncService集成
+   */
+  private initializeDataSyncIntegration(): void {
+    // 配置数据验证参数
+    dataSyncService.configureValidation({
+      level: ConsistencyLevel.RELAXED,
+      autoRepair: true,
+      scheduledValidation: true
+    })
+
+    // 配置批处理优化
+    dataSyncService.configureBatchOptimization({
+      enabled: true,
+      dynamicBatchSize: true,
+      adaptiveDelay: true,
+      networkAware: true
+    })
+
+    console.log('DataSyncService integration initialized')
   }
 
   private startBackgroundSync(): void {
@@ -331,33 +373,29 @@ export class UnifiedSyncService {
 
     try {
       const startTime = performance.now()
-      
-      // 处理本地同步队列（优先处理用户本地操作）
-      await this.processLocalSyncQueue()
-      
-      // 下行同步：从云端获取最新数据
-      await this.syncFromCloud()
-      
-      // 上行同步：处理本地队列
-      await this.processSyncQueue()
-      
-      // 冲突检测和解决
-      await this.detectAndResolveConflicts()
-      
-      // 数据一致性检查
-      await this.verifyDataConsistency()
-      
+
+      // 优先使用DataSyncService进行双向同步
+      const syncSession = await dataSyncService.performFullSync(SyncDirection.BIDIRECTIONAL)
+
+      // 如果DataSyncService失败，使用备用同步策略
+      if (syncSession.state === 'error') {
+        console.warn('DataSyncService failed, falling back to legacy sync')
+        await this.performLegacyFullSync()
+      } else {
+        console.log(`DataSyncService completed: ${syncSession.processed} operations`)
+      }
+
       const syncTime = performance.now() - startTime
       this.lastFullSync = new Date()
-      
+
       // 更新指标
       this.updateMetrics({
         lastSyncTime: this.lastFullSync,
         averageSyncTime: (this.metrics.averageSyncTime + syncTime) / 2
       })
-      
-      console.log(`Full sync completed in ${syncTime}ms`)
-      
+
+      console.log(`Unified full sync completed in ${syncTime}ms`)
+
     } catch (error) {
       console.error('Full sync failed:', error)
       throw error
@@ -365,6 +403,26 @@ export class UnifiedSyncService {
       this.syncInProgress = false
       this.notifyStatusChange()
     }
+  }
+
+  /**
+   * 备用的传统同步方法
+   */
+  private async performLegacyFullSync(): Promise<void> {
+    // 处理本地同步队列（优先处理用户本地操作）
+    await this.processLocalSyncQueue()
+
+    // 下行同步：从云端获取最新数据
+    await this.syncFromCloud()
+
+    // 上行同步：处理本地队列
+    await this.processSyncQueue()
+
+    // 冲突检测和解决
+    await this.detectAndResolveConflicts()
+
+    // 数据一致性检查
+    await this.verifyDataConsistency()
   }
 
   /**
@@ -376,18 +434,21 @@ export class UnifiedSyncService {
     }
 
     try {
+      // 优先使用DataSyncService进行增量同步
+      await dataSyncService.performIncrementalSync()
+
       // 处理本地同步队列（优先级最高）
       await this.processLocalSyncQueue()
-      
+
       // 只处理高优先级操作
       await this.processHighPriorityOperations()
-      
+
       // 检查云端更新
       await this.checkCloudUpdates()
-      
+
       // 清理缓存
       this.cleanupCache()
-      
+
     } catch (error) {
       console.error('Incremental sync failed:', error)
     }
@@ -908,15 +969,72 @@ export class UnifiedSyncService {
   // 网络和状态管理
   // ============================================================================
 
-  private handleNetworkStateChange(state: any): void {
+  private handleNetworkStateChange(state: UnifiedNetworkStatus): void {
     this.isOnline = state.isOnline
-    
+
     if (state.isOnline && state.canSync) {
       // 网络恢复，立即同步
-      this.performIncrementalSync()
+      this.performIncrementalSync().catch(console.error)
     }
-    
+
+    // 更新网络质量指标
+    this.metrics.networkQuality = state.quality
+
     this.notifyStatusChange()
+  }
+
+  private handleNetworkEvent(event: any): void {
+    console.log('Network event in sync service:', event.type)
+
+    switch (event.type) {
+      case 'online':
+        this.handleNetworkRestored()
+        break
+      case 'offline':
+        this.handleNetworkLost()
+        break
+      case 'sync-ready':
+        this.handleSyncReady(event.currentState.syncStrategy)
+        break
+    }
+  }
+
+  private handleSyncReady(strategy: SyncStrategy): void {
+    console.log('Sync ready with strategy:', strategy)
+
+    // 网络准备好同步，触发同步操作
+    if (!this.syncInProgress && this.authService?.isAuthenticated()) {
+      this.performIncrementalSync().catch(console.error)
+    }
+  }
+
+  private handleNetworkPrediction(prediction: any): void {
+    console.log('Network prediction:', prediction)
+
+    // 根据预测调整同步策略
+    if (!prediction.isStable) {
+      // 网络不稳定，采用保守策略
+      syncQueueManager.setConservativeMode(true)
+    } else {
+      syncQueueManager.setConservativeMode(false)
+    }
+  }
+
+  private handleNetworkRestored(): void {
+    console.log('Network restored, resuming sync operations')
+
+    // 恢复同步队列
+    syncQueueManager.resume()
+
+    // 立即执行同步
+    this.performIncrementalSync().catch(console.error)
+  }
+
+  private handleNetworkLost(): void {
+    console.log('Network lost, pausing sync operations')
+
+    // 暂停同步队列
+    syncQueueManager.pause()
   }
 
   private handleNetworkError(error: any, context?: string): void {
@@ -962,14 +1080,72 @@ export class UnifiedSyncService {
     this.notifyStatusChange()
   }
 
+  /**
+   * 处理DataSyncService状态变化
+   */
+  private handleDataSyncStatusChange(session: SyncSession): void {
+    console.log('DataSyncService status change:', session.state, session.direction)
+
+    // 更新统一同步状态
+    this.syncInProgress = session.state === 'syncing'
+
+    // 更新同步指标
+    if (session.state === 'completed') {
+      this.lastFullSync = session.endTime
+      this.updateMetricsFromDataSync(session)
+    }
+
+    // 处理同步错误
+    if (session.state === 'error') {
+      console.error('DataSyncService error:', session)
+      this.handleSyncError(session)
+    }
+
+    this.notifyStatusChange()
+  }
+
+  /**
+   * 从DataSyncService更新指标
+   */
+  private updateMetricsFromDataSync(session: SyncSession): void {
+    this.metrics.totalOperations += session.processed
+    this.metrics.successfulOperations += session.successful
+    this.metrics.failedOperations += session.failed
+    this.metrics.conflictsCount += session.conflicts
+    this.metrics.lastSyncTime = session.endTime
+
+    // 计算平均同步时间
+    if (session.duration) {
+      const totalTime = this.metrics.averageSyncTime * (this.metrics.totalOperations - session.processed) + session.duration
+      this.metrics.averageSyncTime = totalTime / this.metrics.totalOperations
+    }
+  }
+
+  /**
+   * 处理DataSyncService同步错误
+   */
+  private handleSyncError(session: SyncSession): void {
+    // 记录错误并通知监听器
+    this.notifyListeners({
+      status: 'error',
+      error: 'Data sync failed',
+      details: {
+        processed: session.processed,
+        successful: session.successful,
+        failed: session.failed,
+        conflicts: session.conflicts
+      }
+    })
+  }
+
   // ============================================================================
   // 辅助方法
   // ============================================================================
 
   private canSync(): boolean {
-    const networkState = networkStateDetector.getCurrentState()
-    return this.isOnline && 
-           this.authService?.isAuthenticated() && 
+    const networkState = networkManager.getCurrentStatus()
+    return this.isOnline &&
+           this.authService?.isAuthenticated() &&
            networkState.canSync
   }
 
@@ -978,15 +1154,15 @@ export class UnifiedSyncService {
   }
 
   private shouldPerformBackgroundSync(): boolean {
-    const networkState = networkStateDetector.getCurrentState()
-    return networkState.canSync && 
-           !this.syncInProgress && 
+    const networkState = networkManager.getCurrentStatus()
+    return networkState.canSync &&
+           !this.syncInProgress &&
            this.authService?.isAuthenticated()
   }
 
   private getAdaptiveSyncInterval(): number {
-    const networkState = networkStateDetector.getCurrentState()
-    
+    const networkState = networkManager.getCurrentStatus()
+
     switch (networkState.quality) {
       case 'excellent': return 60 * 1000 // 1分钟
       case 'good': return 2 * 60 * 1000 // 2分钟
@@ -1086,9 +1262,9 @@ export class UnifiedSyncService {
   }
 
   async getCurrentStatus(): Promise<SyncStatus> {
-    const networkState = networkStateDetector.getCurrentState()
+    const networkState = networkManager.getCurrentStatus()
     const queueStats = await syncQueueManager.getQueueStats()
-    
+
     return {
       isOnline: networkState.isOnline,
       lastSyncTime: this.metrics.lastSyncTime,
@@ -1156,6 +1332,67 @@ export class UnifiedSyncService {
     this.syncInProgress = false
     this.processNextOperations()
   }
+
+  // ============================================================================
+  // DataSyncService集成方法
+  // ============================================================================
+
+  /**
+   * 获取数据同步服务状态
+   */
+  async getDataSyncStatus(): Promise<any> {
+    return {
+      currentState: dataSyncService.getCurrentState(),
+      currentSession: dataSyncService.getCurrentSession(),
+      metrics: dataSyncService.getMetrics()
+    }
+  }
+
+  /**
+   * 获取数据一致性报告
+   */
+  async getDataConsistencyReport(level?: ConsistencyLevel): Promise<any> {
+    return await dataSyncService.getDetailedConsistencyReport(level)
+  }
+
+  /**
+   * 手动触发数据验证
+   */
+  async performDataValidation(level?: ConsistencyLevel): Promise<any> {
+    return await dataSyncService.manualValidation(level)
+  }
+
+  /**
+   * 获取批处理性能指标
+   */
+  async getBatchPerformanceMetrics(): Promise<any> {
+    return dataSyncService.getBatchPerformanceMetrics()
+  }
+
+  /**
+   * 配置数据验证参数
+   */
+  configureDataValidation(options: {
+    level?: ConsistencyLevel
+    autoRepair?: boolean
+    scheduledValidation?: boolean
+  }): void {
+    dataSyncService.configureValidation(options)
+  }
+
+  /**
+   * 配置批处理优化
+   */
+  configureBatchOptimization(options: any): void {
+    dataSyncService.configureBatchOptimization(options)
+  }
+
+  /**
+   * 强制数据同步
+   */
+  async forceDataSync(direction?: SyncDirection): Promise<SyncSession> {
+    return await dataSyncService.forceSync(direction)
+  }
 }
 
 // ============================================================================
@@ -1176,3 +1413,19 @@ export const performIncrementalSync = () => unifiedSyncService.performIncrementa
 export const getSyncMetrics = () => unifiedSyncService.getMetrics()
 export const getSyncConflicts = () => unifiedSyncService.getConflicts()
 export const getSyncHistory = (filters?: any) => unifiedSyncService.getOperationHistory(filters)
+
+// ============================================================================
+// DataSyncService集成便利方法
+// ============================================================================
+
+export const getDataSyncStatus = () => unifiedSyncService.getDataSyncStatus()
+export const getDataConsistencyReport = (level?: ConsistencyLevel) => unifiedSyncService.getDataConsistencyReport(level)
+export const performDataValidation = (level?: ConsistencyLevel) => unifiedSyncService.performDataValidation(level)
+export const getBatchPerformanceMetrics = () => unifiedSyncService.getBatchPerformanceMetrics()
+export const configureDataValidation = (options: {
+  level?: ConsistencyLevel
+  autoRepair?: boolean
+  scheduledValidation?: boolean
+}) => unifiedSyncService.configureDataValidation(options)
+export const configureBatchOptimization = (options: any) => unifiedSyncService.configureBatchOptimization(options)
+export const forceDataSync = (direction?: SyncDirection) => unifiedSyncService.forceDataSync(direction)

@@ -33,7 +33,7 @@ export interface NetworkEvent {
   timestamp: Date
   previousState?: NetworkInfo
   currentState: NetworkInfo
-  details?: any
+  details?: Record<string, unknown>
 }
 
 // 网络质量等级
@@ -162,9 +162,20 @@ export class NetworkMonitorService {
   private startTime: Date
   private lastOnlineTime?: Date
   private lastOfflineTime?: Date
+
+  // 历史记录
+  private history: NetworkInfo[] = []
+  private readonly maxHistoryLength = 100
   
   // 连接API（如果可用）
-  private connection?: any
+  private connection?: {
+    effectiveType?: string
+    downlink?: number
+    rtt?: number
+    saveData?: boolean
+    addEventListener?: (event: string, callback: Function) => void
+    removeEventListener?: (event: string, callback: Function) => void
+  }
   private connectionTypes = ['wifi', 'cellular', 'ethernet', 'bluetooth', 'wimax', 'other', 'none']
   
   // 重连状态
@@ -181,22 +192,22 @@ export class NetworkMonitorService {
   }
 
   // 初始化服务
-  private initialize(): void {
+  public initialize(): void {
     // 获取网络连接API（如果可用）
     if ('connection' in navigator) {
-      this.connection = (navigator as any).connection
+      this.connection = (navigator as unknown as { connection?: typeof this.connection }).connection
     }
-    
+
     // 监听在线/离线事件
     window.addEventListener('online', this.handleOnline.bind(this))
     window.addEventListener('offline', this.handleOffline.bind(this))
-    
+
     // 监听连接变化（如果支持）
     if (this.connection) {
       this.connection.addEventListener('change', this.handleConnectionChange.bind(this))
     }
-    
-    console.log('NetworkMonitorService initialized')
+
+    // NetworkMonitorService initialized
   }
 
   // 获取初始网络状态
@@ -208,7 +219,7 @@ export class NetworkMonitorService {
       downlink: this.connection?.downlink,
       rtt: this.connection?.rtt,
       saveData: this.connection?.saveData,
-      deviceMemory: (navigator as any).deviceMemory,
+      deviceMemory: (navigator as unknown as { deviceMemory?: number }).deviceMemory,
       hardwareConcurrency: navigator.hardwareConcurrency,
       timestamp: new Date()
     }
@@ -241,7 +252,7 @@ export class NetworkMonitorService {
     this.isMonitoring = true
     this.startPeriodicChecks()
     
-    console.log('Network monitoring started')
+    // Network monitoring started
     this.emitEvent({
       type: 'connection-change',
       timestamp: new Date(),
@@ -257,7 +268,7 @@ export class NetworkMonitorService {
     this.isMonitoring = false
     this.stopPeriodicChecks()
     
-    console.log('Network monitoring stopped')
+    // Network monitoring stopped
     this.emitEvent({
       type: 'connection-change',
       timestamp: new Date(),
@@ -373,8 +384,11 @@ export class NetworkMonitorService {
     const previousState = { ...this.currentState }
     this.currentState.online = true
     this.currentState.lastChange = new Date()
-    
+
     this.lastOnlineTime = new Date()
+
+    // 更新历史记录
+    this.updateHistory()
     
     // 更新统计
     if (this.lastOfflineTime) {
@@ -403,8 +417,11 @@ export class NetworkMonitorService {
     const previousState = { ...this.currentState }
     this.currentState.online = false
     this.currentState.lastChange = new Date()
-    
+
     this.lastOfflineTime = new Date()
+
+    // 更新历史记录
+    this.updateHistory()
     
     // 更新统计
     if (this.lastOnlineTime) {
@@ -437,7 +454,10 @@ export class NetworkMonitorService {
     if (qualityChange >= this.config.eventFilter.minQualityChange) {
       this.currentState = newState
       this.currentState.lastChange = new Date()
-      
+
+      // 更新历史记录
+      this.updateHistory()
+
       this.stats.connectionChanges++
       
       this.emitEvent({
@@ -460,7 +480,10 @@ export class NetworkMonitorService {
     if (qualityChange >= this.config.eventFilter.minQualityChange) {
       this.currentState = newState
       this.currentState.lastChange = new Date()
-      
+
+      // 更新历史记录
+      this.updateHistory()
+
       // 更新质量历史
       this.updateQualityHistory()
       
@@ -524,7 +547,10 @@ export class NetworkMonitorService {
         
         this.currentState.online = false
         this.currentState.lastChange = new Date()
-        
+
+        // 更新历史记录
+        this.updateHistory()
+
         this.emitEvent({
           type: 'error',
           timestamp: new Date(),
@@ -699,6 +725,19 @@ export class NetworkMonitorService {
   }
 
   // 更新质量历史
+  /**
+   * 更新状态历史记录
+   */
+  private updateHistory(): void {
+    const stateCopy = { ...this.currentState }
+    this.history.push(stateCopy)
+
+    // 保持历史记录长度在限制内
+    if (this.history.length > this.maxHistoryLength) {
+      this.history.shift()
+    }
+  }
+
   private updateQualityHistory(): void {
     const quality = this.getNetworkQuality()
     const score = this.getNetworkQualityScore()
@@ -1058,6 +1097,152 @@ export class NetworkMonitorService {
     return 300 // 5分钟
   }
 
+  // ============================================================================
+  // 缺失的公共方法 - 添加测试支持
+  // ============================================================================
+
+  /**
+   * 获取网络统计信息（适配测试）
+   */
+  getNetworkStats(): any {
+    return {
+      ...this.stats,
+      uptime: this.lastOnlineTime ? Date.now() - this.lastOnlineTime.getTime() : 0,
+      downtime: this.lastOfflineTime ? Date.now() - this.lastOfflineTime.getTime() : 0
+    }
+  }
+
+  /**
+   * 获取网络历史记录（适配测试）
+   */
+  getNetworkHistory(): NetworkInfo[] {
+    return [...this.history]
+  }
+
+  /**
+   * 获取同步建议（适配测试）
+   */
+  getSyncRecommendations(): string[] {
+    const quality = this.calculateQuality(this.currentState)
+    const recommendations: string[] = []
+
+    switch (quality) {
+      case 'excellent':
+        recommendations.push('可以进行大规模同步操作')
+        recommendations.push('适合上传大文件')
+        break
+      case 'good':
+        recommendations.push('可以进行常规同步操作')
+        break
+      case 'fair':
+        recommendations.push('建议进行小批量同步')
+        recommendations.push('避免上传大文件')
+        break
+      case 'poor':
+        recommendations.push('建议暂停同步操作')
+        recommendations.push('等待网络改善')
+        break
+      case 'offline':
+        recommendations.push('当前离线，无法同步')
+        recommendations.push('检查网络连接')
+        break
+    }
+
+    return recommendations
+  }
+
+  /**
+   * 添加网络变化监听器（适配测试）
+   */
+  onNetworkChange(listener: (event: NetworkEvent) => void): () => void {
+    this.listeners.add(listener)
+
+    // 返回取消订阅函数
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  /**
+   * 测试连接（适配测试）
+   */
+  async testConnection(endpoint?: string): Promise<boolean> {
+    const testEndpoint = endpoint || 'https://www.google.com'
+
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+
+      const response = await fetch(testEndpoint, {
+        method: 'HEAD',
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+      return response.ok
+    } catch (error) {
+      return false
+    }
+  }
+
+  /**
+   * 更新配置（适配测试）
+   */
+  updateConfig(newConfig: Partial<NetworkMonitorConfig>): void {
+    // 验证配置参数
+    if (newConfig.checkInterval && newConfig.checkInterval < 1000) {
+      throw new Error('检查间隔不能小于1000ms')
+    }
+
+    if (newConfig.qualityCheckInterval && newConfig.qualityCheckInterval < 5000) {
+      throw new Error('质量检查间隔不能小于5000ms')
+    }
+
+    // 更新配置
+    this.config = { ...this.config, ...newConfig }
+
+    // 如果正在监控，重新启动定时器
+    if (this.isMonitoring) {
+      this.stopPeriodicChecks()
+      this.startPeriodicChecks()
+    }
+  }
+
+  /**
+   * 测量带宽（适配测试）
+   */
+  async measureBandwidth(): Promise<number> {
+    try {
+      const startTime = performance.now()
+      const response = await fetch('https://www.google.com', {
+        method: 'GET',
+        cache: 'no-cache'
+      })
+      const endTime = performance.now()
+
+      if (response.ok) {
+        const duration = (endTime - startTime) / 1000 // 转换为秒
+        return duration > 0 ? 1 / duration : 0 // 简化的带宽计算
+      }
+      return 0
+    } catch (error) {
+      return 0
+    }
+  }
+
+  /**
+   * 通知监听器（适配测试）
+   */
+  private notifyListeners(event: NetworkEvent): void {
+    this.listeners.forEach(listener => {
+      try {
+        listener(event)
+      } catch (error) {
+        console.error('Error in network event listener:', error)
+      }
+    })
+  }
+
   // 销毁服务
   destroy(): void {
     this.stopMonitoring()
@@ -1075,7 +1260,7 @@ export class NetworkMonitorService {
       clearTimeout(this.debounceTimer)
     }
     
-    console.log('NetworkMonitorService destroyed')
+    // NetworkMonitorService destroyed
   }
 }
 

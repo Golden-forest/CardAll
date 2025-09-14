@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { Card as CardType } from '../../types/card'
 import { EnhancedFlipCard } from './enhanced-flip-card'
 import { useDraggable } from '@dnd-kit/core'
@@ -13,6 +13,7 @@ interface DraggableCardProps {
   snapDirection?: 'top' | 'bottom' | 'left' | 'right'
   className?: string
   size?: 'sm' | 'md' | 'lg'
+  lazyLoad?: boolean
 }
 
 export function DraggableCard({
@@ -22,9 +23,12 @@ export function DraggableCard({
   isSnapping = false,
   snapDirection,
   className,
-  size = 'md'
+  size = 'md',
+  lazyLoad = false
 }: DraggableCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(!lazyLoad)
+  const observerRef = useRef<IntersectionObserver | null>(null)
   
   const {
     attributes,
@@ -47,6 +51,31 @@ export function DraggableCard({
       cardRef.current = element
     }
   }
+
+  // 懒加载逻辑
+  useEffect(() => {
+    if (!lazyLoad || !cardRef.current) return
+
+    observerRef.current = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observerRef.current?.unobserve(entry.target)
+        }
+      },
+      {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0.1
+      }
+    )
+
+    observerRef.current.observe(cardRef.current)
+
+    return () => {
+      observerRef.current?.disconnect()
+    }
+  }, [lazyLoad])
 
   // Calculate drag transform with snap effect
   const getTransformStyle = () => {
@@ -174,10 +203,11 @@ export function DraggableCard({
         'relative z-10',
         isSnapping && 'transform scale-105'
       )}>
-        <EnhancedFlipCard
-          card={card}
-          onFlip={(cardId) => onUpdate(cardId, { isFlipped: !card.isFlipped })}
-          onUpdate={onUpdate}
+        {isVisible ? (
+          <EnhancedFlipCard
+            card={card}
+            onFlip={(cardId) => onUpdate(cardId, { isFlipped: !card.isFlipped })}
+            onUpdate={onUpdate}
           onCopy={(cardId) => {
             // Copy card content to clipboard
             const content = card.isFlipped ? card.backContent : card.frontContent
@@ -203,6 +233,20 @@ export function DraggableCard({
           )}
           size={size}
         />
+      ) : (
+        // 懒加载占位符
+        <div className={cn(
+          'bg-muted border border-dashed rounded-xl',
+          'flex items-center justify-center',
+          'animate-pulse',
+          'min-h-[200px]'
+        )}>
+          <div className="text-center">
+            <div className="w-8 h-8 mx-auto mb-2 bg-muted-foreground/20 rounded-full" />
+            <div className="text-sm text-muted-foreground">加载中...</div>
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Dragging Overlay Effect */}

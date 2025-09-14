@@ -1,11 +1,11 @@
-import type { 
-  ConflictBase, 
-  CardConflict, 
-  FolderConflict, 
+import type {
+  ConflictBase,
+  CardConflict,
+  FolderConflict,
   TagConflict,
   ConflictSuggestion,
-  ConflictResolution 
-} from '@/types/conflict'
+  ConflictResolution
+} from '../types/conflict'
 
 export class ConflictResolutionEngine {
   /**

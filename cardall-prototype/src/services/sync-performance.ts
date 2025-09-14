@@ -260,22 +260,22 @@ export class SyncPerformanceOptimizer {
     this.initialize()
   }
 
-  // 初始化优化器
-  private initialize(): void {
+  // 初始化服务
+  public async initialize(): Promise<void> {
     // 启动性能监控
     this.startPerformanceMonitoring()
-    
+
     // 启动批处理管理
     this.startBatchManagement()
-    
+
     // 启动缓存清理
     this.startCacheCleanup()
-    
+
     // 监听网络变化
     networkMonitorService.addEventListener((event) => {
       this.handleNetworkChange(event)
     })
-    
+
     console.log('SyncPerformanceOptimizer initialized')
   }
 

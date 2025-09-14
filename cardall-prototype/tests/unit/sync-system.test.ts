@@ -1,5 +1,5 @@
 // 同步系统单元测试
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { MockSyncService, MockSupabaseService, MockDatabaseService } from '../mock-services'
 import { SyncOperationFixture, TestDataGenerator } from '../data-fixtures'
 import type { TestSyncOperation } from '../advanced-test-utils'
@@ -17,30 +17,30 @@ describe('SyncSystem', () => {
   })
 
   afterEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('同步状态管理', () => {
     it('应该正确报告在线状态', () => {
-      expect(syncService.isOnline()).toBe(true)
-      
+      expect(syncService.getIsOnline()).toBe(true)
+
       syncService.setOnline(false)
-      expect(syncService.isOnline()).toBe(false)
-      
+      expect(syncService.getIsOnline()).toBe(false)
+
       syncService.setOnline(true)
-      expect(syncService.isOnline()).toBe(true)
+      expect(syncService.getIsOnline()).toBe(true)
     })
 
     it('应该正确报告同步状态', () => {
-      expect(syncService.isSyncing()).toBe(false)
-      
+      expect(syncService.getIsSyncing()).toBe(false)
+
       // 开始同步时应该返回 true
       // 注意：这里我们测试的是状态，而不是实际的同步过程
     })
 
     it('应该正确记录最后同步时间', () => {
       expect(syncService.getLastSyncTime()).toBeNull()
-      
+
       // 执行同步后应该更新时间
       // 这里我们只测试初始状态
     })
@@ -70,7 +70,7 @@ describe('SyncSystem', () => {
     it('应该处理同步错误', async () => {
       // 创建会导致错误的操作
       const errorOperation = SyncOperationFixture.createCard('error-card')
-      jest.spyOn(syncService as any, 'executeSyncOperation').mockRejectedValueOnce(new Error('Sync failed'))
+      vi.spyOn(syncService as any, 'executeSyncOperation').mockRejectedValueOnce(new Error('Sync failed'))
       
       await databaseService.syncQueue.add(errorOperation)
       
@@ -85,7 +85,7 @@ describe('SyncSystem', () => {
 
     it('不应该在同步进行中时启动新的同步', async () => {
       // 模拟同步进行中
-      jest.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValueOnce(true)
+      vi.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValueOnce(true)
       
       await expect(syncService.syncNow()).rejects.toThrow('Sync already in progress')
     })
@@ -222,24 +222,24 @@ describe('SyncSystem', () => {
     })
 
     it('应该只在在线状态且非同步中时执行自动同步', async () => {
-      const syncNowSpy = jest.spyOn(syncService, 'syncNow')
-      
+      const syncNowSpy = vi.spyOn(syncService, 'syncNow')
+
       // 设置为在线状态
       syncService.setOnline(true)
-      jest.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValue(false)
-      
+      vi.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValue(false)
+
       const stopSync = syncService.startAutoSync(100)
-      
+
       // 等待一个时间间隔
       await new Promise(resolve => setTimeout(resolve, 150))
-      
+
       expect(syncNowSpy).toHaveBeenCalled()
-      
+
       stopSync()
     })
 
     it('应该在离线状态时不执行自动同步', async () => {
-      const syncNowSpy = jest.spyOn(syncService, 'syncNow')
+      const syncNowSpy = vi.spyOn(syncService, 'syncNow')
       
       // 设置为离线状态
       syncService.setOnline(false)
@@ -255,10 +255,10 @@ describe('SyncSystem', () => {
     })
 
     it('应该在同步进行中时不执行自动同步', async () => {
-      const syncNowSpy = jest.spyOn(syncService, 'syncNow')
+      const syncNowSpy = vi.spyOn(syncService, 'syncNow')
       
       // 设置为同步进行中
-      jest.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValue(true)
+      vi.spyOn(syncService as any, 'syncInProgress', 'get').mockReturnValue(true)
       
       const stopSync = syncService.startAutoSync(100)
       
@@ -311,7 +311,7 @@ describe('SyncSystem', () => {
       
       // 执行一个会失败的同步
       const errorOperation = SyncOperationFixture.createCard('error-card')
-      jest.spyOn(syncService as any, 'executeSyncOperation').mockRejectedValueOnce(new Error('Test error'))
+      vi.spyOn(syncService as any, 'executeSyncOperation').mockRejectedValueOnce(new Error('Test error'))
       
       await databaseService.syncQueue.add(errorOperation)
       await syncService.syncNow()
@@ -359,7 +359,7 @@ describe('SyncSystem', () => {
 
     it('应该正确处理网络延迟', async () => {
       // 模拟网络延迟
-      jest.spyOn(syncService as any, 'executeSyncOperation').mockImplementationOnce(async () => {
+      vi.spyOn(syncService as any, 'executeSyncOperation').mockImplementationOnce(async () => {
         await new Promise(resolve => setTimeout(resolve, 1000))
         return true
       })

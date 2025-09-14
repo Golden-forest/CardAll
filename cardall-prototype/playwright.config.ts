@@ -49,7 +49,10 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        hasTouch: true // 启用触摸支持
+      },
     },
 
     {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // 直接测试集成接口，避免复杂的依赖问题
 describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
@@ -60,12 +60,12 @@ describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
     it('应该验证数据获取逻辑', () => {
       // 模拟getPendingSyncOperations的预期行为
       const mockDatabaseOperations = {
-        where: jest.fn().mockReturnThis(),
-        equals: jest.fn().mockReturnThis(),
-        orderBy: jest.fn().mockReturnThis(),
-        reverse: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        toArray: jest.fn().mockResolvedValue([])
+        where: vi.fn().mockReturnThis(),
+        equals: vi.fn().mockReturnThis(),
+        orderBy: vi.fn().mockReturnThis(),
+        reverse: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockResolvedValue([])
       }
 
       // 验证链式调用
@@ -83,10 +83,10 @@ describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
 
     it('应该验证状态更新逻辑', async () => {
       const mockDatabaseUpdate = {
-        transaction: jest.fn().mockImplementation(async (mode, stores, callback) => {
+        transaction: vi.fn().mockImplementation(async (mode, stores, callback) => {
           await callback()
         }),
-        update: jest.fn().mockResolvedValue(1)
+        update: vi.fn().mockResolvedValue(1)
       }
 
       const mockResults = [
@@ -96,7 +96,7 @@ describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
 
       let updateCallCount = 0
       const originalUpdate = mockDatabaseUpdate.update
-      mockDatabaseUpdate.update = jest.fn().mockImplementation(async (...args) => {
+      mockDatabaseUpdate.update = vi.fn().mockImplementation(async (...args) => {
         updateCallCount++
         return await originalUpdate(...args)
       })
@@ -160,7 +160,7 @@ describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
 
   describe('错误处理验证', () => {
     it('应该验证数据库错误处理', () => {
-      const mockErrorHandler = jest.fn()
+      const mockErrorHandler = vi.fn()
       
       // 模拟数据库错误
       const databaseError = new Error('Database connection failed')
@@ -172,7 +172,7 @@ describe('LocalOperationService与UnifiedSyncService集成架构验证', () => {
     })
 
     it('应该验证网络错误处理', () => {
-      const mockNetworkErrorHandler = jest.fn()
+      const mockNetworkErrorHandler = vi.fn()
       
       // 模拟网络错误
       const networkError = new Error('Network timeout')

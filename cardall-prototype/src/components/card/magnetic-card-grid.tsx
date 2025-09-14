@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   DndContext,
   DragEndEvent,
@@ -12,6 +12,8 @@ import {
 } from '@dnd-kit/core';
 import { Card } from '@/types/card';
 import { DraggableCard } from './draggable-card';
+import { VirtualizedCardGrid } from './virtualized-card-grid';
+import { SmartPaginationManager, type PaginationConfig } from '@/services/smart-pagination-manager';
 import { toast } from 'sonner';
 
 interface MagneticCardGridProps {
@@ -20,6 +22,8 @@ interface MagneticCardGridProps {
   onCardDelete: (id: string) => void;
   layout?: 'grid' | 'list';
   cardSize?: 'sm' | 'md' | 'lg';
+  enableVirtualization?: boolean;
+  paginationConfig?: Partial<PaginationConfig>;
 }
 
 interface SnapZone {
@@ -36,10 +40,40 @@ export function MagneticCardGrid({
   onCardDelete,
   layout = 'grid',
   cardSize = 'md',
+  enableVirtualization = true,
+  paginationConfig,
 }: MagneticCardGridProps) {
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [snapZones, setSnapZones] = useState<SnapZone[]>([]);
   const [activeSnapZone, setActiveSnapZone] = useState<SnapZone | null>(null);
+
+  // 创建分页管理器
+  const paginationManager = useMemo(() => {
+    if (!enableVirtualization) return null;
+
+    const defaultConfig: PaginationConfig = {
+      pageSize: 50,
+      prefetchCount: 2,
+      maxCacheSize: 100,
+      enableSmartPrefetching: true,
+      enableMemoryOptimization: true,
+      ...paginationConfig
+    };
+
+    return new SmartPaginationManager(
+      defaultConfig,
+      async (page: number, pageSize: number) => {
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = Math.min(startIndex + pageSize, cards.length);
+        return cards.slice(startIndex, endIndex);
+      }
+    );
+  }, [enableVirtualization, paginationConfig, cards.length]);
+
+  // 智能虚拟化：根据数据量决定是否启用
+  const shouldUseVirtualization = useMemo(() => {
+    return enableVirtualization && cards.length > 50;
+  }, [enableVirtualization, cards.length]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -180,6 +214,23 @@ export function MagneticCardGrid({
     );
   }
 
+  // 使用虚拟化网格或传统网格
+  const CardGrid = shouldUseVirtualization ? VirtualizedCardGrid : ({ cards, onCardUpdate, onCardDelete, layout, cardSize }: any) => (
+    <div className={getGridClasses()}>
+      {cards.map((card: Card) => (
+        <div key={card.id} data-card-id={card.id} className="break-inside-avoid">
+          <DraggableCard
+            card={card}
+            onUpdate={onCardUpdate}
+            onDelete={onCardDelete}
+            isSnapping={activeSnapZone?.cardId === card.id}
+            snapDirection={activeSnapZone?.direction}
+          />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -190,19 +241,14 @@ export function MagneticCardGrid({
     >
       <div className="relative">
         {/* Cards Grid */}
-        <div className={getGridClasses()}>
-          {cards.map((card) => (
-            <div key={card.id} data-card-id={card.id} className="break-inside-avoid">
-              <DraggableCard
-                card={card}
-                onUpdate={onCardUpdate}
-                onDelete={onCardDelete}
-                isSnapping={activeSnapZone?.cardId === card.id}
-                snapDirection={activeSnapZone?.direction}
-              />
-            </div>
-          ))}
-        </div>
+        <CardGrid
+          cards={cards}
+          onCardUpdate={onCardUpdate}
+          onCardDelete={onCardDelete}
+          layout={layout}
+          cardSize={cardSize}
+          enableVirtualization={shouldUseVirtualization}
+        />
 
         {/* Drag Overlay */}
         <DragOverlay>
@@ -226,6 +272,15 @@ export function MagneticCardGrid({
                 🧲 Snap {activeSnapZone.direction}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* 性能优化指示器 (开发模式) */}
+        {process.env.NODE_ENV === 'development' && shouldUseVirtualization && (
+          <div className="absolute bottom-2 left-2 bg-black/80 text-white p-2 rounded text-xs">
+            <div>虚拟化模式: 启用</div>
+            <div>卡片数量: {cards.length}</div>
+            <div>内存优化: 活跃</div>
           </div>
         )}
       </div>

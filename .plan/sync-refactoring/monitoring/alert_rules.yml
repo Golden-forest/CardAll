@@ -1,0 +1,302 @@
+# CardEverything v5.0.0 告警规则
+# 作者: Project-Manager AI Agent
+# 版本: 5.0.0
+# 日期: 2025-09-14
+
+groups:
+  - name: cardeverything-alerts
+    interval: 30s
+    rules:
+
+    # === 应用服务告警 ===
+    - alert: ApplicationDown
+      expr: up{job="cardeverything-app"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: application
+      annotations:
+        summary: "应用服务不可用"
+        description: "应用服务已停止运行超过1分钟 ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/application-down"
+
+    - alert: HighResponseTime
+      expr: histogram_quantile(0.95, http_request_duration_seconds_bucket) > 0.5
+      for: 5m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "应用响应时间过长"
+        description: "95%响应时间超过500ms，当前值: {{ $value }}s ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-response-time"
+
+    - alert: HighErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+      for: 2m
+      labels:
+        severity: critical
+        component: application
+      annotations:
+        summary: "应用错误率过高"
+        description: "5xx错误率超过5%，当前值: {{ $value }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-error-rate"
+
+    - alert: HighMemoryUsage
+      expr: container_memory_usage_bytes{name="cardeverything-app"} / container_spec_memory_limit_bytes{name="cardeverything-app"} > 0.9
+      for: 5m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "应用内存使用率过高"
+        description: "应用内存使用率超过90%，当前值: {{ $value | humanizePercentage }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-memory-usage"
+
+    - alert: HighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{name="cardeverything-app"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        component: application
+      annotations:
+        summary: "应用CPU使用率过高"
+        description: "应用CPU使用率超过80%，当前值: {{ $value | humanizePercentage }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-cpu-usage"
+
+    # === 数据库告警 ===
+    - alert: PostgreSQLDown
+      expr: up{job="cardeverything-postgres"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: database
+      annotations:
+        summary: "PostgreSQL服务不可用"
+        description: "PostgreSQL服务已停止运行超过1分钟 ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/postgresql-down"
+
+    - alert: PostgreSQLHighConnections
+      expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+      for: 5m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL连接数过高"
+        description: "PostgreSQL连接数使用率超过80%，当前值: {{ $value }}% ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/postgresql-high-connections"
+
+    - alert: PostgreSQLSlowQueries
+      expr: rate(pg_stat_database_calls_total[5m]) > 100
+      for: 10m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL慢查询过多"
+        description: "PostgreSQL慢查询数量过多，当前值: {{ $value }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/postgresql-slow-queries"
+
+    - alert: PostgreSQLDeadlocks
+      expr: rate(pg_stat_database_deadlocks[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: database
+      annotations:
+        summary: "PostgreSQL死锁检测"
+        description: "检测到PostgreSQL死锁，当前值: {{ $value }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/postgresql-deadlocks"
+
+    - alert: PostgreSQLDiskSpaceLow
+      expr: pg_database_size_bytes / node_filesystem_size_bytes * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "PostgreSQL磁盘空间不足"
+        description: "PostgreSQL磁盘空间使用率超过85%，当前值: {{ $value }}% ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/postgresql-disk-space-low"
+
+    # === Redis告警 ===
+    - alert: RedisDown
+      expr: up{job="cardeverything-redis"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: redis
+      annotations:
+        summary: "Redis服务不可用"
+        description: "Redis服务已停止运行超过1分钟 ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/redis-down"
+
+    - alert: RedisHighMemoryUsage
+      expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+      for: 5m
+      labels:
+        severity: warning
+        component: redis
+      annotations:
+        summary: "Redis内存使用率过高"
+        description: "Redis内存使用率超过90%，当前值: {{ $value }}% ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/redis-high-memory-usage"
+
+    - alert: RedisLowHitRate
+      expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
+      for: 10m
+      labels:
+        severity: warning
+        component: redis
+      annotations:
+        summary: "Redis缓存命中率过低"
+        description: "Redis缓存命中率低于80%，当前值: {{ $value | humanizePercentage }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/redis-low-hit-rate"
+
+    - alert: RedisConnectionsHigh
+      expr: redis_connected_clients > 100
+      for: 5m
+      labels:
+        severity: warning
+        component: redis
+      annotations:
+        summary: "Redis连接数过多"
+        description: "Redis连接数超过100，当前值: {{ $value }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/redis-connections-high"
+
+    # === 系统告警 ===
+    - alert: HostHighCpuLoad
+      expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 10m
+      labels:
+        severity: warning
+        component: system
+      annotations:
+        summary: "主机CPU使用率过高"
+        description: "主机CPU使用率超过80%，当前值: {{ $value }}% ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/host-high-cpu-load"
+
+    - alert: HostHighMemoryUsage
+      expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+        component: system
+      annotations:
+        summary: "主机内存使用率过高"
+        description: "主机内存使用率超过85%，当前值: {{ $value }}% ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/host-high-memory-usage"
+
+    - alert: HostDiskSpaceLow
+      expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 85
+      for: 5m
+      labels:
+        severity: warning
+        component: system
+      annotations:
+        summary: "主机磁盘空间不足"
+        description: "主机磁盘空间使用率超过85%，当前值: {{ $value }}% ({{ $labels.instance }} - {{ $labels.mountpoint }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/host-disk-space-low"
+
+    - alert: HostOutOfDiskSpace
+      expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 95
+      for: 1m
+      labels:
+        severity: critical
+        component: system
+      annotations:
+        summary: "主机磁盘空间严重不足"
+        description: "主机磁盘空间使用率超过95%，当前值: {{ $value }}% ({{ $labels.instance }} - {{ $labels.mountpoint }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/host-out-of-disk-space"
+
+    - alert: HostHighLoadAverage
+      expr: node_load5 / count(node_cpu_seconds_total{mode="system"}) > 2
+      for: 10m
+      labels:
+        severity: warning
+        component: system
+      annotations:
+        summary: "主机负载过高"
+        description: "主机5分钟平均负载超过CPU核心数的2倍，当前值: {{ $value }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/host-high-load-average"
+
+    # === 网络告警 ===
+    - alert: HighNetworkLatency
+      expr: probe_http_duration_seconds > 1
+      for: 5m
+      labels:
+        severity: warning
+        component: network
+      annotations:
+        summary: "网络延迟过高"
+        description: "HTTP请求响应时间超过1秒，当前值: {{ $value }}s ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-network-latency"
+
+    - alert: ServiceUnavailable
+      expr: probe_success == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: network
+      annotations:
+        summary: "服务不可用"
+        description: "HTTP健康检查失败 ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/service-unavailable"
+
+    # === 业务告警 ===
+    - alert: LowSyncSuccessRate
+      expr: rate(sync_operations_total{status="success"}[5m]) / rate(sync_operations_total[5m]) < 0.95
+      for: 5m
+      labels:
+        severity: warning
+        component: business
+      annotations:
+        summary: "同步成功率过低"
+        description: "同步操作成功率低于95%，当前值: {{ $value | humanizePercentage }} ({{ $labels.instance }})"
+        runbook_url: "https://docs.cardeverything.com/runbooks/low-sync-success-rate"
+
+    - alert: HighUserActivity
+      expr: rate(active_users_total[5m]) > 100
+      for: 10m
+      labels:
+        severity: info
+        component: business
+      annotations:
+        summary: "用户活动异常活跃"
+        description: "活跃用户数量异常增加，当前值: {{ $value }} 用户/分钟"
+        runbook_url: "https://docs.cardeverything.com/runbooks/high-user-activity"
+
+    - alert: DataConsistencyIssue
+      expr: data_consistency_errors_total > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: business
+      annotations:
+        summary: "数据一致性问题"
+        description: "检测到数据一致性问题，错误数量: {{ $value }}"
+        runbook_url: "https://docs.cardeverything.com/runbooks/data-consistency-issue"
+
+    # === 容器告警 ===
+    - alert: ContainerOOMKilled
+      expr: time() - container_last_seen{name!=""} > 60
+      for: 1m
+      labels:
+        severity: critical
+        component: container
+      annotations:
+        summary: "容器被OOM杀死"
+        description: "容器 {{ $labels.name }} 可能被OOM杀死，超过60秒未见到"
+        runbook_url: "https://docs.cardeverything.com/runbooks/container-oom-killed"
+
+    - alert: ContainerRestarted
+      expr: changes(container_start_time_seconds[5m]) > 2
+      for: 1m
+      labels:
+        severity: warning
+        component: container
+      annotations:
+        summary: "容器频繁重启"
+        description: "容器 {{ $labels.name }} 在5分钟内重启超过2次"
+        runbook_url: "https://docs.cardeverything.com/runbooks/container-restarted"

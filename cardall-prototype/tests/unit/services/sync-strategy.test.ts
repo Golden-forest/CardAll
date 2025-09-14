@@ -2,48 +2,48 @@ import { SyncStrategyService, type SyncConflict, type ResolutionStrategy, type S
 import { db } from '@/services/database'
 
 // 模拟数据库
-jest.mock('@/services/database', () => ({
+vi.mock('@/services/database', () => ({
   db: {
     cards: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
     },
     folders: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     tags: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     syncHistory: {
-      add: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
+      add: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
     }
   }
 }))
 
 // 模拟 Supabase
-jest.mock('@/services/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    order: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
   }
 }))
 
@@ -53,7 +53,7 @@ describe('SyncStrategyService', () => {
   let mockSupabase: any
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     mockDb = db
     mockSupabase = require('@/services/supabase').supabase
     service = new SyncStrategyService()
@@ -572,7 +572,7 @@ describe('SyncStrategyService', () => {
 
   describe('事件处理', () => {
     it('应该能够添加和移除事件监听器', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       const unsubscribe = service.onSyncProgress(mockListener)
       
       expect(typeof unsubscribe).toBe('function')
@@ -629,7 +629,7 @@ describe('SyncStrategyService', () => {
       }
       
       // 模拟解决器失败
-      jest.spyOn(service as any, 'applyResolutionStrategy').mockRejectedValue(new Error('Resolution failed'))
+      vi.spyOn(service as any, 'applyResolutionStrategy').mockRejectedValue(new Error('Resolution failed'))
       
       await expect(service.resolveConflict(conflict, 'local')).rejects.toThrow('Resolution failed')
     })

@@ -5,60 +5,60 @@ import { SyncPerformanceOptimizer } from '@/services/sync-performance'
 import { SyncIntegrationService } from '@/services/sync-integration'
 
 // 模拟 Supabase 和数据库
-jest.mock('@/services/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    gte: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    upsert: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis(),
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
   }
 }))
 
-jest.mock('@/services/database', () => ({
+vi.mock('@/services/database', () => ({
   db: {
     cards: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
     },
     folders: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     tags: {
-      get: jest.fn(),
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      get: vi.fn(),
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
     },
     syncQueue: {
-      add: jest.fn(),
-      get: jest.fn(),
-      getAll: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-      clear: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
+      add: vi.fn(),
+      get: vi.fn(),
+      getAll: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      clear: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
     },
     syncHistory: {
-      add: jest.fn(),
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      sort: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
+      add: vi.fn(),
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      sort: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
     }
   }
 }))
@@ -71,7 +71,7 @@ describe('Sync System Integration Tests', () => {
   let integrationService: SyncIntegrationService
 
   beforeEach(async () => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     
     // 创建服务实例
     localOperation = new LocalOperationService()
@@ -105,15 +105,15 @@ describe('Sync System Integration Tests', () => {
       }
 
       // 2. 监听网络状态
-      const networkListener = jest.fn()
+      const networkListener = vi.fn()
       networkMonitor.onNetworkChange(networkListener)
 
       // 3. 监听同步进度
-      const syncListener = jest.fn()
+      const syncListener = vi.fn()
       syncStrategy.onSyncProgress(syncListener)
 
       // 4. 监听系统事件
-      const systemListener = jest.fn()
+      const systemListener = vi.fn()
       integrationService.onSystemEvent(systemListener)
 
       // 5. 模拟网络在线状态
@@ -124,8 +124,8 @@ describe('Sync System Integration Tests', () => {
           downlink: 10,
           rtt: 50,
           saveData: false,
-          addEventListener: jest.fn(),
-          removeEventListener: jest.fn(),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
         },
         writable: true,
       })
@@ -182,8 +182,8 @@ describe('Sync System Integration Tests', () => {
       })
 
       // 2. 监听事件
-      const networkListener = jest.fn()
-      const systemListener = jest.fn()
+      const networkListener = vi.fn()
+      const systemListener = vi.fn()
       
       networkMonitor.onNetworkChange(networkListener)
       integrationService.onSystemEvent(systemListener)
@@ -266,7 +266,7 @@ describe('Sync System Integration Tests', () => {
       mockSupabase.mockResolvedValue({ data: [mockCloudCard], error: null })
 
       // 3. 监听冲突事件
-      const conflictListener = jest.fn()
+      const conflictListener = vi.fn()
       syncStrategy.onSyncProgress(conflictListener)
 
       // 4. 执行同步
@@ -333,7 +333,7 @@ describe('Sync System Integration Tests', () => {
       }
 
       // 3. 执行批量同步
-      const mockExecutor = jest.fn().mockImplementation((op) => {
+      const mockExecutor = vi.fn().mockImplementation((op) => {
         return Promise.resolve({ 
           success: true, 
           operationId: op.id, 
@@ -373,7 +373,7 @@ describe('Sync System Integration Tests', () => {
 
       // 2. 模拟执行器失败
       let attemptCount = 0
-      const mockExecutor = jest.fn().mockImplementation(() => {
+      const mockExecutor = vi.fn().mockImplementation(() => {
         attemptCount++
         if (attemptCount <= 2) {
           return Promise.reject(new Error('Network timeout'))

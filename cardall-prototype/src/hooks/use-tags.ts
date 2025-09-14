@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Tag, TagAction } from '@/types/card'
+import { secureStorage } from '@/utils/secure-storage'
 
 // Mock data for development
 const mockTags: Tag[] = [
@@ -245,8 +246,14 @@ export function useTags() {
   // Auto-save to localStorage
   useEffect(() => {
     const saveTimer = setTimeout(() => {
-      localStorage.setItem('cardall-tags', JSON.stringify(tags))
-      localStorage.setItem('cardall-hidden-tags', JSON.stringify(hiddenTags))
+      secureStorage.set('tags', tags, {
+        validate: true,
+        encrypt: true
+      })
+      secureStorage.set('hidden-tags', hiddenTags, {
+        validate: true,
+        encrypt: true
+      })
     }, 1000)
 
     return () => clearTimeout(saveTimer)
@@ -254,25 +261,22 @@ export function useTags() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const savedTags = localStorage.getItem('cardall-tags')
-    const savedHiddenTags = localStorage.getItem('cardall-hidden-tags')
-    
+    const savedTags = secureStorage.get<Tag[]>('tags', {
+      validate: true,
+      encrypt: true
+    })
+
     if (savedTags) {
-      try {
-        const parsedTags = JSON.parse(savedTags)
-        setTags(parsedTags)
-      } catch (error) {
-        console.error('Failed to load saved tags:', error)
-      }
+      setTags(savedTags)
     }
-    
+
+    const savedHiddenTags = secureStorage.get<string[]>('hidden-tags', {
+      validate: true,
+      encrypt: true
+    })
+
     if (savedHiddenTags) {
-      try {
-        const parsedHiddenTags = JSON.parse(savedHiddenTags)
-        setHiddenTags(parsedHiddenTags)
-      } catch (error) {
-        console.error('Failed to load hidden tags:', error)
-      }
+      setHiddenTags(savedHiddenTags)
     }
   }, [])
 

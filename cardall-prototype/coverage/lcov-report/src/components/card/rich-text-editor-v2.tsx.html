@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/354</span>
+                <span class='fraction'>0/358</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/354</span>
+                <span class='fraction'>0/358</span>
             </div>
         
             
@@ -416,7 +416,15 @@
 <a name='L351'></a><a href='#L351'>351</a>
 <a name='L352'></a><a href='#L352'>352</a>
 <a name='L353'></a><a href='#L353'>353</a>
-<a name='L354'></a><a href='#L354'>354</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L354'></a><a href='#L354'>354</a>
+<a name='L355'></a><a href='#L355'>355</a>
+<a name='L356'></a><a href='#L356'>356</a>
+<a name='L357'></a><a href='#L357'>357</a>
+<a name='L358'></a><a href='#L358'>358</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -790,7 +798,6 @@
 <span class="cstat-no" title="statement not covered" >} from 'lucide-react'</span>
 <span class="cstat-no" title="statement not covered" >import { cn } from '@/lib/utils'</span>
 <span class="cstat-no" title="statement not covered" >import { imageProcessor } from '@/services/image-processor'</span>
-<span class="cstat-no" title="statement not covered" >import { db } from '@/services/database'</span>
 <span class="cstat-no" title="statement not covered" >import './editor-styles.css'</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >interface RichTextEditorV2Props {</span>
@@ -870,23 +877,28 @@
 <span class="cstat-no" title="statement not covered" >        }).run()</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >        // 保存图片信息到数据库</span>
-<span class="cstat-no" title="statement not covered" >        await db.images?.add({</span>
-<span class="cstat-no" title="statement not covered" >          id: result.id,</span>
-<span class="cstat-no" title="statement not covered" >          cardId,</span>
-<span class="cstat-no" title="statement not covered" >          fileName: result.metadata.originalName,</span>
-<span class="cstat-no" title="statement not covered" >          filePath: result.filePaths.webp,</span>
-<span class="cstat-no" title="statement not covered" >          metadata: {</span>
-<span class="cstat-no" title="statement not covered" >            originalName: result.metadata.originalName,</span>
-<span class="cstat-no" title="statement not covered" >            size: result.metadata.processedSize,</span>
-<span class="cstat-no" title="statement not covered" >            width: result.metadata.width,</span>
-<span class="cstat-no" title="statement not covered" >            height: result.metadata.height,</span>
-<span class="cstat-no" title="statement not covered" >            format: result.metadata.format,</span>
-<span class="cstat-no" title="statement not covered" >            compressed: true</span>
-<span class="cstat-no" title="statement not covered" >          },</span>
-<span class="cstat-no" title="statement not covered" >          createdAt: new Date(),</span>
-<span class="cstat-no" title="statement not covered" >          syncVersion: 1,</span>
-<span class="cstat-no" title="statement not covered" >          pendingSync: true</span>
-<span class="cstat-no" title="statement not covered" >        })</span>
+<span class="cstat-no" title="statement not covered" >        try {</span>
+<span class="cstat-no" title="statement not covered" >          const { db } = await import('@/services/database')</span>
+<span class="cstat-no" title="statement not covered" >          await db.images?.add({</span>
+<span class="cstat-no" title="statement not covered" >            id: result.id,</span>
+<span class="cstat-no" title="statement not covered" >            cardId,</span>
+<span class="cstat-no" title="statement not covered" >            fileName: result.metadata.originalName,</span>
+<span class="cstat-no" title="statement not covered" >            filePath: result.filePaths.webp,</span>
+<span class="cstat-no" title="statement not covered" >            metadata: {</span>
+<span class="cstat-no" title="statement not covered" >              originalName: result.metadata.originalName,</span>
+<span class="cstat-no" title="statement not covered" >              size: result.metadata.processedSize,</span>
+<span class="cstat-no" title="statement not covered" >              width: result.metadata.width,</span>
+<span class="cstat-no" title="statement not covered" >              height: result.metadata.height,</span>
+<span class="cstat-no" title="statement not covered" >              format: result.metadata.format,</span>
+<span class="cstat-no" title="statement not covered" >              compressed: true</span>
+<span class="cstat-no" title="statement not covered" >            },</span>
+<span class="cstat-no" title="statement not covered" >            createdAt: new Date(),</span>
+<span class="cstat-no" title="statement not covered" >            syncVersion: 1,</span>
+<span class="cstat-no" title="statement not covered" >            pendingSync: true</span>
+<span class="cstat-no" title="statement not covered" >          })</span>
+<span class="cstat-no" title="statement not covered" >        } catch (dbError) {</span>
+<span class="cstat-no" title="statement not covered" >          console.warn('Failed to save image to database:', dbError)</span>
+<span class="cstat-no" title="statement not covered" >        }</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      console.log(`Successfully uploaded ${results.length} images`)</span>
@@ -1129,7 +1141,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-13T02:41:57.646Z
+                at 2025-09-13T15:54:57.028Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

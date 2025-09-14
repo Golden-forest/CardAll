@@ -5,13 +5,13 @@ describe('SyncPerformanceOptimizer', () => {
   let optimizer: SyncPerformanceOptimizer
 
   beforeEach(() => {
-    jest.clearAllMocks()
-    jest.useFakeTimers()
+    vi.clearAllMocks()
+    vi.useFakeTimers()
     optimizer = new SyncPerformanceOptimizer()
   })
 
   afterEach(() => {
-    jest.useRealTimers()
+    vi.useRealTimers()
   })
 
   describe('初始化', () => {
@@ -41,7 +41,7 @@ describe('SyncPerformanceOptimizer', () => {
       }
 
       // 模拟成功的操作执行
-      const mockExecutor = jest.fn().mockResolvedValue({ success: true, latency: 100 })
+      const mockExecutor = vi.fn().mockResolvedValue({ success: true, latency: 100 })
 
       const result = await optimizer.executeOptimizedOperation(mockOperation, mockExecutor)
 
@@ -65,7 +65,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal'
       }
 
-      const mockExecutor = jest.fn().mockRejectedValue(new Error('Network error'))
+      const mockExecutor = vi.fn().mockRejectedValue(new Error('Network error'))
 
       const result = await optimizer.executeOptimizedOperation(mockOperation, mockExecutor)
 
@@ -101,7 +101,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal'
       }
 
-      const mockExecutor = jest.fn()
+      const mockExecutor = vi.fn()
         .mockResolvedValueOnce({ success: true, latency: 100 })
         .mockResolvedValueOnce({ success: true, latency: 150 })
 
@@ -149,7 +149,7 @@ describe('SyncPerformanceOptimizer', () => {
         }
       ]
 
-      const mockBatchExecutor = jest.fn().mockResolvedValue({
+      const mockBatchExecutor = vi.fn().mockResolvedValue({
         success: true,
         results: [
           { success: true, latency: 50 },
@@ -181,7 +181,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal' as const
       }))
 
-      const mockBatchExecutor = jest.fn().mockResolvedValue({
+      const mockBatchExecutor = vi.fn().mockResolvedValue({
         success: true,
         results: mockOperations.map(() => ({ success: true, latency: 50 })),
         totalLatency: 2500
@@ -222,7 +222,7 @@ describe('SyncPerformanceOptimizer', () => {
         }
       ]
 
-      const mockBatchExecutor = jest.fn().mockResolvedValue({
+      const mockBatchExecutor = vi.fn().mockResolvedValue({
         success: false,
         results: [
           { success: true, latency: 50 },
@@ -394,7 +394,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal'
       }
 
-      const mockExecutor = jest.fn().mockResolvedValue({ success: true, latency: 100 })
+      const mockExecutor = vi.fn().mockResolvedValue({ success: true, latency: 100 })
 
       // 设置低并发限制
       optimizer.updateConfig({
@@ -432,7 +432,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal'
       }
 
-      const mockExecutor = jest.fn().mockResolvedValue({ success: true, latency: 50 })
+      const mockExecutor = vi.fn().mockResolvedValue({ success: true, latency: 50 })
 
       // 设置严格的速率限制
       optimizer.updateConfig({
@@ -451,11 +451,11 @@ describe('SyncPerformanceOptimizer', () => {
       }
 
       // 前两个操作应该立即执行
-      await jest.advanceTimersByTime(0)
+      await vi.advanceTimersByTime(0)
       expect(optimizer.getActiveOperationCount()).toBe(2)
 
       // 等待速率限制窗口重置
-      await jest.advanceTimersByTime(1001)
+      await vi.advanceTimersByTime(1001)
       
       // 后续操作应该能够执行
       await Promise.all(promises)
@@ -624,7 +624,7 @@ describe('SyncPerformanceOptimizer', () => {
 
     it('应该处理自适应调整中的异常', async () => {
       // 模拟自适应过程中的异常
-      jest.spyOn(optimizer as any, 'calculateNewBatchSize').mockImplementation(() => {
+      vi.spyOn(optimizer as any, 'calculateNewBatchSize').mockImplementation(() => {
         throw new Error('Calculation error')
       })
 
@@ -646,7 +646,7 @@ describe('SyncPerformanceOptimizer', () => {
         priority: 'normal'
       }
 
-      const mockExecutor = jest.fn().mockRejectedValue(new Error('Database connection failed'))
+      const mockExecutor = vi.fn().mockRejectedValue(new Error('Database connection failed'))
 
       const result = await optimizer.executeOptimizedOperation(mockOperation, mockExecutor)
 

@@ -1634,25 +1634,25 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className=\"debug-panel fixed bottom-4 right-4 w-96 max-h-[80vh] bg-white border rounded-lg shadow-lg z-50\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >      &lt;Card className=\"h-full border-0 rounded-lg\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardHeader className=\"pb-3\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"flex items-center justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;CardTitle className=\"text-lg flex items-center gap-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Bug className=\"w-5 h-5\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="debug-panel fixed bottom-4 right-4 w-96 max-h-[80vh] bg-white border rounded-lg shadow-lg z-50"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;Card className="h-full border-0 rounded-lg"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardHeader className="pb-3"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;CardTitle className="text-lg flex items-center gap-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Bug className="w-5 h-5" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              调试诊断面板</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/CardTitle&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex items-center gap-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex items-center gap-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >                variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >                size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >                variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >                size="sm"</span>
 <span class="cstat-no" title="statement not covered" >                onClick={() =&gt; setAutoRefresh(!autoRefresh)}</span>
 <span class="cstat-no" title="statement not covered" >              &gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >                variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >                size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >                variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >                size="sm"</span>
 <span class="cstat-no" title="statement not covered" >                onClick={loadData}</span>
 <span class="cstat-no" title="statement not covered" >                disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >              &gt;</span>
@@ -1662,35 +1662,35 @@
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/CardHeader&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-0\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;Tabs defaultValue=\"overview\" className=\"h-full\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;TabsList className=\"grid w-full grid-cols-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value=\"overview\" className=\"text-xs\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Activity className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-0"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;Tabs defaultValue="overview" className="h-full"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;TabsList className="grid w-full grid-cols-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value="overview" className="text-xs"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Activity className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                概览</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/TabsTrigger&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value=\"events\" className=\"text-xs\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Bug className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value="events" className="text-xs"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Bug className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                事件</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/TabsTrigger&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value=\"diagnostics\" className=\"text-xs\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;BarChart3 className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value="diagnostics" className="text-xs"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;BarChart3 className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                诊断</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/TabsTrigger&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value=\"actions\" className=\"text-xs\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Settings className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;TabsTrigger value="actions" className="text-xs"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Settings className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >                操作</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/TabsTrigger&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/TabsList&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value=\"overview\" className=\"m-4 space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value="overview" className="m-4 space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;SystemOverview </span>
 <span class="cstat-no" title="statement not covered" >                diagnosticReport={diagnosticReport}</span>
 <span class="cstat-no" title="statement not covered" >                errorStats={errorStats}</span>
 <span class="cstat-no" title="statement not covered" >              /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/TabsContent&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value=\"events\" className=\"m-4 space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value="events" className="m-4 space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;EventList </span>
 <span class="cstat-no" title="statement not covered" >                events={filteredEvents}</span>
 <span class="cstat-no" title="statement not covered" >                selectedLevel={selectedLevel}</span>
@@ -1700,11 +1700,11 @@
 <span class="cstat-no" title="statement not covered" >              /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/TabsContent&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value=\"diagnostics\" className=\"m-4 space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value="diagnostics" className="m-4 space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;DiagnosticsPanel diagnosticReport={diagnosticReport} /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/TabsContent&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value=\"actions\" className=\"m-4 space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;TabsContent value="actions" className="m-4 space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;DebugActions onRefresh={loadData} /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/TabsContent&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/Tabs&gt;</span>
@@ -1727,8 +1727,8 @@
 <span class="cstat-no" title="statement not covered" >}) {</span>
 <span class="cstat-no" title="statement not covered" >  if (!diagnosticReport || !errorStats) {</span>
 <span class="cstat-no" title="statement not covered" >    return (</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className=\"text-center py-8 text-gray-500\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;RefreshCw className=\"w-8 h-8 mx-auto mb-2 animate-spin\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div className="text-center py-8 text-gray-500"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;p&gt;正在加载系统状态...&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >    )</span>
@@ -1745,20 +1745,20 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const getHealthIcon = (status: SyncHealthStatus) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    switch (status) {</span>
-<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.HEALTHY: return &lt;CheckCircle className=\"w-4 h-4\" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.WARNING: return &lt;AlertTriangle className=\"w-4 h-4\" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.CRITICAL: return &lt;AlertTriangle className=\"w-4 h-4\" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >      default: return &lt;Activity className=\"w-4 h-4\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.HEALTHY: return &lt;CheckCircle className="w-4 h-4" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.WARNING: return &lt;AlertTriangle className="w-4 h-4" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      case SyncHealthStatus.CRITICAL: return &lt;AlertTriangle className="w-4 h-4" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      default: return &lt;Activity className="w-4 h-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className=\"space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* 健康状态 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"flex items-center justify-between mb-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;h3 className=\"font-medium flex items-center gap-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="flex items-center justify-between mb-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;h3 className="font-medium flex items-center gap-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              {getHealthIcon(diagnosticReport.overallHealth)}</span>
 <span class="cstat-no" title="statement not covered" >              系统健康状态</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/h3&gt;</span>
@@ -1766,24 +1766,24 @@
 <span class="cstat-no" title="statement not covered" >              {diagnosticReport.overallHealth.toUpperCase()}</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Badge&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"grid grid-cols-2 gap-4 text-sm\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="grid grid-cols-2 gap-4 text-sm"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;总操作数:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"ml-2 font-medium\"&gt;{diagnosticReport.summary.totalOperations}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;总操作数:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="ml-2 font-medium"&gt;{diagnosticReport.summary.totalOperations}&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;成功率:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"ml-2 font-medium\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;成功率:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="ml-2 font-medium"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                {((diagnosticReport.summary.successfulOperations / diagnosticReport.summary.totalOperations) * 100).toFixed(1)}%</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;失败操作:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"ml-2 font-medium text-red-600\"&gt;{diagnosticReport.summary.failedOperations}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;失败操作:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="ml-2 font-medium text-red-600"&gt;{diagnosticReport.summary.failedOperations}&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;平均响应:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"ml-2 font-medium\"&gt;{diagnosticReport.summary.averageResponseTime.toFixed(0)}ms&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;平均响应:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="ml-2 font-medium"&gt;{diagnosticReport.summary.averageResponseTime.toFixed(0)}ms&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/CardContent&gt;</span>
@@ -1791,29 +1791,29 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* 错误统计 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-2 flex items-center gap-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;AlertTriangle className=\"w-4 h-4\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-2 flex items-center gap-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;AlertTriangle className="w-4 h-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            错误统计</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"space-y-2 text-sm\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;总错误数:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{errorStats.totalErrors}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="space-y-2 text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;总错误数:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{errorStats.totalErrors}&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;最近错误:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{errorStats.recentErrors}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;最近错误:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{errorStats.recentErrors}&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;恢复率:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium text-green-600\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;恢复率:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium text-green-600"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                {(errorStats.recoveryRate * 100).toFixed(1)}%</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;平均恢复时间:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{errorStats.averageRecoveryTime.toFixed(0)}ms&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;平均恢复时间:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{errorStats.averageRecoveryTime.toFixed(0)}ms&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/CardContent&gt;</span>
@@ -1821,27 +1821,27 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* 性能指标 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-2 flex items-center gap-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;BarChart3 className=\"w-4 h-4\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-2 flex items-center gap-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;BarChart3 className="w-4 h-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            性能指标</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"space-y-2 text-sm\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;平均同步时间:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{diagnosticReport.performanceMetrics.averageSyncTime.toFixed(0)}ms&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="space-y-2 text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;平均同步时间:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{diagnosticReport.performanceMetrics.averageSyncTime.toFixed(0)}ms&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;上传速度:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{(diagnosticReport.performanceMetrics.averageUploadSpeed / 1024).toFixed(1)}KB/s&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;上传速度:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{(diagnosticReport.performanceMetrics.averageUploadSpeed / 1024).toFixed(1)}KB/s&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;下载速度:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{(diagnosticReport.performanceMetrics.averageDownloadSpeed / 1024).toFixed(1)}KB/s&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;下载速度:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{(diagnosticReport.performanceMetrics.averageDownloadSpeed / 1024).toFixed(1)}KB/s&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"flex justify-between\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"text-gray-500\"&gt;内存使用:&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;span className=\"font-medium\"&gt;{diagnosticReport.performanceMetrics.memoryUsage.toFixed(1)}%&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="flex justify-between"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="text-gray-500"&gt;内存使用:&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;span className="font-medium"&gt;{diagnosticReport.performanceMetrics.memoryUsage.toFixed(1)}%&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/CardContent&gt;</span>
@@ -1883,64 +1883,64 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className=\"space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* 过滤器和操作 */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className=\"flex items-center justify-between gap-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className=\"flex gap-1\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div className="flex items-center justify-between gap-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="flex gap-1"&gt;</span>
 <span class="cstat-no" title="statement not covered" >          {(['all', ...Object.values(DebugLevel)] as const).map(level =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
 <span class="cstat-no" title="statement not covered" >              key={level}</span>
 <span class="cstat-no" title="statement not covered" >              variant={selectedLevel === level ? 'default' : 'outline'}</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; onLevelChange(level)}</span>
-<span class="cstat-no" title="statement not covered" >              className=\"text-xs h-7\"</span>
+<span class="cstat-no" title="statement not covered" >              className="text-xs h-7"</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
 <span class="cstat-no" title="statement not covered" >              {level === 'all' ? '全部' : level.toUpperCase()}</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >          ))}</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;div className=\"flex gap-1\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;Button variant=\"outline\" size=\"sm\" onClick={onExportLogs}&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;Download className=\"w-3 h-3 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;div className="flex gap-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;Button variant="outline" size="sm" onClick={onExportLogs}&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;Download className="w-3 h-3 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            导出</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/Button&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;Button variant=\"outline\" size=\"sm\" onClick={onClearLogs}&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;Trash2 className=\"w-3 h-3 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;Button variant="outline" size="sm" onClick={onClearLogs}&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;Trash2 className="w-3 h-3 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >            清空</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* 事件列表 */}</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className=\"space-y-2 max-h-96 overflow-y-auto\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div className="space-y-2 max-h-96 overflow-y-auto"&gt;</span>
 <span class="cstat-no" title="statement not covered" >        {events.length === 0 ? (</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"text-center py-8 text-gray-500 text-sm\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="text-center py-8 text-gray-500 text-sm"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            没有找到事件</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >        ) : (</span>
 <span class="cstat-no" title="statement not covered" >          events.map(event =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >            &lt;Card key={event.id} className=\"border-l-4\" style={{ borderLeftColor: getEventColor(event.level).split(' ')[2] }}&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;CardContent className=\"p-3\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;div className=\"flex items-start justify-between mb-1\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className=\"flex items-center gap-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;Card key={event.id} className="border-l-4" style={{ borderLeftColor: getEventColor(event.level).split(' ')[2] }}&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;CardContent className="p-3"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;div className="flex items-start justify-between mb-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="flex items-center gap-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;Badge className={`text-xs ${getEventColor(event.level)}`}&gt;</span>
 <span class="cstat-no" title="statement not covered" >                      {event.level.toUpperCase()}</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;/Badge&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;span className=\"text-xs text-gray-500\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;span className="text-xs text-gray-500"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                      {event.category}</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;span className=\"text-xs text-gray-400\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;span className="text-xs text-gray-400"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    {formatTime(event.timestamp)}</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;p className=\"text-sm text-gray-700 mb-1\"&gt;{event.message}&lt;/p&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;p className="text-sm text-gray-700 mb-1"&gt;{event.message}&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >                {event.details &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;details className=\"text-xs\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;summary className=\"cursor-pointer text-blue-600 hover:text-blue-800\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;details className="text-xs"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;summary className="cursor-pointer text-blue-600 hover:text-blue-800"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                      查看详情</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;/summary&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;pre className=\"mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;pre className="mt-1 p-2 bg-gray-50 rounded text-xs overflow-x-auto"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                      {JSON.stringify(event.details, null, 2)}</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;/pre&gt;</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/details&gt;</span>
@@ -1961,31 +1961,31 @@
 <span class="cstat-no" title="statement not covered" >function DiagnosticsPanel({ diagnosticReport }: { diagnosticReport: SyncDiagnosticReport | null }) {</span>
 <span class="cstat-no" title="statement not covered" >  if (!diagnosticReport) {</span>
 <span class="cstat-no" title="statement not covered" >    return (</span>
-<span class="cstat-no" title="statement not covered" >      &lt;div className=\"text-center py-8 text-gray-500\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;RefreshCw className=\"w-8 h-8 mx-auto mb-2 animate-spin\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >      &lt;div className="text-center py-8 text-gray-500"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        &lt;p&gt;正在加载诊断报告...&lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >    )</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className=\"space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* 错误分析 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-3\"&gt;错误分析&lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"space-y-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-3"&gt;错误分析&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="space-y-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            {diagnosticReport.errorAnalysis.map((error, index) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >              &lt;div key={index} className=\"flex items-center justify-between p-2 bg-gray-50 rounded\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;span className=\"font-medium text-sm\"&gt;{error.errorType}&lt;/span&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;span className=\"text-xs text-gray-500 ml-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;span className="font-medium text-sm"&gt;{error.errorType}&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;span className="text-xs text-gray-500 ml-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    ({error.count}次, {error.frequency.toFixed(1)}/小时)</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;Badge </span>
 <span class="cstat-no" title="statement not covered" >                  variant={error.severity === 'critical' ? 'destructive' : 'outline'}</span>
-<span class="cstat-no" title="statement not covered" >                  className=\"text-xs\"</span>
+<span class="cstat-no" title="statement not covered" >                  className="text-xs"</span>
 <span class="cstat-no" title="statement not covered" >                &gt;</span>
 <span class="cstat-no" title="statement not covered" >                  {error.severity}</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/Badge&gt;</span>
@@ -1998,25 +1998,25 @@
 <span class="cstat-no" title="statement not covered" >      {/* 建议和警告 */}</span>
 <span class="cstat-no" title="statement not covered" >      {diagnosticReport.recommendations.length &gt; 0 &amp;&amp; (</span>
 <span class="cstat-no" title="statement not covered" >        &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;h3 className=\"font-medium mb-3 flex items-center gap-2\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;AlertTriangle className=\"w-4 h-4\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;h3 className="font-medium mb-3 flex items-center gap-2"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;AlertTriangle className="w-4 h-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              建议和警告</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"space-y-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="space-y-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              {diagnosticReport.recommendations.map((rec, index) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >                &lt;div key={index} className=\"p-3 border rounded-lg\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className=\"flex items-center justify-between mb-1\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;h4 className=\"font-medium text-sm\"&gt;{rec.title}&lt;/h4&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;div key={index} className="p-3 border rounded-lg"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="flex items-center justify-between mb-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;h4 className="font-medium text-sm"&gt;{rec.title}&lt;/h4&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;Badge </span>
 <span class="cstat-no" title="statement not covered" >                      variant={rec.priority === 'critical' ? 'destructive' : 'outline'}</span>
-<span class="cstat-no" title="statement not covered" >                      className=\"text-xs\"</span>
+<span class="cstat-no" title="statement not covered" >                      className="text-xs"</span>
 <span class="cstat-no" title="statement not covered" >                    &gt;</span>
 <span class="cstat-no" title="statement not covered" >                      {rec.priority}</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;/Badge&gt;</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;p className=\"text-xs text-gray-600 mb-2\"&gt;{rec.description}&lt;/p&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className=\"text-xs text-gray-500\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;p className="text-xs text-gray-600 mb-2"&gt;{rec.description}&lt;/p&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="text-xs text-gray-500"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    &lt;strong&gt;预计影响:&lt;/strong&gt; {rec.estimatedImpact}</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/div&gt;</span>
@@ -2029,24 +2029,24 @@
 <span class="cstat-no" title="statement not covered" >      {/* 紧急问题 */}</span>
 <span class="cstat-no" title="statement not covered" >      {diagnosticReport.urgentIssues.length &gt; 0 &amp;&amp; (</span>
 <span class="cstat-no" title="statement not covered" >        &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;h3 className=\"font-medium mb-3 flex items-center gap-2 text-red-600\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;AlertTriangle className=\"w-4 h-4\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;h3 className="font-medium mb-3 flex items-center gap-2 text-red-600"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;AlertTriangle className="w-4 h-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              紧急问题</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"space-y-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="space-y-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              {diagnosticReport.urgentIssues.map((issue, index) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >                &lt;div key={index} className=\"p-3 bg-red-50 border border-red-200 rounded-lg\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className=\"flex items-center justify-between mb-1\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >                    &lt;h4 className=\"font-medium text-sm text-red-800\"&gt;{issue.description}&lt;/h4&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="flex items-center justify-between mb-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    &lt;h4 className="font-medium text-sm text-red-800"&gt;{issue.description}&lt;/h4&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    {issue.deadline &amp;&amp; (</span>
-<span class="cstat-no" title="statement not covered" >                      &lt;span className=\"text-xs text-red-600\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                      &lt;span className="text-xs text-red-600"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                        截止: {new Date(issue.deadline).toLocaleDateString()}</span>
 <span class="cstat-no" title="statement not covered" >                      &lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    )}</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;p className=\"text-xs text-red-700 mb-2\"&gt;{issue.impact}&lt;/p&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;div className=\"text-xs text-red-600 font-medium\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;p className="text-xs text-red-700 mb-2"&gt;{issue.impact}&lt;/p&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;div className="text-xs text-red-600 font-medium"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                    建议: {issue.suggestedAction}</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/div&gt;</span>
@@ -2078,58 +2078,58 @@
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  return (</span>
-<span class="cstat-no" title="statement not covered" >    &lt;div className=\"space-y-4\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >    &lt;div className="space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* 诊断操作 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-3\"&gt;诊断操作&lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"grid grid-cols-2 gap-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-3"&gt;诊断操作&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="grid grid-cols-2 gap-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                await syncDiagnostics.generateDiagnosticReport()</span>
 <span class="cstat-no" title="statement not covered" >                onRefresh()</span>
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Activity className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Activity className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              生成诊断报告</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                await syncDiagnostics.performHealthCheck()</span>
 <span class="cstat-no" title="statement not covered" >                onRefresh()</span>
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;CheckCircle className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;CheckCircle className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              健康检查</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                const suggestions = await getPreventiveSuggestions()</span>
 <span class="cstat-no" title="statement not covered" >                console.log('Preventive suggestions:', suggestions)</span>
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Settings className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Settings className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              预防建议</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                const prediction = await syncDiagnostics.predictPotentialIssues()</span>
 <span class="cstat-no" title="statement not covered" >                console.log('Error prediction:', prediction)</span>
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;BarChart3 className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;BarChart3 className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              错误预测</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
@@ -2138,13 +2138,13 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* 系统操作 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-3\"&gt;系统操作&lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"space-y-2\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-3"&gt;系统操作&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="space-y-2"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
-<span class="cstat-no" title="statement not covered" >              className=\"w-full justify-start\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
+<span class="cstat-no" title="statement not covered" >              className="w-full justify-start"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                // 测试网络连接</span>
 <span class="cstat-no" title="statement not covered" >                const online = navigator.onLine</span>
@@ -2152,13 +2152,13 @@
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Network className=\"w-4 h-4 mr-2\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Network className="w-4 h-4 mr-2" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              测试网络连接</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
-<span class="cstat-no" title="statement not covered" >              className=\"w-full justify-start\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
+<span class="cstat-no" title="statement not covered" >              className="w-full justify-start"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; handleAction(async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                // 清理缓存</span>
 <span class="cstat-no" title="statement not covered" >                if ('caches' in window) {</span>
@@ -2168,13 +2168,13 @@
 <span class="cstat-no" title="statement not covered" >              })}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Database className=\"w-4 h-4 mr-2\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Database className="w-4 h-4 mr-2" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              清理应用缓存</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >              variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >              size=\"sm\"</span>
-<span class="cstat-no" title="statement not covered" >              className=\"w-full justify-start\"</span>
+<span class="cstat-no" title="statement not covered" >              variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >              size="sm"</span>
+<span class="cstat-no" title="statement not covered" >              className="w-full justify-start"</span>
 <span class="cstat-no" title="statement not covered" >              onClick={() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >                if (confirm('确定要重置调试系统吗？这将清除所有日志和设置。')) {</span>
 <span class="cstat-no" title="statement not covered" >                  localStorage.clear()</span>
@@ -2183,7 +2183,7 @@
 <span class="cstat-no" title="statement not covered" >              }}</span>
 <span class="cstat-no" title="statement not covered" >              disabled={isLoading}</span>
 <span class="cstat-no" title="statement not covered" >            &gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;Trash2 className=\"w-4 h-4 mr-2\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;Trash2 className="w-4 h-4 mr-2" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              重置调试系统</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/div&gt;</span>
@@ -2192,13 +2192,13 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >      {/* 开发者工具 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Card&gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;CardContent className=\"p-4\"&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;h3 className=\"font-medium mb-3\"&gt;开发者工具&lt;/h3&gt;</span>
-<span class="cstat-no" title="statement not covered" >          &lt;div className=\"space-y-2 text-sm text-gray-600\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;CardContent className="p-4"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;h3 className="font-medium mb-3"&gt;开发者工具&lt;/h3&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div className="space-y-2 text-sm text-gray-600"&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;div&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;strong&gt;控制台命令:&lt;/strong&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/div&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;div className=\"bg-gray-50 p-2 rounded font-mono text-xs\"&gt;</span>
+<span class="cstat-no" title="statement not covered" >            &lt;div className="bg-gray-50 p-2 rounded font-mono text-xs"&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;div&gt;debug.syncStatus() - 查看同步状态&lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;div&gt;debug.errorHistory() - 查看错误历史&lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;div&gt;debug.performance() - 性能诊断&lt;/div&gt;</span>
@@ -2222,12 +2222,12 @@
 <span class="cstat-no" title="statement not covered" >    &lt;&gt;</span>
 <span class="cstat-no" title="statement not covered" >      {/* 调试按钮 */}</span>
 <span class="cstat-no" title="statement not covered" >      &lt;Button</span>
-<span class="cstat-no" title="statement not covered" >        variant=\"outline\"</span>
-<span class="cstat-no" title="statement not covered" >        size=\"sm\"</span>
-<span class="cstat-no" title="statement not covered" >        className=\"fixed bottom-4 right-4 z-40 bg-white shadow-lg\"</span>
+<span class="cstat-no" title="statement not covered" >        variant="outline"</span>
+<span class="cstat-no" title="statement not covered" >        size="sm"</span>
+<span class="cstat-no" title="statement not covered" >        className="fixed bottom-4 right-4 z-40 bg-white shadow-lg"</span>
 <span class="cstat-no" title="statement not covered" >        onClick={() =&gt; setIsOpen(!isOpen)}</span>
 <span class="cstat-no" title="statement not covered" >      &gt;</span>
-<span class="cstat-no" title="statement not covered" >        &lt;Bug className=\"w-4 h-4 mr-1\" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >        &lt;Bug className="w-4 h-4 mr-1" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >        调试面板</span>
 <span class="cstat-no" title="statement not covered" >      &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -2242,7 +2242,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-13T02:41:57.646Z
+                at 2025-09-13T15:54:57.028Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

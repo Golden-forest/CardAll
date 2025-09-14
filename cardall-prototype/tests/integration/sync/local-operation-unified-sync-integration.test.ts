@@ -1,46 +1,46 @@
-import { describe, it, expect, beforeEach, jest } from '@jest/globals'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { unifiedSyncService } from '@/services/unified-sync-service'
 import { localOperationService } from '@/services/local-operation'
 import type { LocalSyncOperation } from '@/services/local-operation'
 
 // 模拟数据库
-jest.mock('@/services/database-unified', () => ({
+vi.mock('@/services/database-unified', () => ({
   db: {
     syncQueue: {
-      where: jest.fn().mockReturnThis(),
-      equals: jest.fn().mockReturnThis(),
-      orderBy: jest.fn().mockReturnThis(),
-      reverse: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis(),
-      toArray: jest.fn(),
-      update: jest.fn(),
-      transaction: jest.fn(),
-      bulkDelete: jest.fn()
+      where: vi.fn().mockReturnThis(),
+      equals: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      reverse: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      toArray: vi.fn(),
+      update: vi.fn(),
+      transaction: vi.fn(),
+      bulkDelete: vi.fn()
     },
     cards: {
-      add: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn()
+      add: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn()
     },
-    on: jest.fn()
+    on: vi.fn()
   }
 }))
 
 // 模拟Supabase
-jest.mock('@/services/supabase', () => ({
+vi.mock('@/services/supabase', () => ({
   supabase: {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    insert: jest.fn().mockReturnThis(),
-    update: jest.fn().mockReturnThis(),
-    delete: jest.fn().mockReturnThis()
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis()
   }
 }))
 
 describe('LocalOperationService与UnifiedSyncService集成验证', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   describe('集成架构验证', () => {
@@ -160,10 +160,10 @@ describe('LocalOperationService与UnifiedSyncService集成验证', () => {
       ]
 
       // 模拟LocalOperationService方法
-      jest.spyOn(localOperationService, 'getPendingSyncOperations')
+      vi.spyOn(localOperationService, 'getPendingSyncOperations')
         .mockResolvedValue(mockOperations)
       
-      jest.spyOn(localOperationService, 'updateOperationStatuses')
+      vi.spyOn(localOperationService, 'updateOperationStatuses')
         .mockResolvedValue()
 
       // 设置UnifiedSyncService为在线状态

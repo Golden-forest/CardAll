@@ -1,7 +1,7 @@
 // 同步机制重构测试
 // Week 3 Day 11-13 同步机制重构 - Project-Brainstormer
 
-import { jest } from '@jest/globals'
+import { jest } from 'vitest'
 import { optimizedCloudSyncService } from '../../src/services/sync/optimized-cloud-sync'
 import { incrementalSyncAlgorithm } from '../../src/services/sync/algorithms/incremental-sync-algorithm'
 import { intelligentConflictResolver } from '../../src/services/sync/conflict/intelligent-conflict-resolver'
@@ -19,7 +19,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     mockAuthService = {
       isAuthenticated: () => true,
       getCurrentUser: () => ({ id: 'test-user-id' }),
-      onAuthStateChange: jest.fn()
+      onAuthStateChange: vi.fn()
     }
     
     // 设置认证服务
@@ -194,7 +194,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     })
     
     test('应该能够添加状态监听器', () => {
-      const mockCallback = jest.fn()
+      const mockCallback = vi.fn()
       const unsubscribe = optimizedCloudSyncService.onStatusChange(mockCallback)
       
       expect(typeof unsubscribe).toBe('function')
@@ -211,7 +211,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     
     test('应该能够处理完整的同步流程', async () => {
       // 模拟网络状态良好
-      jest.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(mockNetworkState)
+      vi.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(mockNetworkState)
       
       // 执行同步
       const result = await optimizedCloudSyncService.performOptimizedSync()
@@ -234,7 +234,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
         canSync: false
       }
       
-      jest.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(poorNetworkState)
+      vi.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(poorNetworkState)
       
       const result = await optimizedCloudSyncService.performOptimizedSync()
       
@@ -247,7 +247,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     
     test('应该能够在认证失败时跳过同步', async () => {
       // 模拟认证失败
-      jest.spyOn(mockAuthService, 'isAuthenticated').mockReturnValue(false)
+      vi.spyOn(mockAuthService, 'isAuthenticated').mockReturnValue(false)
       
       const result = await optimizedCloudSyncService.performOptimizedSync()
       
@@ -255,7 +255,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
       expect(result.success).toBe(false)
       
       // 恢复认证状态
-      jest.spyOn(mockAuthService, 'isAuthenticated').mockReturnValue(true)
+      vi.spyOn(mockAuthService, 'isAuthenticated').mockReturnValue(true)
       
       console.log(`✅ 认证失败跳过同步测试完成`)
     })
@@ -280,7 +280,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     
     test('应该能够正确处理并发同步请求', async () => {
       // 模拟网络状态良好
-      jest.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(mockNetworkState)
+      vi.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(mockNetworkState)
       
       // 并发触发多个同步请求
       const promises = []
@@ -310,7 +310,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
         canSync: false
       }
       
-      jest.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(errorNetworkState)
+      vi.spyOn(networkStateDetector, 'getCurrentState').mockReturnValue(errorNetworkState)
       
       const result = await optimizedCloudSyncService.performOptimizedSync()
       
@@ -322,7 +322,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
     
     test('应该能够处理服务错误', async () => {
       // 模拟增量同步算法错误
-      jest.spyOn(incrementalSyncAlgorithm, 'performIncrementalSync')
+      vi.spyOn(incrementalSyncAlgorithm, 'performIncrementalSync')
         .mockRejectedValue(new Error('Sync service error'))
       
       const result = await optimizedCloudSyncService.performOptimizedSync()
@@ -332,7 +332,7 @@ describe('Week 3 Day 11-13 同步机制重构测试', () => {
       expect(result.errors.length).toBeGreaterThan(0)
       
       // 恢复原始实现
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
       
       console.log(`✅ 服务错误处理测试完成`)
     })

@@ -1,23 +1,32 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  BarChart3, 
-  Database, 
-  Zap, 
-  TrendingUp, 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import {
+  BarChart3,
+  Database,
+  Zap,
+  TrendingUp,
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Clock
+  Clock,
+  Activity,
+  Cpu,
+  Wifi,
+  HardDrive,
+  Globe
 } from 'lucide-react'
-import { 
-  optimizedQueryService, 
-  getQueryPerformance, 
-  rebuildSearchIndexes, 
-  optimizeDatabase 
+import {
+  optimizedQueryService,
+  getQueryPerformance,
+  rebuildSearchIndexes,
+  optimizeDatabase
 } from '@/services/query-optimizer'
+import { performanceMonitor, PerformanceReport } from '@/utils/performance-monitoring'
+import { measurePerformance, measureAsyncPerformance } from '@/utils/performance-monitoring'
 
 interface PerformanceMetrics {
   averageQueryTime: number
@@ -26,22 +35,92 @@ interface PerformanceMetrics {
   suggestions: any[]
 }
 
+interface SystemMetrics {
+  memory: {
+    used: number
+    total: number
+    percentage: number
+  }
+  cpu: {
+    usage: number
+  }
+  network: {
+    latency: number
+    downlink: number
+  }
+  loading: {
+    fcp: number
+    lcp: number
+    tti: number
+  }
+}
+
 export function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [isMonitoring, setIsMonitoring] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [reports, setReports] = useState<PerformanceReport[]>([])
+  const [alerts, setAlerts] = useState<any[]>([])
 
   const loadMetrics = async () => {
     setIsLoading(true)
     try {
-      const report = getQueryPerformance()
-      setMetrics(report)
+      // 加载数据库性能指标
+      const dbReport = getQueryPerformance()
+      setMetrics(dbReport)
+
+      // 加载系统性能指标
+      await loadSystemMetrics()
+
       setLastUpdate(new Date())
     } catch (error) {
       console.error('Failed to load performance metrics:', error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadSystemMetrics = async () => {
+    try {
+      // 收集系统指标
+      const memoryInfo = measurePerformance('MemoryCollection', () => {
+        if (typeof window !== 'undefined' && 'performance' in window && 'memory' in performance) {
+          const memory = (performance as any).memory
+          return {
+            used: memory.usedJSHeapSize / (1024 * 1024),
+            total: memory.jsHeapSizeLimit / (1024 * 1024),
+            percentage: (memory.usedJSHeapSize / memory.jsHeapSizeLimit) * 100
+          }
+        }
+        return { used: 0, total: 0, percentage: 0 }
+      }, 'runtime')
+
+      const networkInfo = measurePerformance('NetworkCollection', () => {
+        if (typeof window !== 'undefined' && 'navigator' in window && 'connection' in navigator) {
+          const connection = (navigator as any).connection
+          return {
+            latency: connection.rtt || 0,
+            downlink: connection.downlink || 0
+          }
+        }
+        return { latency: 0, downlink: 0 }
+      }, 'network')
+
+      setSystemMetrics({
+        memory: memoryInfo,
+        cpu: { usage: 0 }, // 浏览器中无法直接获取CPU使用率
+        network: networkInfo,
+        loading: {
+          fcp: 0,
+          lcp: 0,
+          tti: 0
+        }
+      })
+    } catch (error) {
+      console.error('Failed to load system metrics:', error)
     }
   }
 
@@ -69,14 +148,42 @@ export function PerformanceDashboard() {
     }
   }
 
+  // 处理性能报告
+  const handlePerformanceReport = useCallback((report: PerformanceReport) => {
+    setReports(prev => {
+      const updated = [...prev, report]
+      // 保持最近24小时的报告
+      const oneDayAgo = Date.now() - 86400000
+      return updated.filter(r => r.period.end >= oneDayAgo)
+    })
+  }, [])
+
+  // 开始/停止监控
+  const toggleMonitoring = useCallback(() => {
+    if (isMonitoring) {
+      performanceMonitor.stopMonitoring()
+      setIsMonitoring(false)
+    } else {
+      performanceMonitor.startMonitoring(30000) // 30秒间隔
+      setIsMonitoring(true)
+      loadMetrics()
+    }
+  }, [isMonitoring, loadMetrics])
+
   useEffect(() => {
     loadMetrics()
-    
+
+    // 设置性能监控订阅
+    performanceMonitor.subscribe(handlePerformanceReport)
+
     // 每30秒自动更新指标
     const interval = setInterval(loadMetrics, 30000)
-    
-    return () => clearInterval(interval)
-  }, [])
+
+    return () => {
+      clearInterval(interval)
+      performanceMonitor.unsubscribe(handlePerformanceReport)
+    }
+  }, [loadMetrics, handlePerformanceReport])
 
   const formatExecutionTime = (time: number) => {
     return `${time.toFixed(2)}ms`
@@ -99,9 +206,9 @@ export function PerformanceDashboard() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">数据库性能监控</h1>
+          <h1 className="text-3xl font-bold">综合性能监控</h1>
           <p className="text-muted-foreground">
-            监控查询性能和优化建议
+            监控系统、数据库、网络和加载性能
             {lastUpdate && (
               <span className="ml-2 text-sm">
                 (最后更新: {lastUpdate.toLocaleTimeString()})
@@ -110,8 +217,16 @@ export function PerformanceDashboard() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={loadMetrics} 
+          <Button
+            onClick={toggleMonitoring}
+            variant={isMonitoring ? "destructive" : "default"}
+            size="sm"
+          >
+            <Activity className={`w-4 h-4 mr-2 ${isMonitoring ? 'animate-pulse' : ''}`} />
+            {isMonitoring ? '停止监控' : '开始监控'}
+          </Button>
+          <Button
+            onClick={loadMetrics}
             disabled={isLoading}
             variant="outline"
             size="sm"
@@ -119,7 +234,7 @@ export function PerformanceDashboard() {
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             刷新
           </Button>
-          <Button 
+          <Button
             onClick={handleRebuildIndexes}
             disabled={isOptimizing}
             variant="outline"
@@ -128,7 +243,7 @@ export function PerformanceDashboard() {
             <Database className="w-4 h-4 mr-2" />
             重建索引
           </Button>
-          <Button 
+          <Button
             onClick={handleOptimize}
             disabled={isOptimizing}
             size="sm"
@@ -138,6 +253,111 @@ export function PerformanceDashboard() {
           </Button>
         </div>
       </div>
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">概览</TabsTrigger>
+          <TabsTrigger value="database">数据库</TabsTrigger>
+          <TabsTrigger value="system">系统</TabsTrigger>
+          <TabsTrigger value="network">网络</TabsTrigger>
+          <TabsTrigger value="loading">加载性能</TabsTrigger>
+          <TabsTrigger value="reports">报告</TabsTrigger>
+        </TabsList>
+
+        {/* 概览 */}
+        <TabsContent value="overview" className="space-y-4">
+          {metrics && systemMetrics && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* 平均查询时间 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">平均查询时间</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatExecutionTime(metrics.averageQueryTime)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {metrics.averageQueryTime < 50 ? (
+                      <span className="text-green-600">优秀</span>
+                    ) : metrics.averageQueryTime < 100 ? (
+                      <span className="text-yellow-600">良好</span>
+                    ) : (
+                      <span className="text-red-600">需要优化</span>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* 内存使用 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">内存使用</CardTitle>
+                  <Cpu className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {systemMetrics.memory.used.toFixed(1)}MB
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {systemMetrics.memory.percentage < 50 ? (
+                      <span className="text-green-600">正常</span>
+                    ) : systemMetrics.memory.percentage < 80 ? (
+                      <span className="text-yellow-600">中等</span>
+                    ) : (
+                      <span className="text-red-600">高内存</span>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* 网络延迟 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">网络延迟</CardTitle>
+                  <Wifi className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {systemMetrics.network.latency}ms
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {systemMetrics.network.latency < 100 ? (
+                      <span className="text-green-600">优秀</span>
+                    ) : systemMetrics.network.latency < 300 ? (
+                      <span className="text-yellow-600">一般</span>
+                    ) : (
+                      <span className="text-red-600">较慢</span>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* 缓存命中率 */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">缓存命中率</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">
+                    {formatCacheRate(metrics.cacheHitRate)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {metrics.cacheHitRate > 0.8 ? (
+                      <span className="text-green-600">优秀</span>
+                    ) : metrics.cacheHitRate > 0.5 ? (
+                      <span className="text-yellow-600">良好</span>
+                    ) : (
+                      <span className="text-red-600">需要优化</span>
+                    )}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </TabsContent>
 
       {metrics ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

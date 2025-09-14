@@ -385,6 +385,60 @@ export class ConflictResolutionEngine {
   }
 
   // ============================================================================
+  // 解决策略初始化
+  // ============================================================================
+
+  private initializeResolutionStrategies(): void {
+    // 时间戳优先策略
+    this.resolutionStrategies.set('timestamp-priority', {
+      type: 'auto',
+      priority: 1,
+      conditions: { conflictType: 'version' },
+      resolution: 'cloud',
+      mergeFunction: (local, cloud) => {
+        // 选择时间戳较新的版本
+        return (cloud.updatedAt && local.updatedAt && cloud.updatedAt > local.updatedAt) ? cloud : local
+      }
+    })
+
+    // 本地优先策略
+    this.resolutionStrategies.set('local-priority', {
+      type: 'auto',
+      priority: 2,
+      conditions: { conflictType: 'field' },
+      resolution: 'local',
+      mergeFunction: (local, cloud) => local
+    })
+
+    // 云端优先策略
+    this.resolutionStrategies.set('cloud-priority', {
+      type: 'auto',
+      priority: 3,
+      conditions: { conflictType: 'field' },
+      resolution: 'cloud',
+      mergeFunction: (local, cloud) => cloud
+    })
+
+    // 智能合并策略
+    this.resolutionStrategies.set('smart-merge', {
+      type: 'auto',
+      priority: 4,
+      conditions: { conflictType: 'field', canMerge: true },
+      resolution: 'merge',
+      mergeFunction: (local, cloud) => {
+        // 简化的智能合并逻辑
+        const merged = { ...local }
+        Object.keys(cloud).forEach(key => {
+          if (!local[key] || (cloud.updatedAt && local.updatedAt && cloud.updatedAt > local.updatedAt)) {
+            merged[key] = cloud[key]
+          }
+        })
+        return merged
+      }
+    })
+  }
+
+  // ============================================================================
   // 合并策略实现
   // ============================================================================
 
@@ -822,6 +876,33 @@ export class ConflictResolutionEngine {
     }
     
     this.resolutionStats.set(key, stats)
+  }
+
+  // ============================================================================
+  // 初始化冲突模式
+  // ============================================================================
+
+  /**
+   * 初始化冲突模式
+   */
+  private initializeConflictPatterns(): void {
+    this.conflictPatterns.set('simultaneous-edit', {
+      id: 'simultaneous-edit',
+      pattern: '同时编辑',
+      description: '多设备同时编辑同一内容',
+      severity: 'high',
+      autoResolution: false,
+      resolutionStrategy: 'manual'
+    })
+
+    this.conflictPatterns.set('network-partition', {
+      id: 'network-partition',
+      pattern: '网络分区',
+      description: '网络分区导致的冲突',
+      severity: 'medium',
+      autoResolution: true,
+      resolutionStrategy: 'timestamp-priority'
+    })
   }
 
   // ============================================================================

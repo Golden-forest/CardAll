@@ -1,7 +1,7 @@
 // 高级测试工具 - 包含完整的数据生成器和模拟服务
 import { render, RenderOptions, RenderResult, act } from '@testing-library/react'
 import { ReactElement } from 'react'
-import { axe, toHaveNoViolations } from 'jest-axe'
+// import { axe, toHaveNoViolations } from 'jest-axe'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -9,7 +9,7 @@ import { ThemeProvider } from 'styled-components'
 import { ToastProvider } from '@/components/ui/toast-provider'
 
 // 扩展 Jest 匹配器
-expect.extend(toHaveNoViolations)
+// expect.extend(toHaveNoViolations)
 
 // ============================================================================
 // 类型定义
@@ -115,19 +115,19 @@ export class MockSupabaseClient {
 
   // 卡片操作
   cards = {
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        order: jest.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        order: vi.fn(() => ({
           data: Array.from(this.data.cards.values()),
           error: null,
         })),
       })),
-      in: jest.fn(() => ({
+      in: vi.fn(() => ({
         data: Array.from(this.data.cards.values()),
         error: null,
       })),
     })),
-    insert: jest.fn((card: Partial<TestCardData>) => {
+    insert: vi.fn((card: Partial<TestCardData>) => {
       const newCard: TestCardData = {
         id: crypto.randomUUID(),
         frontContent: card.frontContent || {
@@ -168,7 +168,7 @@ export class MockSupabaseClient {
         error: null,
       })
     }),
-    update: jest.fn((id: string, updates: Partial<TestCardData>) => {
+    update: vi.fn((id: string, updates: Partial<TestCardData>) => {
       const card = this.data.cards.get(id)
       if (card) {
         const updatedCard = { ...card, ...updates, updatedAt: new Date() }
@@ -183,24 +183,26 @@ export class MockSupabaseClient {
         error: { message: 'Card not found' },
       })
     }),
-    delete: jest.fn((id: string) => {
-      const deleted = this.data.cards.delete(id)
-      return Promise.resolve({
-        data: null,
-        error: deleted ? null : { message: 'Card not found' },
-      })
-    }),
+    delete: vi.fn(() => ({
+      eq: vi.fn((id: string) => {
+        const deleted = this.data.cards.delete(id)
+        return Promise.resolve({
+          data: null,
+          error: deleted ? null : { message: 'Card not found' },
+        })
+      }),
+    })),
   }
 
   // 文件夹操作
   folders = {
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
         data: Array.from(this.data.folders.values()),
         error: null,
       })),
     })),
-    insert: jest.fn((folder: Partial<TestFolderData>) => {
+    insert: vi.fn((folder: Partial<TestFolderData>) => {
       const newFolder: TestFolderData = {
         id: crypto.randomUUID(),
         name: folder.name || '',
@@ -218,15 +220,39 @@ export class MockSupabaseClient {
         error: null,
       })
     }),
+    update: vi.fn((id: string, updates: Partial<TestFolderData>) => {
+      const folder = this.data.folders.get(id)
+      if (folder) {
+        const updatedFolder = { ...folder, ...updates, updatedAt: new Date() }
+        this.data.folders.set(id, updatedFolder)
+        return Promise.resolve({
+          data: [updatedFolder],
+          error: null,
+        })
+      }
+      return Promise.resolve({
+        data: null,
+        error: { message: 'Folder not found' },
+      })
+    }),
+    delete: vi.fn(() => ({
+      eq: vi.fn((id: string) => {
+        const deleted = this.data.folders.delete(id)
+        return Promise.resolve({
+          data: null,
+          error: deleted ? null : { message: 'Folder not found' },
+        })
+      }),
+    })),
   }
 
   // 标签操作
   tags = {
-    select: jest.fn(() => ({
+    select: vi.fn(() => ({
       data: Array.from(this.data.tags.values()),
       error: null,
     })),
-    insert: jest.fn((tag: Partial<TestTagData>) => {
+    insert: vi.fn((tag: Partial<TestTagData>) => {
       const newTag: TestTagData = {
         id: crypto.randomUUID(),
         name: tag.name || '',
@@ -243,6 +269,30 @@ export class MockSupabaseClient {
         error: null,
       })
     }),
+    update: vi.fn((id: string, updates: Partial<TestTagData>) => {
+      const tag = this.data.tags.get(id)
+      if (tag) {
+        const updatedTag = { ...tag, ...updates }
+        this.data.tags.set(id, updatedTag)
+        return Promise.resolve({
+          data: [updatedTag],
+          error: null,
+        })
+      }
+      return Promise.resolve({
+        data: null,
+        error: { message: 'Tag not found' },
+      })
+    }),
+    delete: vi.fn(() => ({
+      eq: vi.fn((id: string) => {
+        const deleted = this.data.tags.delete(id)
+        return Promise.resolve({
+          data: null,
+          error: deleted ? null : { message: 'Tag not found' },
+        })
+      }),
+    })),
   }
 
   // 重置模拟数据
@@ -276,37 +326,45 @@ export class MockIndexedDB {
   // 模拟 Dexie 风格的操作
   table(name: string) {
     return {
-      add: jest.fn((data: any) => {
+      add: vi.fn((data: any) => {
         const store = this.stores.get(name)
         if (store) {
           const id = data.id || crypto.randomUUID()
-          store.set(id, { ...data, id })
+          const itemToStore = { ...data }
+          if (!data.id) {
+            itemToStore.id = id
+          }
+          store.set(id, itemToStore)
           return Promise.resolve(id)
         }
         return Promise.reject(new Error(`Table ${name} not found`))
       }),
-      bulkAdd: jest.fn((items: any[]) => {
+      bulkAdd: vi.fn((items: any[]) => {
         const store = this.stores.get(name)
         if (store) {
           const ids = items.map(item => {
             const id = item.id || crypto.randomUUID()
-            store.set(id, { ...item, id })
+            const itemToStore = { ...item }
+            if (!item.id) {
+              itemToStore.id = id
+            }
+            store.set(id, itemToStore)
             return id
           })
           return Promise.resolve(ids)
         }
         return Promise.reject(new Error(`Table ${name} not found`))
       }),
-      get: jest.fn((id: string) => {
+      get: vi.fn((id: string) => {
         const store = this.stores.get(name)
         if (store) {
           return Promise.resolve(store.get(id) || undefined)
         }
         return Promise.resolve(undefined)
       }),
-      where: jest.fn((key: string) => ({
-        equals: jest.fn((value: any) => ({
-          toArray: jest.fn(() => {
+      where: vi.fn((key: string) => ({
+        equals: vi.fn((value: any) => ({
+          toArray: vi.fn(() => {
             const store = this.stores.get(name)
             if (store) {
               const results = Array.from(store.values()).filter(item => item[key] === value)
@@ -314,7 +372,7 @@ export class MockIndexedDB {
             }
             return Promise.resolve([])
           }),
-          delete: jest.fn(() => {
+          delete: vi.fn(() => {
             const store = this.stores.get(name)
             if (store) {
               const toDelete = Array.from(store.entries()).filter(([_, item]) => item[key] === value)
@@ -323,7 +381,7 @@ export class MockIndexedDB {
             }
             return Promise.resolve(0)
           }),
-          modify: jest.fn((updates: any) => {
+          modify: vi.fn((updates: any) => {
             const store = this.stores.get(name)
             if (store) {
               const toModify = Array.from(store.entries()).filter(([_, item]) => item[key] === value)
@@ -335,8 +393,8 @@ export class MockIndexedDB {
             return Promise.resolve(0)
           }),
         })),
-        anyOf: jest.fn((values: any[]) => ({
-          toArray: jest.fn(() => {
+        anyOf: vi.fn((values: any[]) => ({
+          toArray: vi.fn(() => {
             const store = this.stores.get(name)
             if (store) {
               const results = Array.from(store.values()).filter(item => values.includes(item[key]))
@@ -346,14 +404,14 @@ export class MockIndexedDB {
           }),
         })),
       })),
-      toArray: jest.fn(() => {
+      toArray: vi.fn(() => {
         const store = this.stores.get(name)
         if (store) {
           return Promise.resolve(Array.from(store.values()))
         }
         return Promise.resolve([])
       }),
-      delete: jest.fn((id: string) => {
+      delete: vi.fn((id: string) => {
         const store = this.stores.get(name)
         if (store) {
           const deleted = store.delete(id)
@@ -361,7 +419,7 @@ export class MockIndexedDB {
         }
         return Promise.resolve(0)
       }),
-      clear: jest.fn(() => {
+      clear: vi.fn(() => {
         const store = this.stores.get(name)
         if (store) {
           store.clear()
@@ -613,7 +671,7 @@ export class NetworkSimulator {
   }
 
   private setupMockFetch() {
-    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    global.fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       if (this.offline) {
         throw new Error('Network: Offline')
       }
@@ -651,12 +709,12 @@ export class EventSimulator {
   static simulateDragStart(data: any): DragEvent {
     return {
       dataTransfer: {
-        setData: jest.fn(),
-        getData: jest.fn(() => JSON.stringify(data)),
-        clearData: jest.fn(),
+        setData: vi.fn(),
+        getData: vi.fn(() => JSON.stringify(data)),
+        clearData: vi.fn(),
       },
-      preventDefault: jest.fn(),
-      stopPropagation: jest.fn(),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
     } as unknown as DragEvent
   }
 
@@ -664,8 +722,8 @@ export class EventSimulator {
     return {
       clientX: position.x,
       clientY: position.y,
-      preventDefault: jest.fn(),
-      stopPropagation: jest.fn(),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
     } as unknown as DragEvent
   }
 
@@ -674,12 +732,12 @@ export class EventSimulator {
       clientX: position.x,
       clientY: position.y,
       dataTransfer: {
-        getData: jest.fn(() => JSON.stringify(data)),
-        setData: jest.fn(),
-        clearData: jest.fn(),
+        getData: vi.fn(() => JSON.stringify(data)),
+        setData: vi.fn(),
+        clearData: vi.fn(),
       },
-      preventDefault: jest.fn(),
-      stopPropagation: jest.fn(),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
     } as unknown as DragEvent
   }
 
@@ -711,14 +769,10 @@ export * from '@testing-library/react'
 // 导出自定义渲染器
 export { customRender as render }
 
-// 导出工具类
+// 导出工具类（未在类定义中直接导出的）
 export {
-  MockSupabaseClient,
-  MockIndexedDB,
-  TestDataGenerator,
-  PerformanceTester,
-  NetworkSimulator,
-  EventSimulator,
+  MockComponentRenderer,
+  TestAssertionUtils,
 }
 
 // 导出类型

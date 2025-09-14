@@ -857,11 +857,13 @@ export class SyncQueueManager {
     }, 120000)
 
     // 网络恢复时立即处理
-    window.addEventListener('online', () => {
-      if (!this.isProcessing) {
-        this.processNextBatch()
-      }
-    })
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('online', () => {
+        if (!this.isProcessing) {
+          this.processNextBatch()
+        }
+      })
+    }
   }
 
   private async checkRetryOperations(): Promise<void> {

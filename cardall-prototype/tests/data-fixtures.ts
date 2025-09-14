@@ -2,6 +2,9 @@
 import { TestDataGenerator } from './advanced-test-utils'
 import type { TestCardData, TestFolderData, TestTagData, TestSyncOperation } from './advanced-test-utils'
 
+// 重新导出TestDataGenerator确保可用
+export { TestDataGenerator }
+
 // ============================================================================
 // 预定义的测试数据集
 // ============================================================================
@@ -622,18 +625,5 @@ export const BOUNDARY_TEST_DATA = {
 }
 
 // ============================================================================
-// 导出所有装置
+// 导出已在文件开头完成，避免重复导出
 // ============================================================================
-
-export {
-  TEST_USERS,
-  TEST_CARD_STYLES,
-  TEST_IMAGES,
-  TEST_TAGS,
-  CardFixture,
-  FolderFixture,
-  TagFixture,
-  SyncOperationFixture,
-  TEST_SCENARIOS,
-  BOUNDARY_TEST_DATA,
-}

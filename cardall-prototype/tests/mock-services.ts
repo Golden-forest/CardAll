@@ -20,7 +20,7 @@ export class MockSupabaseService {
 
   // 认证服务
   auth = {
-    signUp: jest.fn(async ({ email, password }: { email: string; password: string }) => {
+    signUp: vi.fn(async ({ email, password }: { email: string; password: string }) => {
       this.authState.isLoading = true
       await new Promise(resolve => setTimeout(resolve, 100))
       
@@ -40,7 +40,7 @@ export class MockSupabaseService {
       }
     }),
 
-    signIn: jest.fn(async ({ email, password }: { email: string; password: string }) => {
+    signIn: vi.fn(async ({ email, password }: { email: string; password: string }) => {
       this.authState.isLoading = true
       await new Promise(resolve => setTimeout(resolve, 100))
       
@@ -69,7 +69,7 @@ export class MockSupabaseService {
       }
     }),
 
-    signOut: jest.fn(async () => {
+    signOut: vi.fn(async () => {
       this.authState.isLoading = true
       await new Promise(resolve => setTimeout(resolve, 50))
       
@@ -80,27 +80,27 @@ export class MockSupabaseService {
       return { error: null }
     }),
 
-    getCurrentUser: jest.fn(() => {
+    getCurrentUser: vi.fn(() => {
       return this.authState.user
     }),
 
-    onAuthStateChange: jest.fn((callback: (event: string, session: any) => void) => {
+    onAuthStateChange: vi.fn((callback: (event: string, session: any) => void) => {
       // 返回一个取消订阅函数
       return {
         data: {
           subscription: {
-            unsubscribe: jest.fn(),
+            unsubscribe: vi.fn(),
           },
         },
       }
     }),
 
-    resetPasswordForEmail: jest.fn(async (email: string) => {
+    resetPasswordForEmail: vi.fn(async (email: string) => {
       await new Promise(resolve => setTimeout(resolve, 100))
       return { error: null }
     }),
 
-    updateUser: jest.fn(async (attributes: any) => {
+    updateUser: vi.fn(async (attributes: any) => {
       await new Promise(resolve => setTimeout(resolve, 100))
       
       if (this.authState.user) {
@@ -115,7 +115,7 @@ export class MockSupabaseService {
   }
 
   // 数据库服务
-  from = jest.fn((table: string) => {
+  from = vi.fn((table: string) => {
     switch (table) {
       case 'cards':
         return this.client.cards
@@ -125,26 +125,26 @@ export class MockSupabaseService {
         return this.client.tags
       default:
         return {
-          select: jest.fn(() => ({ data: [], error: null })),
-          insert: jest.fn(() => ({ data: [], error: null })),
-          update: jest.fn(() => ({ data: [], error: null })),
-          delete: jest.fn(() => ({ data: null, error: null })),
+          select: vi.fn(() => ({ data: [], error: null })),
+          insert: vi.fn(() => ({ data: [], error: null })),
+          update: vi.fn(() => ({ data: [], error: null })),
+          delete: vi.fn(() => ({ data: null, error: null })),
         }
     }
   })
 
   // 实时服务
-  channel = jest.fn((channelName: string) => {
+  channel = vi.fn((channelName: string) => {
     return {
-      on: jest.fn((event: string, callback: (payload: any) => void) => {
+      on: vi.fn((event: string, callback: (payload: any) => void) => {
         return this
       }),
-      subscribe: jest.fn(() => {
+      subscribe: vi.fn(() => {
         return {
-          unsubscribe: jest.fn(),
+          unsubscribe: vi.fn(),
         }
       }),
-      send: jest.fn((payload: any) => {
+      send: vi.fn((payload: any) => {
         return Promise.resolve()
       }),
     }
@@ -152,22 +152,22 @@ export class MockSupabaseService {
 
   // 存储服务
   storage = {
-    from: jest.fn((bucket: string) => ({
-      upload: jest.fn(async (path: string, file: File) => {
+    from: vi.fn((bucket: string) => ({
+      upload: vi.fn(async (path: string, file: File) => {
         await new Promise(resolve => setTimeout(resolve, 200))
         return {
           data: { path: `${bucket}/${path}` },
           error: null,
         }
       }),
-      getPublicUrl: jest.fn((path: string) => ({
+      getPublicUrl: vi.fn((path: string) => ({
         data: { publicUrl: `https://example.com/${bucket}/${path}` },
       })),
-      remove: jest.fn(async (paths: string[]) => {
+      remove: vi.fn(async (paths: string[]) => {
         await new Promise(resolve => setTimeout(resolve, 100))
         return { error: null }
       }),
-      list: jest.fn(() => ({
+      list: vi.fn(() => ({
         data: [],
         error: null,
       })),
@@ -180,14 +180,14 @@ export class MockSupabaseService {
   setAuthState = (state: any) => {
     this.authState = { ...this.authState, ...state }
   }
-  reset = () => {
+  reset = vi.fn(() => {
     this.client.reset()
     this.authState = {
       user: null,
       session: null,
       isLoading: false,
     }
-  }
+  })
 }
 
 // ============================================================================
@@ -204,50 +204,50 @@ export class MockDatabaseService {
 
   // 卡片操作
   cards = {
-    add: jest.fn(async (card: Partial<TestCardData>) => {
+    add: vi.fn(async (card: Partial<TestCardData>) => {
       const result = await this.db.table('cards').add(card)
       return result
     }),
 
-    get: jest.fn(async (id: string) => {
+    get: vi.fn(async (id: string) => {
       return await this.db.table('cards').get(id)
     }),
 
-    getAll: jest.fn(async () => {
+    getAll: vi.fn(async () => {
       return await this.db.table('cards').toArray()
     }),
 
-    update: jest.fn(async (id: string, updates: Partial<TestCardData>) => {
+    update: vi.fn(async (id: string, updates: Partial<TestCardData>) => {
       await this.db.table('cards').where('id').equals(id).modify(updates)
       return true
     }),
 
-    delete: jest.fn(async (id: string) => {
+    delete: vi.fn(async (id: string) => {
       const deleted = await this.db.table('cards').where('id').equals(id).delete()
       return deleted > 0
     }),
 
-    bulkAdd: jest.fn(async (cards: Partial<TestCardData>[]) => {
+    bulkAdd: vi.fn(async (cards: Partial<TestCardData>[]) => {
       const results = await this.db.table('cards').bulkAdd(cards)
       return results
     }),
 
-    clear: jest.fn(async () => {
+    clear: vi.fn(async () => {
       await this.db.table('cards').clear()
     }),
 
-    findByFolder: jest.fn(async (folderId: string) => {
+    findByFolder: vi.fn(async (folderId: string) => {
       return await this.db.table('cards').where('folderId').equals(folderId).toArray()
     }),
 
-    findByTag: jest.fn(async (tag: string) => {
+    findByTag: vi.fn(async (tag: string) => {
       const allCards = await this.db.table('cards').toArray()
       return allCards.filter(card => 
         card.frontContent.tags.includes(tag) || card.backContent.tags.includes(tag)
       )
     }),
 
-    search: jest.fn(async (searchTerm: string) => {
+    search: vi.fn(async (searchTerm: string) => {
       const allCards = await this.db.table('cards').toArray()
       const term = searchTerm.toLowerCase()
       
@@ -262,87 +262,87 @@ export class MockDatabaseService {
 
   // 文件夹操作
   folders = {
-    add: jest.fn(async (folder: Partial<TestFolderData>) => {
+    add: vi.fn(async (folder: Partial<TestFolderData>) => {
       const result = await this.db.table('folders').add(folder)
       return result
     }),
 
-    get: jest.fn(async (id: string) => {
+    get: vi.fn(async (id: string) => {
       return await this.db.table('folders').get(id)
     }),
 
-    getAll: jest.fn(async () => {
+    getAll: vi.fn(async () => {
       return await this.db.table('folders').toArray()
     }),
 
-    update: jest.fn(async (id: string, updates: Partial<TestFolderData>) => {
+    update: vi.fn(async (id: string, updates: Partial<TestFolderData>) => {
       await this.db.table('folders').where('id').equals(id).modify(updates)
       return true
     }),
 
-    delete: jest.fn(async (id: string) => {
+    delete: vi.fn(async (id: string) => {
       const deleted = await this.db.table('folders').where('id').equals(id).delete()
       return deleted > 0
     }),
 
-    bulkAdd: jest.fn(async (folders: Partial<TestFolderData>[]) => {
+    bulkAdd: vi.fn(async (folders: Partial<TestFolderData>[]) => {
       const results = await this.db.table('folders').bulkAdd(folders)
       return results
     }),
 
-    clear: jest.fn(async () => {
+    clear: vi.fn(async () => {
       await this.db.table('folders').clear()
     }),
 
-    getChildren: jest.fn(async (parentId: string) => {
+    getChildren: vi.fn(async (parentId: string) => {
       return await this.db.table('folders').where('parentId').equals(parentId).toArray()
     }),
 
-    getRoot: jest.fn(async () => {
+    getRoot: vi.fn(async () => {
       return await this.db.table('folders').where('parentId').equals(undefined).toArray()
     }),
   }
 
   // 标签操作
   tags = {
-    add: jest.fn(async (tag: Partial<TestTagData>) => {
+    add: vi.fn(async (tag: Partial<TestTagData>) => {
       const result = await this.db.table('tags').add(tag)
       return result
     }),
 
-    get: jest.fn(async (id: string) => {
+    get: vi.fn(async (id: string) => {
       return await this.db.table('tags').get(id)
     }),
 
-    getAll: jest.fn(async () => {
+    getAll: vi.fn(async () => {
       return await this.db.table('tags').toArray()
     }),
 
-    update: jest.fn(async (id: string, updates: Partial<TestTagData>) => {
+    update: vi.fn(async (id: string, updates: Partial<TestTagData>) => {
       await this.db.table('tags').where('id').equals(id).modify(updates)
       return true
     }),
 
-    delete: jest.fn(async (id: string) => {
+    delete: vi.fn(async (id: string) => {
       const deleted = await this.db.table('tags').where('id').equals(id).delete()
       return deleted > 0
     }),
 
-    bulkAdd: jest.fn(async (tags: Partial<TestTagData>[]) => {
+    bulkAdd: vi.fn(async (tags: Partial<TestTagData>[]) => {
       const results = await this.db.table('tags').bulkAdd(tags)
       return results
     }),
 
-    clear: jest.fn(async () => {
+    clear: vi.fn(async () => {
       await this.db.table('tags').clear()
     }),
 
-    getVisible: jest.fn(async () => {
+    getVisible: vi.fn(async () => {
       const allTags = await this.db.table('tags').toArray()
       return allTags.filter(tag => !tag.isHidden)
     }),
 
-    getHidden: jest.fn(async () => {
+    getHidden: vi.fn(async () => {
       const allTags = await this.db.table('tags').toArray()
       return allTags.filter(tag => tag.isHidden)
     }),
@@ -350,45 +350,51 @@ export class MockDatabaseService {
 
   // 同步队列操作
   syncQueue = {
-    add: jest.fn(async (operation: Partial<TestSyncOperation>) => {
+    add: vi.fn(async (operation: Partial<TestSyncOperation>) => {
       const result = await this.db.table('syncQueue').add(operation)
       this.syncOperations.push(operation as TestSyncOperation)
       return result
     }),
 
-    get: jest.fn(async (id: string) => {
+    get: vi.fn(async (id: string) => {
       return await this.db.table('syncQueue').get(id)
     }),
 
-    getAll: jest.fn(async () => {
+    getAll: vi.fn(async () => {
       return await this.db.table('syncQueue').toArray()
     }),
 
-    getPending: jest.fn(async () => {
+    getPending: vi.fn(async () => {
       return await this.db.table('syncQueue').where('status').equals('pending').toArray()
     }),
 
-    getFailed: jest.fn(async () => {
+    getFailed: vi.fn(async () => {
       return await this.db.table('syncQueue').where('status').equals('failed').toArray()
     }),
 
-    update: jest.fn(async (id: string, updates: Partial<TestSyncOperation>) => {
+    bulkAdd: vi.fn(async (operations: Partial<TestSyncOperation>[]) => {
+      const results = await this.db.table('syncQueue').bulkAdd(operations)
+      this.syncOperations.push(...operations as TestSyncOperation[])
+      return results
+    }),
+
+    update: vi.fn(async (id: string, updates: Partial<TestSyncOperation>) => {
       await this.db.table('syncQueue').where('id').equals(id).modify(updates)
       return true
     }),
 
-    delete: jest.fn(async (id: string) => {
+    delete: vi.fn(async (id: string) => {
       const deleted = await this.db.table('syncQueue').where('id').equals(id).delete()
       this.syncOperations = this.syncOperations.filter(op => op.id !== id)
       return deleted > 0
     }),
 
-    clear: jest.fn(async () => {
+    clear: vi.fn(async () => {
       await this.db.table('syncQueue').clear()
       this.syncOperations = []
     }),
 
-    getStats: jest.fn(() => {
+    getStats: vi.fn(() => {
       const pending = this.syncOperations.filter(op => op.status === 'pending').length
       const processing = this.syncOperations.filter(op => op.status === 'processing').length
       const completed = this.syncOperations.filter(op => op.status === 'completed').length
@@ -405,7 +411,7 @@ export class MockDatabaseService {
   }
 
   // 数据库管理
-  clearAll = jest.fn(async () => {
+  clearAll = vi.fn(async () => {
     await this.cards.clear()
     await this.folders.clear()
     await this.tags.clear()
@@ -413,7 +419,7 @@ export class MockDatabaseService {
     this.syncOperations = []
   })
 
-  exportData = jest.fn(async () => {
+  exportData = vi.fn(async () => {
     const [cards, folders, tags, syncQueue] = await Promise.all([
       this.cards.getAll(),
       this.folders.getAll(),
@@ -430,7 +436,7 @@ export class MockDatabaseService {
     }
   })
 
-  importData = jest.fn(async (data: any) => {
+  importData = vi.fn(async (data: any) => {
     await this.clearAll()
     
     await Promise.all([
@@ -443,10 +449,10 @@ export class MockDatabaseService {
 
   // 辅助方法
   getDB = () => this.db
-  reset = () => {
+  reset = vi.fn(() => {
     this.db.reset()
     this.syncOperations = []
-  }
+  })
 }
 
 // ============================================================================
@@ -469,19 +475,19 @@ export class MockSyncService {
     this.databaseService = databaseService
   }
 
-  // 同步状态
-  isOnline = jest.fn(() => this.isOnline)
-  isSyncing = jest.fn(() => this.syncInProgress)
-  getLastSyncTime = jest.fn(() => this.lastSyncTime)
-  getSyncErrors = jest.fn(() => [...this.syncErrors])
+  // 同步状态方法
+  getIsOnline = vi.fn(() => this.isOnline)
+  getIsSyncing = vi.fn(() => this.syncInProgress)
+  getLastSyncTime = vi.fn(() => this.lastSyncTime)
+  getSyncErrors = vi.fn(() => [...this.syncErrors])
 
   // 网络状态管理
-  setOnline = jest.fn((online: boolean) => {
+  setOnline = vi.fn((online: boolean) => {
     this.isOnline = online
   })
 
   // 手动同步
-  syncNow = jest.fn(async () => {
+  syncNow = vi.fn(async () => {
     if (this.syncInProgress) {
       throw new Error('Sync already in progress')
     }
@@ -550,7 +556,7 @@ export class MockSyncService {
   })
 
   // 自动同步
-  startAutoSync = jest.fn((interval: number = 30000) => {
+  startAutoSync = vi.fn((interval: number = 30000) => {
     const intervalId = setInterval(async () => {
       if (this.isOnline && !this.syncInProgress) {
         await this.syncNow()
@@ -620,7 +626,7 @@ export class MockSyncService {
   }
 
   // 冲突解决
-  resolveConflicts = jest.fn(async (conflicts: any[]) => {
+  resolveConflicts = vi.fn(async (conflicts: any[]) => {
     // 模拟冲突解决逻辑
     const resolvedConflicts = conflicts.map(conflict => ({
       ...conflict,
@@ -631,12 +637,76 @@ export class MockSyncService {
     return resolvedConflicts
   })
 
+  // 数据生成方法（适配测试）
+  generateCard = vi.fn((cardData: any) => {
+    return {
+      id: cardData.id || crypto.randomUUID(),
+      title: cardData.title || 'Test Card',
+      frontContent: cardData.frontContent || {
+        title: 'Front Title',
+        text: 'Front Content',
+        images: [],
+        tags: [],
+        lastModified: new Date(),
+      },
+      backContent: cardData.backContent || {
+        title: 'Back Title',
+        text: 'Back Content',
+        images: [],
+        tags: [],
+        lastModified: new Date(),
+      },
+      style: cardData.style || {
+        type: 'solid' as const,
+        backgroundColor: '#ffffff',
+        fontFamily: 'system-ui',
+        fontSize: 'base' as const,
+        fontWeight: 'normal' as const,
+        textColor: '#1f2937',
+        borderRadius: 'xl' as const,
+        shadow: 'md' as const,
+        borderWidth: 0,
+      },
+      isFlipped: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...cardData,
+    }
+  })
+
+  generateFolder = vi.fn((folderData: any) => {
+    return {
+      id: folderData.id || crypto.randomUUID(),
+      name: folderData.name || 'Test Folder',
+      color: folderData.color || '#3b82f6',
+      icon: folderData.icon || 'folder',
+      cardIds: folderData.cardIds || [],
+      parentId: folderData.parentId,
+      isExpanded: folderData.isExpanded || false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...folderData,
+    }
+  })
+
+  generateTag = vi.fn((tagData: any) => {
+    return {
+      id: tagData.id || crypto.randomUUID(),
+      name: tagData.name || 'Test Tag',
+      color: tagData.color || '#3b82f6',
+      count: tagData.count || 0,
+      isHidden: tagData.isHidden || false,
+      createdAt: new Date(),
+      ...tagData,
+    }
+  })
+
   // 辅助方法
-  clearErrors = jest.fn(() => {
+  clearErrors = vi.fn(() => {
     this.syncErrors = []
   })
 
-  reset = jest.fn(() => {
+  reset = vi.fn(() => {
     this.isOnline = true
     this.syncInProgress = false
     this.lastSyncTime = null
@@ -694,9 +764,4 @@ export class ServiceFactory {
 // 导出
 // ============================================================================
 
-export {
-  MockSupabaseService,
-  MockDatabaseService,
-  MockSyncService,
-  ServiceFactory,
-}
+// Mock services export已在类定义中处理

@@ -5,20 +5,20 @@ import { SyncStrategyService } from '@/services/sync-strategy'
 import { SyncPerformanceOptimizer } from '@/services/sync-performance'
 
 // 模拟所有服务
-jest.mock('@/services/local-operation')
-jest.mock('@/services/network-monitor')
-jest.mock('@/services/sync-strategy')
-jest.mock('@/services/sync-performance')
+vi.mock('@/services/local-operation')
+vi.mock('@/services/network-monitor')
+vi.mock('@/services/sync-strategy')
+vi.mock('@/services/sync-performance')
 
 describe('SyncIntegrationService', () => {
   let service: SyncIntegrationService
-  let mockLocalOperation: jest.Mocked<LocalOperationService>
-  let mockNetworkMonitor: jest.Mocked<NetworkMonitorService>
-  let mockSyncStrategy: jest.Mocked<SyncStrategyService>
-  let mockPerformanceOptimizer: jest.Mocked<SyncPerformanceOptimizer>
+  let mockLocalOperation: vi.Mocked<LocalOperationService>
+  let mockNetworkMonitor: vi.Mocked<NetworkMonitorService>
+  let mockSyncStrategy: vi.Mocked<SyncStrategyService>
+  let mockPerformanceOptimizer: vi.Mocked<SyncPerformanceOptimizer>
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
     
     // 创建模拟实例
     mockLocalOperation = new LocalOperationService() as any
@@ -251,7 +251,7 @@ describe('SyncIntegrationService', () => {
     })
 
     it('应该监听网络状态变化', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       service.onNetworkChange(mockListener)
 
       // 模拟网络状态变化
@@ -474,7 +474,7 @@ describe('SyncIntegrationService', () => {
     })
 
     it('应该能够添加和移除系统事件监听器', () => {
-      const mockListener = jest.fn()
+      const mockListener = vi.fn()
       const unsubscribe = service.onSystemEvent(mockListener)
 
       expect(typeof unsubscribe).toBe('function')
@@ -496,8 +496,8 @@ describe('SyncIntegrationService', () => {
     })
 
     it('应该正确通知所有监听器', () => {
-      const mockListener1 = jest.fn()
-      const mockListener2 = jest.fn()
+      const mockListener1 = vi.fn()
+      const mockListener2 = vi.fn()
 
       service.onSystemEvent(mockListener1)
       service.onSystemEvent(mockListener2)
@@ -532,7 +532,7 @@ describe('SyncIntegrationService', () => {
     })
 
     it('应该启动定时同步', () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       
       service.startScheduledSync()
       
@@ -540,11 +540,11 @@ describe('SyncIntegrationService', () => {
       
       // 清理
       service.stopScheduledSync()
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it('应该停止定时同步', () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       
       service.startScheduledSync()
       expect((service as any).syncTimer).toBeDefined()
@@ -552,11 +552,11 @@ describe('SyncIntegrationService', () => {
       service.stopScheduledSync()
       expect((service as any).syncTimer).toBeNull()
       
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it('应该按配置的间隔执行同步', async () => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
       
       const userId = 'user-123'
       
@@ -584,13 +584,13 @@ describe('SyncIntegrationService', () => {
       service.startScheduledSync()
 
       // 快进时间
-      jest.advanceTimersByTime(300000)
+      vi.advanceTimersByTime(300000)
 
       expect(mockSyncStrategy.performIncrementalSync).toHaveBeenCalled()
       
       // 清理
       service.stopScheduledSync()
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
   })
 
@@ -643,7 +643,7 @@ describe('SyncIntegrationService', () => {
     })
 
     it('应该在组件销毁时清理事件监听器', () => {
-      const mockUnsubscribe = jest.fn()
+      const mockUnsubscribe = vi.fn()
       
       // 模拟添加事件监听器
       ;(service as any).eventUnsubscribers.push(mockUnsubscribe)

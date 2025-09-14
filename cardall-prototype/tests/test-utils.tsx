@@ -347,21 +347,4 @@ export const storageUtils = {
   },
 }
 
-// 导出所有工具
-export {
-  testData,
-  createMockFunction,
-  waitForAsync,
-  createMockEvent,
-  createMockFile,
-  createMockImage,
-  createMockDragEvent,
-  createMockKeyboardEvent,
-  createMockMouseEvent,
-  createMockTouchEvent,
-  performanceUtils,
-  accessibilityUtils,
-  mockDataUtils,
-  networkUtils,
-  storageUtils,
-}
+// 测试工具导出已在文件中单独定义

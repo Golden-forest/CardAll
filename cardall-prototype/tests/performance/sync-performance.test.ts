@@ -1,5 +1,5 @@
 // 同步系统性能测试
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { MockSyncService, MockSupabaseService, MockDatabaseService } from '../mock-services'
 import { PerformanceTester } from '../advanced-test-utils'
 import { CardFixture, SyncOperationFixture } from '../data-fixtures'

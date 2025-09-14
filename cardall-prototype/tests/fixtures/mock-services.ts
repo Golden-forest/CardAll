@@ -356,7 +356,7 @@ export const createMockCanvas = () => {
   const originalToDataURL = canvas.toDataURL
   
   // 模拟方法
-  canvas.toDataURL = jest.fn(() => 'data:image/png;base64,mock-canvas-data')
+  canvas.toDataURL = vi.fn(() => 'data:image/png;base64,mock-canvas-data')
   
   return { canvas, ctx }
 }
@@ -369,7 +369,7 @@ export const createMockFileReader = () => {
   const originalReadAsDataURL = reader.readAsDataURL
   
   // 模拟方法
-  reader.readAsDataURL = jest.fn((file: File) => {
+  reader.readAsDataURL = vi.fn((file: File) => {
     setTimeout(() => {
       const event = new ProgressEvent('load')
       Object.defineProperty(event, 'target', {
@@ -387,8 +387,8 @@ export const createMockFileReader = () => {
 // 模拟剪贴板 API
 export const createMockClipboard = () => {
   const clipboard = {
-    writeText: jest.fn(() => Promise.resolve()),
-    readText: jest.fn(() => Promise.resolve('mock-clipboard-text')),
+    writeText: vi.fn(() => Promise.resolve()),
+    readText: vi.fn(() => Promise.resolve('mock-clipboard-text')),
   }
   
   Object.assign(navigator, { clipboard })
@@ -400,7 +400,7 @@ export const createMockClipboard = () => {
 export const createMockNotification = () => {
   const Notification = {
     permission: 'granted' as NotificationPermission,
-    requestPermission: jest.fn(() => Promise.resolve('granted')),
+    requestPermission: vi.fn(() => Promise.resolve('granted')),
   }
   
   Object.assign(window, { Notification })
@@ -410,7 +410,7 @@ export const createMockNotification = () => {
 
 // 模拟振动 API
 export const createMockVibrate = () => {
-  const vibrate = jest.fn(() => true)
+  const vibrate = vi.fn(() => true)
   
   Object.assign(navigator, { vibrate })
   
@@ -422,8 +422,8 @@ export const createMockScreenOrientation = () => {
   const orientation = {
     type: 'portrait-primary' as OrientationType,
     angle: 0,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   }
   
   Object.assign(screen, { orientation })
@@ -441,8 +441,8 @@ export const createMockVisualViewport = () => {
     pageLeft: 0,
     pageTop: 0,
     scale: 1,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   }
   
   Object.assign(window, { visualViewport: viewport })
@@ -457,8 +457,8 @@ export const createMockNetworkStatus = () => {
     downlink: 10,
     rtt: 100,
     saveData: false,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   }
   
   Object.assign(navigator, { connection })
@@ -473,8 +473,8 @@ export const createMockBatteryManager = () => {
     chargingTime: 0,
     dischargingTime: Infinity,
     level: 1,
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   }
   
   Object.assign(navigator, { getBattery: () => Promise.resolve(battery) })
@@ -482,22 +482,4 @@ export const createMockBatteryManager = () => {
   return battery
 }
 
-// 导出所有模拟服务
-export {
-  mockSupabaseHandlers,
-  mockErrorHandlers,
-  mockServer,
-  createMockIndexedDB,
-  createMockDexie,
-  createMockLocalStorage,
-  createMockSessionStorage,
-  createMockCanvas,
-  createMockFileReader,
-  createMockClipboard,
-  createMockNotification,
-  createMockVibrate,
-  createMockScreenOrientation,
-  createMockVisualViewport,
-  createMockNetworkStatus,
-  createMockBatteryManager,
-}
+// 模拟服务导出已在文件中单独定义

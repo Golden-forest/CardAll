@@ -1,6 +1,6 @@
 ---
 name: database-architect
-description: Use this agent when dealing with database architecture design, performance optimization, and data modeling tasks for CardEverything. Examples include: designing IndexedDB and Supabase data models, optimizing query performance and indexing strategies, planning data migration and version management, implementing data caching and warming strategies, ensuring data security and privacy protection, handling large-scale data processing, complex query optimization, transaction management, and data consistency. This agent should be proactively used when making database-related architectural decisions or when performance issues arise that may be related to database operations.
+description: Use this agent when dealing with database architecture design, performance optimization, and data modeling tasks. Examples include: designing IndexedDB and Supabase data models, optimizing query performance and indexing strategies, planning data migration and version management, implementing data caching and warming strategies, ensuring data security and privacy protection, handling large-scale data processing, complex query optimization, transaction management, and data consistency. This agent should be proactively used when making database-related architectural decisions or when performance issues arise that may be related to database operations.
 model: sonnet
 ---
 

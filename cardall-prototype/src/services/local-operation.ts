@@ -1,4 +1,17 @@
 import { db, type SyncOperation, type DbCard, type DbFolder, type DbTag, type DbImage } from './database'
+import type { Card } from '../types/card'
+
+// 同步服务接口定义
+interface SyncService {
+  syncCard(card: DbCard): Promise<void>
+  syncFolder(folder: DbFolder): Promise<void>
+  syncTag(tag: DbTag): Promise<void>
+  syncImage(image: DbImage): Promise<void>
+  removeCard(cardId: string): Promise<void>
+  removeFolder(folderId: string): Promise<void>
+  removeTag(tagId: string): Promise<void>
+  removeImage(imageId: string): Promise<void>
+}
 
 // ============================================================================
 // 本地操作队列管理 - 优化的同步队列系统
@@ -14,8 +27,8 @@ export interface LocalSyncOperation extends SyncOperation {
   userId?: string
   
   // 数据快照
-  data: any
-  previousData?: any // 用于回滚和冲突检测
+  data: Record<string, unknown>
+  previousData?: Record<string, unknown> // 用于回滚和冲突检测
   
   // 时间戳和版本控制
   timestamp: Date
@@ -167,21 +180,21 @@ export class LocalOperationService {
   }
 
   // 初始化服务
-  private async initialize(): Promise<void> {
+  public async initialize(): Promise<void> {
     try {
       // 确保数据库已初始化
       await db.open()
-      
+
       // 从本地存储恢复队列
       await this.restoreQueueFromStorage()
-      
+
       // 启动定期处理
       this.startProcessing()
-      
+
       // 启动定期清理
       this.startCleanup()
-      
-      console.log('LocalOperationService initialized successfully')
+
+      // LocalOperationService initialized successfully
     } catch (error) {
       console.error('Failed to initialize LocalOperationService:', error)
     }
@@ -217,7 +230,7 @@ export class LocalOperationService {
   }
 
   // 转换操作格式（旧格式到新格式）
-  private convertOperationFormat(operation: any): LocalSyncOperation {
+  private convertOperationFormat(operation: Record<string, unknown> & { [key: string]: unknown }): LocalSyncOperation {
     // 如果是新格式，直接返回
     if (operation.entityType && operation.operationType && operation.entityId) {
       return operation as LocalSyncOperation
@@ -605,7 +618,7 @@ export class LocalOperationService {
   private async processEntityGroup(
     entityType: string, 
     operations: LocalSyncOperation[], 
-    syncService: any
+    syncService: SyncService
   ): Promise<void> {
     switch (entityType) {
       case 'card':
@@ -626,7 +639,7 @@ export class LocalOperationService {
   }
 
   // 处理卡片操作
-  private async processCardOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+  private async processCardOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
     for (const operation of operations) {
       try {
         switch (operation.operationType) {
@@ -671,7 +684,7 @@ export class LocalOperationService {
   }
 
   // 处理文件夹操作
-  private async processFolderOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+  private async processFolderOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
     for (const operation of operations) {
       try {
         switch (operation.operationType) {
@@ -716,7 +729,7 @@ export class LocalOperationService {
   }
 
   // 处理标签操作
-  private async processTagOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+  private async processTagOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
     for (const operation of operations) {
       try {
         switch (operation.operationType) {
@@ -761,7 +774,7 @@ export class LocalOperationService {
   }
 
   // 处理图片操作
-  private async processImageOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+  private async processImageOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
     for (const operation of operations) {
       try {
         switch (operation.operationType) {
@@ -889,7 +902,7 @@ export class LocalOperationService {
   }
 
   // 获取连接类型
-  private getConnectionType(connection: any): 'wifi' | 'cellular' | 'none' {
+  private getConnectionType(connection: { type?: string }): 'wifi' | 'cellular' | 'none' {
     if (!connection) return 'none'
     
     switch (connection.type) {
@@ -1093,7 +1106,7 @@ export class LocalOperationService {
   // 通知监听器
   private notifyListeners<K extends keyof typeof this.listeners>(
     event: K,
-    ...args: any[]
+    ...args: unknown[]
   ): void {
     const listener = this.listeners[event]
     if (listener) {

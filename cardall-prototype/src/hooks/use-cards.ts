@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
+import { secureStorage } from '@/utils/secure-storage'
 
 // Mock data for development
 const mockCards: Card[] = [
@@ -290,7 +291,10 @@ export function useCards() {
   // Auto-save to localStorage
   useEffect(() => {
     const saveTimer = setTimeout(() => {
-      localStorage.setItem('cardall-cards', JSON.stringify(cards))
+      secureStorage.set('cards', cards, {
+        validate: true,
+        encrypt: true
+      })
     }, 1000)
 
     return () => clearTimeout(saveTimer)
@@ -298,14 +302,13 @@ export function useCards() {
 
   // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('cardall-cards')
-    if (saved) {
-      try {
-        const parsedCards = JSON.parse(saved)
-        setCards(parsedCards)
-      } catch (error) {
-        console.error('Failed to load saved cards:', error)
-      }
+    const savedCards = secureStorage.get<Card[]>('cards', {
+      validate: true,
+      encrypt: true
+    })
+
+    if (savedCards) {
+      setCards(savedCards)
     }
   }, [])
 
