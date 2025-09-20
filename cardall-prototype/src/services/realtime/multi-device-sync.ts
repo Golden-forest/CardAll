@@ -199,7 +199,7 @@ export class MultiDeviceSyncManager {
     const fingerprint = [
       navigator.userAgent,
       navigator.language,
-      screen.width + 'x' + screen.height,
+      `${screen.width  }x${  screen.height}`,
       new Date().getTimezoneOffset()
     ].join('|')
     

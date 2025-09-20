@@ -555,7 +555,7 @@ export class ConsistencyMonitor {
   async generateReport(type: 'daily' | 'weekly' | 'monthly' = 'daily'): Promise<any> {
     const now = new Date()
     let startDate: Date
-    let endDate = new Date(now)
+    const endDate = new Date(now)
 
     switch (type) {
       case 'daily':

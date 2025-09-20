@@ -144,8 +144,8 @@ export class MemoryOptimizationExamples {
       totalAcquired: stats.totalAcquired,
       currentSize: stats.currentSize,
       availableSize: stats.availableSize,
-      hitRate: (stats.hitRate * 100).toFixed(1) + '%',
-      efficiency: (stats.efficiency * 100).toFixed(1) + '%'
+      hitRate: `${(stats.hitRate * 100).toFixed(1)  }%`,
+      efficiency: `${(stats.efficiency * 100).toFixed(1)  }%`
     })
 
     // 获取全局指标
@@ -153,7 +153,7 @@ export class MemoryOptimizationExamples {
     console.log('全局对象池指标:', {
       totalPools: globalMetrics.totalPools,
       totalObjects: globalMetrics.totalObjects,
-      efficiency: (globalMetrics.efficiency * 100).toFixed(1) + '%'
+      efficiency: `${(globalMetrics.efficiency * 100).toFixed(1)  }%`
     })
 
     // 清理剩余对象
@@ -533,8 +533,8 @@ export class AdvancedMemoryOptimizationExamples {
     // 获取池统计
     const stats = poolManager.getPoolStatistics(poolId)
     console.log('自定义对象池统计:', {
-      efficiency: (stats.efficiency * 100).toFixed(1) + '%',
-      averageLifetime: stats.averageLifetime.toFixed(0) + 'ms',
+      efficiency: `${(stats.efficiency * 100).toFixed(1)  }%`,
+      averageLifetime: `${stats.averageLifetime.toFixed(0)  }ms`,
       memoryUsage: `${(stats.memoryUsage / 1024).toFixed(1)}KB`
     })
 

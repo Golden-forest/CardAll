@@ -401,7 +401,7 @@ export class RealtimeSystemIntegration {
       this.emitEvent({
         type: 'conflict-resolved',
         timestamp: new Date(),
-        data: data,
+        data,
         severity: 'low'
       })
     })
@@ -418,7 +418,7 @@ export class RealtimeSystemIntegration {
       this.emitEvent({
         type: 'sync-completed',
         timestamp: new Date(),
-        data: data,
+        data,
         severity: 'low'
       })
     })

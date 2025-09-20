@@ -406,7 +406,7 @@ class ResumableUploadService {
   private async createDataBlocks(items: BatchUploadItem[]): Promise<{ totalSize: number; blocks: DataBlock[] }> {
     const blocks: DataBlock[] = []
     let totalSize = 0
-    let sequence = 0
+    const sequence = 0
 
     for (const item of items) {
       const itemData = JSON.stringify(item.data)

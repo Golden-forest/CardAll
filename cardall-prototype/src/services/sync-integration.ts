@@ -710,7 +710,7 @@ export class SyncIntegrationService {
     const queueStats = localOperationService.getQueueStats()
 
     // 获取一致性验证状态
-    let consistencyStatus = {
+    const consistencyStatus = {
       checkerEnabled: false,
       monitorEnabled: false,
       score: 0,

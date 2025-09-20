@@ -447,8 +447,8 @@ export class ConflictResolutionEngine {
       ...sentences2.map(s => s.trim())
     ])
     
-    return Array.from(allSentences)
+    return `${Array.from(allSentences)
       .filter(s => s.length > 0)
-      .join('. ') + '.'
+      .join('. ')  }.`
   }
 }

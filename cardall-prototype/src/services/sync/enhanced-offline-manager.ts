@@ -1305,7 +1305,7 @@ export class EnhancedOfflineManager {
     strategy: EnhancedSyncStrategy
   ): EnhancedOfflineOperation[] {
     // 按优先级过滤
-    let filtered = operations.filter(op =>
+    const filtered = operations.filter(op =>
       strategy.priorityFilter.includes(op.priority)
     )
 
@@ -2561,8 +2561,8 @@ export class EnhancedOfflineManager {
       reconnectAttempts: this.reconnectAttempts,
       networkInfo: this.networkInfo,
       pendingOperations: pendingOps,
-      conflicts: conflicts,
-      stats: stats,
+      conflicts,
+      stats,
       performanceMetrics: {
         memoryUsage: this.getMemoryUsage(),
         cpuUsage: this.getCPUUsage(),

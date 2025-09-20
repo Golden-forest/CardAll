@@ -563,7 +563,7 @@ describe('ConflictResolutionEngine', () => {
 
     test('应该处理超长文本', () => {
       const longText1 = 'A'.repeat(1000)
-      const longText2 = 'A'.repeat(999) + 'B'
+      const longText2 = `${'A'.repeat(999)  }B`
 
       const similarity = (ConflictResolutionEngine as any).calculateSimilarity(longText1, longText2)
       expect(similarity).toBeGreaterThan(0.9)

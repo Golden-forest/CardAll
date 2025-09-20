@@ -237,7 +237,7 @@ if (typeof window !== 'undefined') {
 
 if (typeof window !== 'undefined') {
   // 保持原有全局变量可访问
-  ;(window as any).networkDetectorCompat = networkDetectorCompat
+  (window as any).networkDetectorCompat = networkDetectorCompat
   ;(window as any).networkMonitorServiceCompat = networkMonitorServiceCompat
   ;(window as any).networkStateDetectorCompat = networkStateDetectorCompat
 

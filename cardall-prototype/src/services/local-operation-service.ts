@@ -665,7 +665,7 @@ export class LocalOperationServiceOptimized {
       }
 
       // 应用分页
-      let result = await query.offset(offset).limit(limit).toArray()
+      const result = await query.offset(offset).limit(limit).toArray()
 
       // 缓存查询结果
       await this.cacheManager.cacheQueryResult(queryKey, result)

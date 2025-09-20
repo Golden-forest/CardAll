@@ -46,6 +46,8 @@ import { useConflicts } from '@/hooks/use-conflicts'
 import { ConflictBanner } from '@/components/conflict/conflict-banner'
 import { ConflictPanel } from '@/components/conflict/conflict-panel'
 import { ConflictDetail } from '@/components/conflict/conflict-detail'
+import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
+import { PerformanceMonitorPanel } from '@/components/performance/performance-monitor-panel'
 
 interface DashboardProps {
   className?: string
@@ -632,6 +634,19 @@ export function Dashboard({ className }: DashboardProps) {
                   <span className="sr-only">Conflict Notifications</span>
                 </Button>
               )}
+
+              {/* Sync Status Indicator */}
+              <SyncStatusIndicator
+                showDetails={true}
+                showLabel={false}
+                className="mr-1"
+              />
+
+              {/* Performance Monitor */}
+              <PerformanceMonitorPanel
+                compact={true}
+                autoRefresh={true}
+              />
 
               {/* Layout Controls Popover */}
               <Popover>

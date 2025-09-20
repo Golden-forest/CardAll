@@ -209,11 +209,11 @@ export async function integrationMonitoringExample() {
     // 1. 设置指标监听器
     const unsubscribeMetrics = syncIntegrationService.onIntegrationMetrics((metrics) => {
       console.log('集成指标更新:', {
-        整体性能: metrics.overallPerformance.toFixed(2) + '%',
-        用户体验: metrics.userExperienceScore.toFixed(2) + '%',
-        系统稳定性: metrics.systemStability.toFixed(2) + '%',
-        增量同步效率: metrics.incrementalSyncEfficiency.toFixed(2) + '%',
-        缓存命中率: metrics.cacheHitRate.toFixed(2) + '%'
+        整体性能: `${metrics.overallPerformance.toFixed(2)  }%`,
+        用户体验: `${metrics.userExperienceScore.toFixed(2)  }%`,
+        系统稳定性: `${metrics.systemStability.toFixed(2)  }%`,
+        增量同步效率: `${metrics.incrementalSyncEfficiency.toFixed(2)  }%`,
+        缓存命中率: `${metrics.cacheHitRate.toFixed(2)  }%`
       })
     })
 
@@ -262,10 +262,10 @@ export async function performanceAnalysisExample() {
     const maxSyncTime = Math.max(...syncTimes)
 
     console.log('性能分析结果:', {
-      平均同步时间: avgSyncTime.toFixed(2) + 'ms',
-      最快同步时间: minSyncTime.toFixed(2) + 'ms',
-      最慢同步时间: maxSyncTime.toFixed(2) + 'ms',
-      性能稳定性: ((1 - (maxSyncTime - minSyncTime) / avgSyncTime) * 100).toFixed(2) + '%'
+      平均同步时间: `${avgSyncTime.toFixed(2)  }ms`,
+      最快同步时间: `${minSyncTime.toFixed(2)  }ms`,
+      最慢同步时间: `${maxSyncTime.toFixed(2)  }ms`,
+      性能稳定性: `${((1 - (maxSyncTime - minSyncTime) / avgSyncTime) * 100).toFixed(2)  }%`
     })
 
     // 3. 获取详细指标
@@ -468,9 +468,9 @@ export async function largeDataSyncScenario() {
     const metrics = syncIntegrationService.getIntegrationMetrics()
     console.log('大数据量同步性能:', {
       总操作数: metrics.totalSyncOperations,
-      成功率: ((metrics.successfulSyncOperations / metrics.totalSyncOperations) * 100).toFixed(2) + '%',
-      平均延迟: metrics.operationLatency.toFixed(2) + 'ms',
-      缓存命中率: metrics.cacheHitRate.toFixed(2) + '%'
+      成功率: `${((metrics.successfulSyncOperations / metrics.totalSyncOperations) * 100).toFixed(2)  }%`,
+      平均延迟: `${metrics.operationLatency.toFixed(2)  }ms`,
+      缓存命中率: `${metrics.cacheHitRate.toFixed(2)  }%`
     })
 
   } catch (error) {
@@ -507,8 +507,8 @@ export async function multiDeviceSyncScenario() {
     const finalMetrics = syncIntegrationService.getIntegrationMetrics()
     console.log('多设备同步结果:', {
       总同步次数: finalMetrics.totalSyncOperations,
-      冲突检测准确率: finalMetrics.conflictDetectionAccuracy.toFixed(2) + '%',
-      版本控制效率: finalMetrics.versionControlEfficiency.toFixed(2) + '%'
+      冲突检测准确率: `${finalMetrics.conflictDetectionAccuracy.toFixed(2)  }%`,
+      版本控制效率: `${finalMetrics.versionControlEfficiency.toFixed(2)  }%`
     })
 
   } catch (error) {

@@ -649,7 +649,7 @@ export class TimeSeriesPrefetchStrategy implements AdvancedPrefetchStrategy {
       const nextNum = parseInt(match[1]) + 1
       return currentKey.replace(/\d+$/, nextNum.toString())
     }
-    return currentKey + '_next'
+    return `${currentKey  }_next`
   }
 
   private estimateSize(key: string): number {

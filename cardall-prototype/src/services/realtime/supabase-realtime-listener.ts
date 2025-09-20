@@ -115,7 +115,7 @@ export class SupabaseRealtimeListener {
           {
             event: '*',
             schema: 'public',
-            table: table,
+            table,
             filter: `user_id=eq.${this.config.userId}`
           },
           (payload) => this.handleRealtimeEvent(payload)
@@ -245,7 +245,7 @@ export class SupabaseRealtimeListener {
         {
           event: '*',
           schema: 'public',
-          table: table,
+          table,
           filter: `user_id=eq.${this.config.userId}`
         },
         (payload) => this.handleRealtimeEvent(payload)

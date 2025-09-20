@@ -780,7 +780,7 @@ export class SyncCompatibilityAdapter {
       }
 
       // 测试写入操作
-      const testKey = 'cache_test_' + Date.now()
+      const testKey = `cache_test_${  Date.now()}`
       localStorage.setItem(testKey, 'test')
       localStorage.removeItem(testKey)
 

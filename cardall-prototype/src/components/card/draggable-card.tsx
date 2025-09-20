@@ -81,8 +81,8 @@ export function DraggableCard({
   const getTransformStyle = () => {
     if (!transform) return undefined
     
-    let x = transform.x
-    let y = transform.y
+    const x = transform.x
+    const y = transform.y
     let rotation = 0
     let scale = 1
 

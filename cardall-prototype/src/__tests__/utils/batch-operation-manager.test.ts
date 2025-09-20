@@ -121,7 +121,7 @@ describe('BatchOperationManager', () => {
 
     test('应该批量创建卡片', async () => {
       // Mock database transaction
-      ;(db.transaction as jest.Mock).mockImplementation((mode, tables, callback) => {
+      (db.transaction as jest.Mock).mockImplementation((mode, tables, callback) => {
         return callback()
       })
       ;(db.cards.bulkAdd as jest.Mock).mockResolvedValue(['id1', 'id2'])
@@ -186,7 +186,7 @@ describe('BatchOperationManager', () => {
     })
 
     test('应该处理数据库错误', async () => {
-      ;(db.transaction as jest.Mock).mockRejectedValue(new Error('Database error'))
+      (db.transaction as jest.Mock).mockRejectedValue(new Error('Database error'))
 
       const results = await manager.bulkCreateCards(mockCardsData)
 
@@ -421,7 +421,7 @@ describe('BatchOperationManager', () => {
 
     test('应该重置指标', () => {
       // 先设置一些指标
-      ;(manager as any).updateMetrics([
+      (manager as any).updateMetrics([
         { success: true, duration: 100, retryCount: 0 }
       ], 100)
 
@@ -483,7 +483,7 @@ describe('BatchOperationManager', () => {
 
     test('应该为不支持的实体类型抛出错误', () => {
       expect(() => {
-        ;(manager as any).getEntityTable('unsupported')
+        (manager as any).getEntityTable('unsupported')
       }).toThrow('不支持的实体类型: unsupported')
     })
   })

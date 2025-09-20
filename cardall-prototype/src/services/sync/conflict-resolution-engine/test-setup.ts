@@ -44,7 +44,7 @@ Object.defineProperty(window, 'scrollTo', {
 // 模拟 crypto API
 Object.defineProperty(global, 'crypto', {
   value: {
-    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
+    randomUUID: () => `test-uuid-${  Math.random().toString(36).substr(2, 9)}`,
     getRandomValues: (arr: any[]) => arr.map(() => Math.floor(Math.random() * 256))
   }
 })

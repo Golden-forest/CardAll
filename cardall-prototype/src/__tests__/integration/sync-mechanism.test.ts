@@ -7,7 +7,7 @@ import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globa
 import { LocalOperationServiceOptimized } from '../../services/local-operation-service'
 import { MultilevelCacheService } from '../../services/multilevel-cache-service'
 import { MockDatabase } from '../utils/test-utils'
-import { performanceTester, memoryLeakDetector, mockFactories, asyncTestHelper } from '../utils/test-utils'
+import { performanceTester, memoryLeakDetector, mockFactories } from '../utils/test-utils'
 
 // 模拟外部依赖
 jest.mock('../../services/database-unified', () => ({
@@ -265,7 +265,7 @@ describe('同步机制集成测试', () => {
     test('应该模拟成功的云端同步', async () => {
       // 创建本地数据
       const cardData = mockFactories.createMockCard()
-      const localResult = await localService.createCard(cardData)
+      await localService.createCard(cardData)
 
       // 模拟云端同步成功
       mockSupabase.from.mockReturnValue({

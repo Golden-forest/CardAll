@@ -528,7 +528,7 @@ describe('DataMigrationTool - 备份恢复机制测试', () => {
       // 模拟存储配额不足
       const originalEstimate = (navigator as any).storage?.estimate
       if (typeof navigator !== 'undefined') {
-        ;(navigator as any).storage = {
+        (navigator as any).storage = {
           estimate: jest.fn().mockResolvedValue({
             usage: 4.9 * 1024 * 1024 * 1024, // 4.9GB used
             quota: 5 * 1024 * 1024 * 1024    // 5GB total
@@ -553,7 +553,7 @@ describe('DataMigrationTool - 备份恢复机制测试', () => {
       } finally {
         // 恢复原始estimate方法
         if (originalEstimate) {
-          ;(navigator as any).storage.estimate = originalEstimate
+          (navigator as any).storage.estimate = originalEstimate
         }
       }
     })
@@ -656,7 +656,7 @@ describe('DataMigrationTool - 备份恢复机制测试', () => {
       const rollbackKey = `rollback_${result.rollbackPoint}`
 
       // 验证备份存在
-      let rollbackData = await db.settings
+      const rollbackData = await db.settings
         .where('key')
         .equals(rollbackKey)
         .first()

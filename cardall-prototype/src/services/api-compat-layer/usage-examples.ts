@@ -272,16 +272,16 @@ export class AdvancedFeaturesExample {
     const syncMetrics = syncServiceAdapter.getMetrics()
     console.log('同步服务指标:', {
       totalCalls: syncMetrics.totalCalls,
-      averageResponseTime: syncMetrics.averageResponseTime.toFixed(2) + 'ms',
-      errorRate: syncMetrics.errorRate.toFixed(2) + '%'
+      averageResponseTime: `${syncMetrics.averageResponseTime.toFixed(2)  }ms`,
+      errorRate: `${syncMetrics.errorRate.toFixed(2)  }%`
     })
     
     // 检查数据库服务性能
     const dbMetrics = databaseAdapter.getMetrics()
     console.log('数据库服务指标:', {
       totalCalls: dbMetrics.totalCalls,
-      averageResponseTime: dbMetrics.averageResponseTime.toFixed(2) + 'ms',
-      errorRate: dbMetrics.errorRate.toFixed(2) + '%'
+      averageResponseTime: `${dbMetrics.averageResponseTime.toFixed(2)  }ms`,
+      errorRate: `${dbMetrics.errorRate.toFixed(2)  }%`
     })
   }
   
@@ -364,7 +364,7 @@ export class AdvancedFeaturesExample {
           updates: {
             frontContent: {
               ...card.frontContent,
-              text: card.frontContent.text + ' (已更新)'
+              text: `${card.frontContent.text  } (已更新)`
             }
           }
         }))

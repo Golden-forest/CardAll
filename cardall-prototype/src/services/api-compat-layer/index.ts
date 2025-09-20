@@ -445,7 +445,7 @@ if (typeof window !== 'undefined') {
 
 // 在开发环境中暴露调试接口
 if (process.env.NODE_ENV === 'development') {
-  ;(window as any).__API_COMPAT_LAYER__ = apiCompatLayer
+  (window as any).__API_COMPAT_LAYER__ = apiCompatLayer
   
   console.log('API兼容层已加载，调试接口可通过 window.__API_COMPAT_LAYER__ 访问')
 }

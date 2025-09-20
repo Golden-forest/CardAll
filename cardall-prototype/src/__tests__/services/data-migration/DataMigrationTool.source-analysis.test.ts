@@ -169,7 +169,7 @@ describe('DataMigrationTool - 数据源分析测试', () => {
   describe('简化版数据库分析', () => {
     beforeEach(() => {
       // 保存原始Dexie
-      ;(global as any).OriginalDexie = (global as any).Dexie
+      (global as any).OriginalDexie = (global as any).Dexie
     })
 
     afterEach(() => {

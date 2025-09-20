@@ -3,8 +3,8 @@
  * 实现智能查询优化和索引管理
  */
 
-import { db, type DbCard, type DbFolder, type DbTag } from '../services/database-unified'
-import Dexie, { Table } from 'dexie'
+import { db, type DbCard } from '../services/database-unified'
+import Dexie from 'dexie'
 
 // ============================================================================
 // 类型定义

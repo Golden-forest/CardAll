@@ -387,10 +387,10 @@ export class MemoryLeakDetector {
     // 包装对象赋值操作（简化实现）
     const detector = this
     Object.defineProperty(Object.prototype, 'leakDetectorRef', {
-      get: function() {
+      get() {
         return refMap.get(this)
       },
-      set: function(value: Set<string>) {
+      set(value: Set<string>) {
         refMap.set(this, value)
       },
       enumerable: false,

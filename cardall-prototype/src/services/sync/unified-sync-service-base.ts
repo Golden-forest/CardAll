@@ -1432,7 +1432,7 @@ export abstract class UnifiedSyncServiceBase {
 
       // 内存使用过高警告
       if (memoryUsage > 90) {
-        console.warn('High memory usage detected:', memoryUsage.toFixed(2) + '%')
+        console.warn('High memory usage detected:', `${memoryUsage.toFixed(2)  }%`)
         await this.handleHighMemoryUsage()
       }
 

@@ -8,10 +8,9 @@
  * 3. 生成详细的性能对比报告
  */
 
-import { performanceBenchmark, PerformanceReport } from '../utils/performance-benchmark'
+import { performanceBenchmark } from '../utils/performance-benchmark'
 import { currentPerformanceBaseline } from '../utils/current-performance-baseline'
 import { syncIntegrationService } from '../sync-integration'
-import { optimizedCloudSyncService } from '../sync/optimized-cloud-sync'
 import { syncServiceCompat } from '../sync-service-compat'
 
 // ============================================================================
@@ -435,7 +434,7 @@ class SyncPerformanceTester {
   }
 
   // 模拟旧版三个服务的开销
-  private async simulateLegacyServicesOverhead(testData: any): Promise<void> {
+  private async simulateLegacyServicesOverhead(_testData: any): Promise<void> {
     // 模拟cloud-sync.ts开销
     await new Promise(resolve => setTimeout(resolve, 50))
 

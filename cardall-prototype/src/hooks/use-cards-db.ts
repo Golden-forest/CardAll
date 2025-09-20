@@ -92,7 +92,7 @@ export function useCardsDb() {
 
   // 过滤和排序卡片
   const filteredCards = useCallback(() => {
-    let filtered = cards.filter(card => {
+    const filtered = cards.filter(card => {
       // 搜索词过滤
       if (filter.searchTerm) {
         const searchLower = filter.searchTerm.toLowerCase()

@@ -292,7 +292,7 @@ export class DataConverter {
     return {
       id: op.id,
       type: op.type,
-      table: (op.entity + 's') as 'cards' | 'folders' | 'tags' | 'images',
+      table: (`${op.entity  }s`) as 'cards' | 'folders' | 'tags' | 'images',
       data: op.data,
       localId: op.entityId,
       timestamp: op.timestamp,

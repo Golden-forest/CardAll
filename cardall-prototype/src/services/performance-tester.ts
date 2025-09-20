@@ -845,17 +845,17 @@ ${this.generateMemoryOptimizationSuggestions()}
     // 检查100ms响应时间目标
     const avgResponseTime = tests.reduce((sum, t) => sum + t.executionTime, 0) / tests.length
     if (avgResponseTime < 100) {
-      targetMet.push('✅ 本地操作响应时间 < 100ms (实际: ' + avgResponseTime.toFixed(2) + 'ms)')
+      targetMet.push(`✅ 本地操作响应时间 < 100ms (实际: ${  avgResponseTime.toFixed(2)  }ms)`)
     } else {
-      targetMissed.push('❌ 本地操作响应时间 > 100ms (实际: ' + avgResponseTime.toFixed(2) + 'ms)')
+      targetMissed.push(`❌ 本地操作响应时间 > 100ms (实际: ${  avgResponseTime.toFixed(2)  }ms)`)
     }
 
     // 检查成功率目标
     const successRate = tests.filter(t => t.success).length / tests.length
     if (successRate >= 0.95) {
-      targetMet.push('✅ 操作成功率 ≥ 95% (实际: ' + (successRate * 100).toFixed(1) + '%)')
+      targetMet.push(`✅ 操作成功率 ≥ 95% (实际: ${  (successRate * 100).toFixed(1)  }%)`)
     } else {
-      targetMissed.push('❌ 操作成功率 < 95% (实际: ' + (successRate * 100).toFixed(1) + '%)')
+      targetMissed.push(`❌ 操作成功率 < 95% (实际: ${  (successRate * 100).toFixed(1)  }%)`)
     }
 
     // 检查吞吐量目标
@@ -864,9 +864,9 @@ ${this.generateMemoryOptimizationSuggestions()}
       .reduce((sum, t) => sum + t.operationsPerSecond!, 0) / tests.filter(t => t.operationsPerSecond).length
     
     if (avgThroughput > 10) {
-      targetMet.push('✅ 平均吞吐量 > 10 ops/s (实际: ' + avgThroughput.toFixed(2) + ' ops/s)')
+      targetMet.push(`✅ 平均吞吐量 > 10 ops/s (实际: ${  avgThroughput.toFixed(2)  } ops/s)`)
     } else {
-      targetMissed.push('❌ 平均吞吐量 < 10 ops/s (实际: ' + avgThroughput.toFixed(2) + ' ops/s)')
+      targetMissed.push(`❌ 平均吞吐量 < 10 ops/s (实际: ${  avgThroughput.toFixed(2)  } ops/s)`)
     }
 
     return `
@@ -917,7 +917,7 @@ ${targetMissed.join('\n')}
     const suggestions: string[] = []
 
     if (cacheStats.hitRate < 0.8) {
-      suggestions.push('- 缓存命中率较低(' + (cacheStats.hitRate * 100).toFixed(1) + '%)，考虑调整缓存策略')
+      suggestions.push(`- 缓存命中率较低(${  (cacheStats.hitRate * 100).toFixed(1)  }%)，考虑调整缓存策略`)
       suggestions.push('- 增加缓存预热机制')
       suggestions.push('- 优化缓存失效策略')
     }

@@ -4,10 +4,10 @@
 // Week 3 Day 11-13: 同步服务架构重构
 // ============================================================================
 
-import { type DbCard, type DbFolder, type DbTag, type DbImage } from '../../database'
+import { type DbCard, type DbFolder, type DbTag, type DbImage } from '../../database-unified'
 import { type ConflictInfo as BasicConflictInfo } from '../../optimized-cloud-sync'
 import { type CardConflict, type FolderConflict, type TagConflict, type ConflictStats } from '../../types/conflict'
-import { db } from '../../database'
+import { db } from '../../database-unified'
 
 // ============================================================================
 // 统一冲突类型定义

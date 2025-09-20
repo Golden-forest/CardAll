@@ -374,7 +374,7 @@ export class SmartRealtimeManager {
     }
     
     // 基于多个因素计算最优策略
-    let enabled = true
+    const enabled = true
     let priority: 'realtime' | 'incremental' | 'hybrid' = 'realtime'
     let batchSize = 10
     let batchTimeout = 1000

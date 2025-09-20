@@ -83,7 +83,7 @@ export function useFoldersDb() {
 
   // 过滤文件夹
   const filteredFolders = useCallback(() => {
-    let filtered = folders.filter(folder => {
+    const filtered = folders.filter(folder => {
       // 搜索词过滤
       if (filter.searchTerm) {
         const searchLower = filter.searchTerm.toLowerCase()

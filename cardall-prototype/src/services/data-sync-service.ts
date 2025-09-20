@@ -120,7 +120,7 @@ export class DataSyncService {
   private retryCount = 0
   private maxRetries = 3
   private autoRepairEnabled = true
-  private validationLevel = ConsistencyLevel.RELAXED
+  private validationLevel = 'relaxed' as const
   private lastValidationTime: Date | null = null
   private batchOptimization = {
     enabled: true,
@@ -1746,7 +1746,7 @@ export class DataSyncService {
    */
   private async validateBeforeSync(): Promise<boolean> {
     try {
-      const report = await dataConsistencyValidator.validateConsistency(ConsistencyLevel.BASIC)
+      const report = await dataConsistencyValidator.validateConsistency('basic' as const)
 
       // 基础检查失败，不允许同步
       if (report.overallStatus === 'critical') {
@@ -1814,14 +1814,14 @@ export class DataSyncService {
   /**
    * 获取详细的数据一致性验证报告
    */
-  async getDetailedConsistencyReport(level: ConsistencyLevel = ConsistencyLevel.RELAXED): Promise<ConsistencyReport> {
+  async getDetailedConsistencyReport(level: 'strict' | 'relaxed' | 'basic' = 'relaxed'): Promise<ConsistencyReport> {
     return await dataConsistencyValidator.validateConsistency(level)
   }
 
   /**
    * 手动触发数据一致性验证
    */
-  async manualValidation(level: ConsistencyLevel = ConsistencyLevel.STRICT): Promise<ConsistencyReport> {
+  async manualValidation(level: 'strict' | 'relaxed' | 'basic' = 'strict'): Promise<ConsistencyReport> {
     console.log('Manual validation triggered with level:', level)
     return await dataConsistencyValidator.validateConsistency(level)
   }
@@ -1830,7 +1830,7 @@ export class DataSyncService {
    * 配置数据验证参数
    */
   configureValidation(options: {
-    level?: ConsistencyLevel
+    level?: 'strict' | 'relaxed' | 'basic'
     autoRepair?: boolean
     scheduledValidation?: boolean
   }): void {
@@ -2111,14 +2111,14 @@ export const pauseDataSync = () =>
 export const resumeDataSync = () =>
   dataSyncService.resumeSync()
 
-export const getDetailedConsistencyReport = (level?: ConsistencyLevel) =>
+export const getDetailedConsistencyReport = (level?: 'strict' | 'relaxed' | 'basic') =>
   dataSyncService.getDetailedConsistencyReport(level)
 
-export const manualDataValidation = (level?: ConsistencyLevel) =>
+export const manualDataValidation = (level?: 'strict' | 'relaxed' | 'basic') =>
   dataSyncService.manualValidation(level)
 
 export const configureDataValidation = (options: {
-  level?: ConsistencyLevel
+  level?: 'strict' | 'relaxed' | 'basic'
   autoRepair?: boolean
   scheduledValidation?: boolean
 }) =>

@@ -247,6 +247,9 @@ export class UnifiedSyncService {
   private syncInterval?: number
   private versionInfo: SyncVersionInfo
 
+  // 事件发射器
+  private eventListeners: Map<string, Function[]> = new Map()
+
   private constructor(config?: Partial<SyncConfig>) {
     this.config = {
       enabled: true,
@@ -360,6 +363,9 @@ export class UnifiedSyncService {
       throw new Error('Sync already in progress')
     }
 
+    // 触发同步开始事件
+    this.emit('sync:start', { options, timestamp: new Date() })
+
     const sessionConfig: SyncSessionConfig = {
       type: options?.type || 'incremental',
       direction: options?.direction || 'bidirectional',
@@ -382,11 +388,15 @@ export class UnifiedSyncService {
       this.updateStats(result)
 
       this.log('Sync completed successfully', result)
+      // 触发同步完成事件
+      this.emit('sync:complete', { result, timestamp: new Date() })
       return result
 
     } catch (error) {
       await this.endCurrentSession('failed')
       this.log('Sync failed:', error)
+      // 触发同步失败事件
+      this.emit('sync:error', { error, timestamp: new Date() })
       throw error
     } finally {
       this.isSyncing = false
@@ -427,16 +437,28 @@ export class UnifiedSyncService {
     currentSession: SyncSession | null
     pendingOperations: number
     conflicts: number
-    lastSync: Date | null
+    hasConflicts: boolean
+    lastSyncTime: Date | null
+    lastSyncTimeMs?: number
     networkStatus: any
+    totalSyncs: number
+    successfulSyncs: number
+    failedSyncs: number
+    conflictsArray: SyncConflict[]
   } {
     return {
       isSyncing: this.isSyncing,
       currentSession: this.currentSession,
       pendingOperations: this.operationQueue.length,
       conflicts: this.conflicts.size,
-      lastSync: this.stats.lastSyncTime,
-      networkStatus: networkStateDetector.getCurrentState()
+      hasConflicts: this.conflicts.size > 0,
+      lastSyncTime: this.stats.lastSyncTime,
+      lastSyncTimeMs: this.stats.lastSyncTime?.getTime(),
+      networkStatus: networkStateDetector.getCurrentState(),
+      totalSyncs: this.stats.totalSessions,
+      successfulSyncs: this.stats.successfulSessions,
+      failedSyncs: this.stats.failedSessions,
+      conflictsArray: Array.from(this.conflicts.values())
     }
   }
 
@@ -1171,6 +1193,40 @@ export class UnifiedSyncService {
   private log(message: string, ...args: any[]): void {
     if (this.config.debug && this.config.logLevel !== 'none') {
       console.log(`[UnifiedSync] ${message}`, ...args)
+    }
+  }
+
+  // ============================================================================
+  // 事件发射器方法
+  // ============================================================================
+
+  public on(event: string, listener: Function): void {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, [])
+    }
+    this.eventListeners.get(event)!.push(listener)
+  }
+
+  public off(event: string, listener: Function): void {
+    const listeners = this.eventListeners.get(event)
+    if (listeners) {
+      const index = listeners.indexOf(listener)
+      if (index > -1) {
+        listeners.splice(index, 1)
+      }
+    }
+  }
+
+  private emit(event: string, ...args: any[]): void {
+    const listeners = this.eventListeners.get(event)
+    if (listeners) {
+      listeners.forEach(listener => {
+        try {
+          listener(...args)
+        } catch (error) {
+          console.error(`Error in event listener for ${event}:`, error)
+        }
+      })
     }
   }
 }

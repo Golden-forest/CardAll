@@ -597,7 +597,7 @@ export class OptimizedCloudSyncService {
       let totalSuccess = 0
       let totalFailure = 0
       let totalBandwidth = 0
-      let totalConflicts: ConflictInfo[] = []
+      const totalConflicts: ConflictInfo[] = []
       
       for (const batch of batches) {
         try {

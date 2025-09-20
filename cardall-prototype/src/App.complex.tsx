@@ -8,15 +8,13 @@ import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
 import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context'
-import { appInitService, type InitializationResult } from '@/services/app-init'
-import { initializeDatabase } from '@/services/database'
+import { appInitService } from '@/services/app-init'
 import { Button } from '@/components/ui/button'
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react'
 import './globals.css'
 
 function AppContent() {
   const { isOpen, closeModal } = useAuthModal()
-  const [initializationResult, setInitializationResult] = useState<InitializationResult | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [initError, setInitError] = useState<string | null>(null)
 
@@ -24,25 +22,19 @@ function AppContent() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('🚀 Starting app initialization...')
-        
         // 监听初始化状态
-        const unsubscribe = appInitService.onStatusChange((status) => {
-          console.log('📊 Initialization status:', status)
+        const unsubscribe = appInitService.onStatusChange((_status) => {
+          // Initialization status monitoring
         })
 
         // 执行初始化
         const result = await appInitService.initialize()
-        setInitializationResult(result)
-        
+
         if (!result.success) {
           setInitError(result.error || '初始化失败')
         }
-        
-        console.log('✅ App initialization completed:', result)
         unsubscribe()
       } catch (error) {
-        console.error('❌ App initialization failed:', error)
         setInitError(error instanceof Error ? error.message : '未知错误')
       } finally {
         setIsInitializing(false)
@@ -59,8 +51,7 @@ function AppContent() {
     
     try {
       const result = await appInitService.reinitialize()
-      setInitializationResult(result)
-      
+
       if (!result.success) {
         setInitError(result.error || '重新初始化失败')
       }

@@ -40,7 +40,7 @@ export function SimpleAppInitialization({ onInitialized }: SimpleInitializationP
     } catch (error) {
       console.error('Initialization failed:', error)
       setHasError(true)
-      setMessage('初始化失败: ' + (error instanceof Error ? error.message : '未知错误'))
+      setMessage(`初始化失败: ${  error instanceof Error ? error.message : '未知错误'}`)
     }
   }
 

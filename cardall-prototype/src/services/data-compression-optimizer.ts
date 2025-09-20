@@ -1043,7 +1043,7 @@ class BatchOperationOptimizer {
       type: first.type,
       table: first.table,
       data: this.mergeData(items.map(item => item.data)),
-      localId: 'batch-' + crypto.randomUUID(),
+      localId: `batch-${  crypto.randomUUID()}`,
       priority: Math.max(...items.map(item => item.priority)),
       dependencies: items.flatMap(item => item.dependencies),
       metadata: {

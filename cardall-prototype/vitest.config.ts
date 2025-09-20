@@ -11,14 +11,14 @@ export default defineConfig({
     setupFiles: ['./tests/vitest.setup.ts'],
     include: [
       'tests/unit/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
+      'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+      'tests/integration/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'
     ],
     exclude: [
       'node_modules/**',
       'dist/**',
       'tests/fixtures/**',
       'tests/e2e/**',
-      'tests/integration/**',
       'tests/performance/**',
       'tests/compatibility/**',
       'tests/offline/**',

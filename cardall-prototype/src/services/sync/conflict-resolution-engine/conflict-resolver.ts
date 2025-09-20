@@ -1169,9 +1169,9 @@ export class ConflictResolver {
     // 去重合并
     const allSentences = new Set([...localSentences, ...cloudSentences])
 
-    return Array.from(allSentences)
+    return `${Array.from(allSentences)
       .filter(s => s.length > 0)
-      .join('. ') + '.'
+      .join('. ')  }.`
   }
 
   private performSemanticAnalysis(localData: any, cloudData: any): { similarity: number; details: any } {

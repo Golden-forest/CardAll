@@ -221,7 +221,7 @@ export class PatternRecognizer {
       return {
         frequencyPattern: {
           count: similarErrors.length,
-          timeWindow: timeWindow,
+          timeWindow,
           threshold: 3
         }
       }

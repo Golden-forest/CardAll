@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { SyncStatusDisplay } from '@/components/sync/sync-status-display'
 import { 
   AlertTriangle, 
   CheckCircle, 
@@ -16,8 +17,9 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { useConflicts } from '@/hooks/use-conflicts'
+import { EnhancedConflictDetail } from './enhanced-conflict-detail'
 import { cn } from '@/lib/utils'
-import type { ConflictBase, ConflictSeverity, ConflictStatus } from '@/types/conflict'
+import type { ConflictBase, ConflictSeverity, ConflictStatus, ConflictResolution } from '@/types/conflict'
 
 interface ConflictPanelProps {
   isOpen: boolean
@@ -30,20 +32,30 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
     conflicts,
     selectedConflict,
     setSelectedConflict,
-    stats,
+    getStats,
     getPendingConflicts,
     getHighPriorityConflicts,
     resolveConflict,
     ignoreConflict,
     batchResolveConflicts,
     detectConflicts,
-    isResolving
+    refreshConflicts,
+    isResolving,
+    isLoading,
+    error,
+    syncStatus
   } = useConflicts()
 
   const [filterType, setFilterType] = useState<'all' | 'pending' | 'high' | 'resolved'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedConflicts, setExpandedConflicts] = useState<Set<string>>(new Set())
   const [selectedConflicts, setSelectedConflicts] = useState<Set<string>>(new Set())
+  const [showDetail, setShowDetail] = useState(false)
+  const [detailConflictId, setDetailConflictId] = useState<string | null>(null)
+
+  const stats = getStats()
+  const pendingConflicts = getPendingConflicts()
+  const highPriorityConflicts = getHighPriorityConflicts()
 
   const filteredConflicts = React.useMemo(() => {
     let filtered = conflicts
@@ -51,10 +63,10 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
     // 按状态过滤
     switch (filterType) {
       case 'pending':
-        filtered = getPendingConflicts()
+        filtered = pendingConflicts
         break
       case 'high':
-        filtered = getHighPriorityConflicts()
+        filtered = highPriorityConflicts
         break
       case 'resolved':
         filtered = conflicts.filter(c => c.status === 'resolved')
@@ -87,7 +99,7 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
       // 时间排序（最新的在前）
       return b.timestamp.getTime() - a.timestamp.getTime()
     })
-  }, [conflicts, filterType, searchTerm, getPendingConflicts, getHighPriorityConflicts])
+  }, [conflicts, filterType, searchTerm, pendingConflicts, highPriorityConflicts])
 
   const handleToggleExpand = (conflictId: string) => {
     setExpandedConflicts(prev => {
@@ -111,6 +123,22 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
       }
       return newSet
     })
+  }
+
+  const handleViewDetail = (conflictId: string) => {
+    setDetailConflictId(conflictId)
+    setShowDetail(true)
+  }
+
+  const handleDetailResolve = async (conflictId: string, resolution: ConflictResolution) => {
+    await resolveConflict(conflictId, resolution)
+    setShowDetail(false)
+    setDetailConflictId(null)
+  }
+
+  const handleDetailClose = () => {
+    setShowDetail(false)
+    setDetailConflictId(null)
   }
 
   const handleSelectAll = () => {
@@ -183,8 +211,50 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
             <span>总计: {stats.totalConflicts}</span>
             <span>已解决: {stats.resolvedConflicts}</span>
             <span>待处理: {stats.pendingConflicts}</span>
-            <span>高优先级: {getHighPriorityConflicts().length}</span>
+            <span>高优先级: {highPriorityConflicts.length}</span>
+
+            {/* 同步状态 */}
+            {syncStatus && (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${
+                    syncStatus.isSyncing ? 'bg-yellow-500 animate-pulse' :
+                    syncStatus.networkStatus?.online ? 'bg-green-500' : 'bg-red-500'
+                  }`} />
+                  <span>
+                    {syncStatus.isSyncing ? '同步中...' :
+                     syncStatus.networkStatus?.online ? '在线' : '离线'}
+                  </span>
+                </div>
+                {syncStatus.pendingOperations > 0 && (
+                  <span>待同步: {syncStatus.pendingOperations}</span>
+                )}
+              </>
+            )}
           </div>
+
+          {/* 同步状态显示 */}
+          <SyncStatusDisplay
+            showDetails={true}
+            compact={false}
+            className="mb-4"
+          />
+
+          {/* 错误显示 */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-red-600">{error}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                >
+                  重试
+                </Button>
+              </div>
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="flex-1 flex flex-col space-y-4">
@@ -232,8 +302,13 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
               </Button>
             </div>
             
-            <Button variant="outline" size="sm" onClick={detectConflicts}>
-              <RefreshCw className="h-4 w-4 mr-2" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshConflicts}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               刷新
             </Button>
           </div>
@@ -274,7 +349,12 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
           {/* 冲突列表 */}
           <ScrollArea className="flex-1">
             <div className="space-y-3">
-              {filteredConflicts.length === 0 ? (
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">加载冲突信息...</p>
+                </div>
+              ) : filteredConflicts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm ? '没有找到匹配的冲突' : '暂无冲突'}
                 </div>
@@ -288,6 +368,7 @@ export function ConflictPanel({ isOpen, onClose, className }: ConflictPanelProps
                     onToggleExpand={() => handleToggleExpand(conflict.id)}
                     onToggleSelect={() => handleToggleSelect(conflict.id)}
                     onSelect={() => setSelectedConflict(conflict.id)}
+                    onViewDetail={() => handleViewDetail(conflict.id)}
                     onResolve={(resolution) => resolveConflict(conflict.id, resolution)}
                     onIgnore={() => ignoreConflict(conflict.id)}
                     getSeverityColor={getSeverityColor}
@@ -312,6 +393,7 @@ interface ConflictItemProps {
   onToggleExpand: () => void
   onToggleSelect: () => void
   onSelect: () => void
+  onViewDetail: () => void
   onResolve: (resolution: any) => Promise<void>
   onIgnore: () => void
   getSeverityColor: (severity: ConflictSeverity) => string
@@ -326,6 +408,7 @@ function ConflictItem({
   onToggleExpand,
   onToggleSelect,
   onSelect,
+  onViewDetail,
   onResolve,
   onIgnore,
   getSeverityColor,
@@ -387,6 +470,16 @@ function ConflictItem({
                   </div>
                   
                   <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onViewDetail()
+                      }}
+                    >
+                      查看详情
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

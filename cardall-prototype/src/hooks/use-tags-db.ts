@@ -82,7 +82,7 @@ export function useTagsDb() {
 
   // 过滤标签
   const filteredTags = useCallback(() => {
-    let filtered = tags.filter(tag => {
+    const filtered = tags.filter(tag => {
       // 搜索词过滤
       if (filter.searchTerm) {
         const searchLower = filter.searchTerm.toLowerCase()

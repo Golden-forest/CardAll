@@ -406,7 +406,7 @@ export class SyncQueueManager {
       
       let highRisk = 0
       let mediumRisk = 0
-      let lowRisk = 0
+      const lowRisk = 0
       const recommendations: string[] = []
       
       // 分析并发操作风险

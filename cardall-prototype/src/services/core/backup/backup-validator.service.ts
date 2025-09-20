@@ -441,7 +441,7 @@ export class BackupValidatorService {
 
       if (currentChecksum !== metadata.checksum) {
         errors.push('Checksum mismatch - data may be corrupted')
-        warnings.push('Expected: ' + metadata.checksum + ', Actual: ' + currentChecksum)
+        warnings.push(`Expected: ${  metadata.checksum  }, Actual: ${  currentChecksum}`)
       }
 
     } catch (error) {

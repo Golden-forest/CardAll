@@ -40,7 +40,7 @@ async function main() {
     console.log('📋 生成性能测试报告...')
     const reportText = await generatePerformanceReport(performanceReport)
 
-    console.log('\n' + '='.repeat(60))
+    console.log(`\n${  '='.repeat(60)}`)
     console.log('📊 性能测试报告')
     console.log('='.repeat(60))
     console.log(reportText)

@@ -33,6 +33,12 @@ import {
   type ConflictEngineHealth
 } from './sync/conflict-resolution-engine/unified-conflict-resolution-engine'
 
+// Phase 1 冲突管理组件导入
+import { ConflictStateManager } from './sync/conflict-state-manager'
+import { ConflictDiagnosticTools } from './sync/conflict-diagnostic-tools'
+import { ConflictStorageOptimizer } from './sync/conflict-storage-optimizer'
+import { ConflictManagementTestSuite } from './sync/conflict-management-test-suite'
+
 // ============================================================================
 // 统一同步操作接口
 // ============================================================================
@@ -140,6 +146,11 @@ export class UnifiedSyncService {
   private conflictEngineMetrics: ConflictEngineMetrics
   private conflictEngineHealth: ConflictEngineHealth
 
+  // Phase 1 冲突管理组件
+  private conflictStateManager: any
+  private conflictDiagnosticTools: any
+  private conflictStorageOptimizer: any
+
   // 事件监听器
   private listeners: Set<(status: SyncStatus) => void> = new Set()
   private conflictListeners: Set<(conflict: SyncConflict) => void> = new Set()
@@ -164,6 +175,11 @@ export class UnifiedSyncService {
     this.conflictResolver = new ConflictResolver()
     this.conflictEngineMetrics = this.getDefaultConflictEngineMetrics()
     this.conflictEngineHealth = this.getDefaultConflictEngineHealth()
+
+    // 初始化Phase 1冲突管理组件
+    this.conflictStateManager = new ConflictStateManager()
+    this.conflictDiagnosticTools = new ConflictDiagnosticTools()
+    this.conflictStorageOptimizer = new ConflictStorageOptimizer()
   }
 
   private getDefaultConfig(): SyncConfig {
@@ -303,6 +319,9 @@ export class UnifiedSyncService {
       // 集成统一冲突解决引擎
       await this.initializeConflictEngine()
 
+      // 集成Phase 1冲突管理组件
+      await this.initializeConflictManagement()
+
       // 启动后台服务
       this.startBackgroundServices()
 
@@ -411,6 +430,31 @@ export class UnifiedSyncService {
   }
 
   /**
+   * 初始化Phase 1冲突管理组件
+   */
+  private async initializeConflictManagement(): Promise<void> {
+    try {
+      // 初始化冲突状态管理器
+      await this.conflictStateManager.initialize()
+
+      // 初始化诊断工具
+      await this.conflictDiagnosticTools.initialize()
+
+      // 初始化存储优化器
+      await this.conflictStorageOptimizer.initialize()
+
+      // 设置Phase 1组件事件监听器
+      this.setupConflictManagementEventListeners()
+
+      console.log('Phase 1 conflict management components initialized successfully')
+
+    } catch (error) {
+      console.error('Failed to initialize Phase 1 conflict management:', error)
+      // Phase 1组件初始化失败不应该阻止整个服务的启动
+    }
+  }
+
+  /**
    * 设置冲突解决引擎事件监听器
    */
   private setupConflictEngineEventListeners(): void {
@@ -432,6 +476,33 @@ export class UnifiedSyncService {
     this.conflictResolver.on('error', (error: any) => {
       console.error('Conflict resolver error:', error)
     })
+  }
+
+  /**
+   * 设置Phase 1冲突管理组件事件监听器
+   */
+  private setupConflictManagementEventListeners(): void {
+    // 监听冲突状态变化
+    this.conflictStateManager.onStateChange((state: any) => {
+      this.handleConflictStateChange(state)
+    })
+
+    // 监听冲突解决事件
+    this.conflictStateManager.onResolution((state: any, resolution: any) => {
+      this.handleConflictStateResolution(state, resolution)
+    })
+
+    // 监听错误事件
+    this.conflictStateManager.onError((error: Error, context: any) => {
+      console.error('Conflict state manager error:', error, context)
+    })
+
+    // 监听诊断事件（如果有）
+    if (this.conflictDiagnosticTools) {
+      this.conflictDiagnosticTools.onStateChange?.((state: any) => {
+        this.handleDiagnosticStateChange(state)
+      })
+    }
   }
 
   /**
@@ -2147,6 +2218,53 @@ export class UnifiedSyncService {
   }
 
   /**
+   * 处理冲突状态变化（Phase 1）
+   */
+  private handleConflictStateChange(state: any): void {
+    console.log(`Conflict state changed: ${state.id} -> ${state.status}`)
+
+    // 更新本地冲突列表以保持同步
+    const localIndex = this.conflicts.findIndex(c => c.id === state.id)
+    if (localIndex >= 0) {
+      this.conflicts[localIndex] = {
+        ...this.conflicts[localIndex],
+        resolution: state.status === 'resolved' ? 'resolved' : state.status,
+        autoResolved: state.status === 'resolved' && state.resolvedBy === 'auto'
+      }
+    }
+
+    // 触发状态变化通知
+    this.notifyStatusChange()
+  }
+
+  /**
+   * 处理冲突状态解决（Phase 1）
+   */
+  private handleConflictStateResolution(state: any, resolution: any): void {
+    console.log(`Conflict resolved via state manager: ${state.id}`)
+
+    // 确保从待解决列表中移除
+    this.removeFromPendingList(state.id)
+
+    // 更新指标
+    this.metrics.conflictsResolved += 1
+
+    // 通知监听器
+    if (state) {
+      const traditionalConflict = this.convertToTraditionalConflict(state)
+      this.notifyConflictListeners(traditionalConflict)
+    }
+  }
+
+  /**
+   * 处理诊断状态变化（Phase 1）
+   */
+  private handleDiagnosticStateChange(state: any): void {
+    console.log(`Diagnostic state change: ${state.id}`)
+    // 可以在这里添加特定的诊断逻辑
+  }
+
+  /**
    * 更新冲突解决引擎指标
    */
   private updateConflictEngineMetrics(updates: Partial<ConflictEngineMetrics>): void {
@@ -2375,6 +2493,40 @@ export class UnifiedSyncService {
     // 这里可以验证本地和云端数据的一致性
   }
 
+  /**
+   * 从待解决列表中移除冲突（Phase 1）
+   */
+  private removeFromPendingList(conflictId: string): void {
+    // 从UI组件的待解决列表中移除
+    if (typeof eventBus !== 'undefined') {
+      eventBus.emit('conflict-resolved', { conflictId })
+    }
+
+    // 更新本地状态
+    const index = this.conflicts.findIndex(c => c.id === conflictId)
+    if (index >= 0 && this.conflicts[index].resolution === 'resolved') {
+      console.log(`Removed resolved conflict ${conflictId} from pending list`)
+    }
+  }
+
+  /**
+   * 转换为传统冲突格式（Phase 1）
+   */
+  private convertToTraditionalConflict(state: any): SyncConflict {
+    return {
+      id: state.id,
+      entity: state.entityType,
+      entityId: state.entityId,
+      localData: state.localData,
+      cloudData: state.cloudData,
+      conflictType: state.conflictType,
+      resolution: state.status === 'resolved' ? 'resolved' : state.status,
+      timestamp: state.detectedAt,
+      autoResolved: state.status === 'resolved' && state.resolvedBy === 'auto',
+      conflictFields: state.conflictFields
+    }
+  }
+
   // ============================================================================
   // 事件监听器
   // ============================================================================
@@ -2555,6 +2707,78 @@ export class UnifiedSyncService {
     }
   }
 
+  // ============================================================================
+  // Phase 1 冲突管理公共API
+  // ============================================================================
+
+  /**
+   * 获取冲突状态管理器指标
+   */
+  async getConflictStateMetrics() {
+    if (!this.conflictStateManager) {
+      throw new Error('Conflict state manager not available')
+    }
+    return this.conflictStateManager.getMetrics()
+  }
+
+  /**
+   * 获取冲突诊断报告
+   */
+  async getConflictDiagnosticReport() {
+    if (!this.conflictDiagnosticTools) {
+      throw new Error('Conflict diagnostic tools not available')
+    }
+    return this.conflictDiagnosticTools.getHealthReport()
+  }
+
+  /**
+   * 运行冲突诊断
+   */
+  async runConflictDiagnostic() {
+    if (!this.conflictDiagnosticTools) {
+      throw new Error('Conflict diagnostic tools not available')
+    }
+    return this.conflictDiagnosticTools.runFullDiagnostic()
+  }
+
+  /**
+   * 获取存储优化器指标
+   */
+  async getStorageMetrics() {
+    if (!this.conflictStorageOptimizer) {
+      throw new Error('Conflict storage optimizer not available')
+    }
+    return this.conflictStorageOptimizer.getMetrics()
+  }
+
+  /**
+   * 优化存储
+   */
+  async optimizeConflictStorage() {
+    if (!this.conflictStorageOptimizer) {
+      throw new Error('Conflict storage optimizer not available')
+    }
+    return this.conflictStorageOptimizer.optimizeStorage()
+  }
+
+  /**
+   * 获取冲突日志
+   */
+  async getConflictLogs(filters?: any) {
+    if (!this.conflictDiagnosticTools) {
+      throw new Error('Conflict diagnostic tools not available')
+    }
+    return this.conflictDiagnosticTools.getLogs(filters)
+  }
+
+  /**
+   * 运行冲突管理测试
+   */
+  async runConflictManagementTests(config?: any) {
+    const testSuite = new ConflictManagementTestSuite(config)
+    return testSuite.runFullTestSuite()
+  }
+
   /**
    * 获取冲突列表
    */
@@ -2667,6 +2891,17 @@ export class UnifiedSyncService {
 
     // 持久化状态
     await this.persistSyncState()
+
+    // 销毁Phase 1组件
+    if (this.conflictStateManager) {
+      await this.conflictStateManager.destroy()
+    }
+    if (this.conflictDiagnosticTools) {
+      await this.conflictDiagnosticTools.destroy()
+    }
+    if (this.conflictStorageOptimizer) {
+      await this.conflictStorageOptimizer.destroy()
+    }
 
     // 清理缓存
     this.syncCache.clear()

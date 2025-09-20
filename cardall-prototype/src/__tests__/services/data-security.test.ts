@@ -488,7 +488,7 @@ describe('DataSecurityService', () => {
 
       // 创建多个日志
       for (let i = 0; i < 10; i++) {
-        ;(service as any).logAudit(`action-${i}`, 'resource', {}, 'info')
+        (service as any).logAudit(`action-${i}`, 'resource', {}, 'info')
       }
 
       const logs = service.getAuditLogs({ limit: 5 })
@@ -503,7 +503,7 @@ describe('DataSecurityService', () => {
 
       // 创建超过限制的日志
       for (let i = 0; i < 10; i++) {
-        ;(service as any).logAudit(`action-${i}`, 'resource', {}, 'info')
+        (service as any).logAudit(`action-${i}`, 'resource', {}, 'info')
       }
 
       const logs = service.getAuditLogs()

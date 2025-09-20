@@ -947,7 +947,7 @@ describe('PerformanceMonitoringService', () => {
 
       // 添加大量历史数据
       for (let i = 0; i < 500; i++) {
-        ;(service as any).metricsHistory.push({
+        (service as any).metricsHistory.push({
           timestamp: 1640995200000 + i * 1000,
           databaseSize: i * 1000,
           cardCount: i,

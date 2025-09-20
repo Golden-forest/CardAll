@@ -348,7 +348,7 @@ export class MigrationTestHelpers {
   static restoreIndexedDB() {
     const OriginalDexie = (global as any).OriginalDexie
     if (OriginalDexie) {
-      ;(global as any).Dexie = OriginalDexie
+      (global as any).Dexie = OriginalDexie
     }
   }
 

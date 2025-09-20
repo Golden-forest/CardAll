@@ -205,9 +205,9 @@ export class RealtimeConnectionManager {
           'postgres_changes',
           {
             event: '*',
-            schema: schema,
-            table: table,
-            filter: filter
+            schema,
+            table,
+            filter
           },
           (payload) => this.handlePostgresChange(payload)
         )
@@ -469,7 +469,7 @@ export class RealtimeConnectionManager {
   private performHealthCheck(): void {
     const now = Date.now()
     let healthyConnections = 0
-    let totalLatency = 0
+    const totalLatency = 0
     let activeConnections = 0
 
     for (const [channelName, state] of this.connectionStates) {

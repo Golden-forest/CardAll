@@ -67,7 +67,7 @@ export class SmartPaginationManager {
 
     // 检查缓存
     const cacheKey = this.getCacheKey(page, this.config.pageSize);
-    let cachedData = this.cache.get(cacheKey);
+    const cachedData = this.cache.get(cacheKey);
 
     if (cachedData) {
       this.cacheHits++;

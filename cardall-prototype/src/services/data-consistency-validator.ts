@@ -858,7 +858,7 @@ export class DataConsistencyValidator {
       if (!user) return null
 
       const result = await supabase
-        .from(entity + 's') // 复数形式
+        .from(`${entity  }s`) // 复数形式
         .select('*')
         .eq('id', entityId)
         .eq('user_id', user.id)

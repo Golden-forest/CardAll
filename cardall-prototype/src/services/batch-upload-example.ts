@@ -522,7 +522,7 @@ class BatchUploadExample {
         const performanceReport = cloudSyncBatchUploadIntegration.getPerformanceReport()
         console.log(`Performance:`, {
           uploadTime: duration,
-          compressionRatio: (performanceReport.stats?.compressionRatio * 100 || 0).toFixed(1) + '%',
+          compressionRatio: `${(performanceReport.stats?.compressionRatio * 100 || 0).toFixed(1)  }%`,
           networkRequests: performanceReport.stats?.networkRequests || 0
         })
       }

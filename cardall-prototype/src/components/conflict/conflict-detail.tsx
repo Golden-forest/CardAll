@@ -119,7 +119,7 @@ export function ConflictDetail({ conflictId, onClose, className }: ConflictDetai
   const mergeCardContent = (local: any, remote: any) => {
     return {
       title: local.title.length > remote.title.length ? local.title : remote.title,
-      text: local.text + '\n\n' + remote.text,
+      text: `${local.text  }\n\n${  remote.text}`,
       tags: [...new Set([...local.tags, ...remote.tags])],
       lastModified: new Date()
     }

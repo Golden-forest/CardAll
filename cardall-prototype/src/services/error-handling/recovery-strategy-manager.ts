@@ -430,7 +430,7 @@ export class RollbackStrategy implements RecoveryStrategy {
     // 查找最近的可用回滚点
     // 这里应该查询检查点存储
     return {
-      id: 'checkpoint-' + Date.now(),
+      id: `checkpoint-${  Date.now()}`,
       operation: context.operation?.type || 'unknown',
       timestamp: Date.now() - 30000, // 30秒前
       state: {},

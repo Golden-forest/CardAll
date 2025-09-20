@@ -107,7 +107,7 @@ describe('DataMigrationTool - 迁移错误处理和回滚测试', () => {
       } finally {
         // 恢复原始服务
         if (originalFileSystem) {
-          ;(global as any).fileSystemService = originalFileSystem
+          (global as any).fileSystemService = originalFileSystem
         }
         cleanupLocalStorage()
       }

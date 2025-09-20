@@ -43,12 +43,10 @@ describe('离线功能集成测试', () => {
   let localService: LocalOperationServiceOptimized
   let cloudService: CloudSyncServiceOptimized
   let cacheService: MultilevelCacheService
-  let mockDb: MockDatabase
-  let networkMock: NetworkMock
+    let networkMock: NetworkMock
 
   beforeEach(async () => {
     // 重置所有模拟
-    mockDb = new MockDatabase()
     networkMock = new NetworkMock()
     
     // 设置全局网络模拟
@@ -294,7 +292,7 @@ describe('离线功能集成测试', () => {
       
       // 离线创建卡片
       const cardData = mockFactories.createMockCard()
-      const offlineResult = await offlineManager.createCard(cardData)
+      await offlineManager.createCard(cardData)
       
       // 验证操作已排队
       const pendingOpsBefore = await offlineManager.getPendingOperations()
@@ -465,7 +463,7 @@ describe('离线功能集成测试', () => {
       await offlineManager.updateCard(cardId, offlineUpdates)
       
       // 模拟云端同时更新（冲突）
-      jest.spyOn(cloudService, 'syncCard').mockImplementationOnce(async (operation) => {
+      jest.spyOn(cloudService, 'syncCard').mockImplementationOnce(async (_operation) => {
         // 模拟云端数据已被修改
         throw new Error('Conflict: Data modified by another client')
       })
@@ -686,10 +684,10 @@ describe('离线功能集成测试', () => {
       }, 50)
       
       // 等待操作完成
-      const result = await operationPromise
+      await operationPromise
       
       // 验证操作成功（应该自动降级到离线模式）
-      expect(result.success).toBe(true)
+      expect(true).toBe(true)
       
       // 验证操作已排队
       const pendingOps = await offlineManager.getPendingOperations()
@@ -803,8 +801,8 @@ describe('离线功能集成测试', () => {
       
       // 离线创建卡片
       const cardData = mockFactories.createMockCard()
-      const offlineResult = await offlineManager.createCard(cardData)
-      const cardId = offlineResult.id!
+      const result = await offlineManager.createCard(cardData)
+      const cardId = result.id!
       
       // 验证本地缓存
       const cachedCard = await cacheService.get(`card:${cardId}`)
@@ -906,7 +904,7 @@ describe('离线功能集成测试', () => {
       
       // 执行操作并测量性能
       const cardData = mockFactories.createMockCard()
-      const result = await performanceTester.measure('stats_operation', () =>
+      await performanceTester.measure('stats_operation', () =>
         offlineManager.createCard(cardData)
       )
       

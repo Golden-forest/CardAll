@@ -87,7 +87,7 @@ export function useCards() {
 
   // Filter and sort cards
   const filteredCards = useCallback(() => {
-    let filtered = cards.filter(card => {
+    const filtered = cards.filter(card => {
       // Search term filter
       if (filter.searchTerm) {
         const searchLower = filter.searchTerm.toLowerCase()

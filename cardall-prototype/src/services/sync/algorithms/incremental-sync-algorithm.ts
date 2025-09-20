@@ -2,8 +2,8 @@
 // Week 3 Day 11-13 同步机制重构 - Project-Brainstormer
 
 import { type SyncOperation, type SyncResult, type SyncVersion, type SyncMetrics } from '../types/sync-types'
-import { supabase } from '../supabase'
-import { db } from '../database-unified'
+import { supabase } from '../../supabase'
+import { db } from '../../database-unified'
 
 export class IncrementalSyncAlgorithm {
   private syncHistory: SyncVersion[] = []

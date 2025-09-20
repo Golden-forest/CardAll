@@ -79,6 +79,7 @@ export interface SyncOperation {
   maxRetries: number
   error?: string
   priority: 'high' | 'normal' | 'low'
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'retrying'
 }
 
 // 应用设置 - 统一配置管理

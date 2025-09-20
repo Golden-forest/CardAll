@@ -290,16 +290,16 @@ export async function runAllExamples() {
   try {
     // 运行各个示例
     await basicUsageExample()
-    console.log('\n' + '='.repeat(80))
+    console.log(`\n${  '='.repeat(80)}`)
     
     await advancedCacheExample()
-    console.log('\n' + '='.repeat(80))
+    console.log(`\n${  '='.repeat(80)}`)
     
     await performanceMonitoringExample()
-    console.log('\n' + '='.repeat(80))
+    console.log(`\n${  '='.repeat(80)}`)
     
     await datasetOptimizerExample()
-    console.log('\n' + '='.repeat(80))
+    console.log(`\n${  '='.repeat(80)}`)
     
     await realtimeDataUpdateExample()
     

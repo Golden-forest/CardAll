@@ -393,7 +393,7 @@ class MockIDBTransactionImpl implements MockIDBTransaction {
 }
 
 // 全局IndexedDB工厂函数
-let databases: Map<string, MockIDBDatabase> = new Map()
+const databases: Map<string, MockIDBDatabase> = new Map()
 
 export function resetMockIndexedDB(): void {
   databases.clear()

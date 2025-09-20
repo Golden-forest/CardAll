@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 1 冲突状态管理验证</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background-color: #2980b9;
+        }
+        .test-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .test-results {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .info { color: #3498db; }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric-card {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Phase 1 冲突状态管理验证</h1>
+
+        <div class="test-section">
+            <h2>组件测试</h2>
+            <button class="test-button" onclick="runBasicTest()">基础功能测试</button>
+            <button class="test-button" onclick="runLifecycleTest()">生命周期测试</button>
+            <button class="test-button" onclick="runDiagnosticTest()">诊断工具测试</button>
+            <button class="test-button" onclick="runStorageTest()">存储优化测试</button>
+            <button class="test-button" onclick="runIntegrationTest()">集成测试</button>
+            <button class="test-button" onclick="clearResults()">清空结果</button>
+        </div>
+
+        <div class="test-section">
+            <h2>测试指标</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalTests">0</div>
+                    <div class="metric-label">总测试数</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="passedTests">0</div>
+                    <div class="metric-label">通过测试</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="failedTests">0</div>
+                    <div class="metric-label">失败测试</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="successRate">0%</div>
+                    <div class="metric-label">成功率</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>测试结果</h2>
+            <div class="test-results" id="testResults">
+                等待测试开始...
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 动态导入测试组件
+        import { ConflictStateManager } from './src/services/sync/conflict-state-manager.js'
+        import { ConflictDiagnosticTools } from './src/services/sync/conflict-diagnostic-tools.js'
+        import { ConflictStorageOptimizer } from './src/services/sync/conflict-storage-optimizer.js'
+
+        // 全局变量
+        let stateManager = null
+        let diagnosticTools = null
+        let storageOptimizer = null
+        let testResults = []
+        let testMetrics = {
+            total: 0,
+            passed: 0,
+            failed: 0
+        }
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString()
+            const logEntry = `[${timestamp}] ${message}`
+            testResults.push(`${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'} ${logEntry}`)
+            updateTestResults()
+        }
+
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('testResults')
+            resultsDiv.textContent = testResults.join('\n')
+            resultsDiv.scrollTop = resultsDiv.scrollHeight
+        }
+
+        function updateMetrics() {
+            document.getElementById('totalTests').textContent = testMetrics.total
+            document.getElementById('passedTests').textContent = testMetrics.passed
+            document.getElementById('failedTests').textContent = testMetrics.failed
+            const successRate = testMetrics.total > 0 ? Math.round((testMetrics.passed / testMetrics.total) * 100) : 0
+            document.getElementById('successRate').textContent = successRate + '%'
+        }
+
+        // 初始化组件
+        async function initializeComponents() {
+            try {
+                log('初始化 Phase 1 组件...')
+
+                stateManager = new ConflictStateManager()
+                diagnosticTools = new ConflictDiagnosticTools()
+                storageOptimizer = new ConflictStorageOptimizer()
+
+                await Promise.all([
+                    stateManager.initialize(),
+                    diagnosticTools.initialize(),
+                    storageOptimizer.initialize()
+                ])
+
+                log('所有组件初始化成功', 'success')
+                return true
+            } catch (error) {
+                log(`组件初始化失败: ${error.message}`, 'error')
+                return false
+            }
+        }
+
+        // 清理资源
+        async function cleanupComponents() {
+            try {
+                if (stateManager || diagnosticTools || storageOptimizer) {
+                    await Promise.all([
+                        stateManager?.destroy(),
+                        diagnosticTools?.destroy(),
+                        storageOptimizer?.destroy()
+                    ])
+                    log('资源清理完成', 'success')
+                }
+            } catch (error) {
+                log(`资源清理失败: ${error.message}`, 'warning')
+            }
+        }
+
+        // 基础功能测试
+        window.runBasicTest = async function() {
+            testMetrics.total++
+            updateMetrics()
+
+            log('开始基础功能测试...')
+
+            try {
+                if (!await initializeComponents()) {
+                    testMetrics.failed++
+                    updateMetrics()
+                    return
+                }
+
+                // 创建冲突
+                const conflictId = await stateManager.createConflict({
+                    entityType: 'card',
+                    entityId: 'test-card-basic',
+                    conflictType: 'content',
+                    status: 'pending',
+                    severity: 'medium',
+                    localData: { content: '本地内容' },
+                    cloudData: { content: '云端内容' },
+                    localVersion: 1,
+                    cloudVersion: 2,
+                    localTimestamp: new Date(),
+                    cloudTimestamp: new Date(),
+                    detectionTime: Date.now(),
+                    sourceDevice: 'test-device',
+                    retryCount: 0,
+                    maxRetries: 3
+                })
+
+                log(`创建冲突成功: ${conflictId}`, 'success')
+
+                // 验证状态
+                const state = stateManager.getConflictState(conflictId)
+                if (state && state.status === 'pending') {
+                    log('冲突状态验证通过', 'success')
+                } else {
+                    throw new Error('冲突状态验证失败')
+                }
+
+                log('基础功能测试完成', 'success')
+                testMetrics.passed++
+
+            } catch (error) {
+                log(`基础功能测试失败: ${error.message}`, 'error')
+                testMetrics.failed++
+            } finally {
+                await cleanupComponents()
+                updateMetrics()
+            }
+        }
+
+        // 生命周期测试
+        window.runLifecycleTest = async function() {
+            testMetrics.total++
+            updateMetrics()
+
+            log('开始生命周期测试...')
+
+            try {
+                if (!await initializeComponents()) {
+                    testMetrics.failed++
+                    updateMetrics()
+                    return
+                }
+
+                const conflictId = await stateManager.createConflict({
+                    entityType: 'card',
+                    entityId: 'test-card-lifecycle',
+                    conflictType: 'content',
+                    status: 'pending',
+                    severity: 'medium',
+                    localData: { content: '本地内容' },
+                    cloudData: { content: '云端内容' },
+                    localVersion: 1,
+                    cloudVersion: 2,
+                    localTimestamp: new Date(),
+                    cloudTimestamp: new Date(),
+                    detectionTime: Date.now(),
+                    sourceDevice: 'test-device',
+                    retryCount: 0,
+                    maxRetries: 3
+                })
+
+                // 状态转换测试
+                const states = ['pending', 'detecting', 'resolving', 'resolved']
+                for (const status of states) {
+                    await stateManager.updateConflictState(conflictId, { status })
+                    const state = stateManager.getConflictState(conflictId)
+                    if (state?.status !== status) {
+                        throw new Error(`状态转换失败: ${status}`)
+                    }
+                    log(`状态转换成功: ${status}`, 'success')
+                }
+
+                // 解决冲突测试
+                const resolutionResult = await stateManager.resolveConflict(conflictId, {
+                    type: 'merge',
+                    strategy: 'smart',
+                    success: true,
+                    reasoning: '生命周期测试',
+                    timestamp: new Date()
+                })
+
+                if (resolutionResult) {
+                    log('冲突解决成功', 'success')
+                } else {
+                    throw new Error('冲突解决失败')
+                }
+
+                log('生命周期测试完成', 'success')
+                testMetrics.passed++
+
+            } catch (error) {
+                log(`生命周期测试失败: ${error.message}`, 'error')
+                testMetrics.failed++
+            } finally {
+                await cleanupComponents()
+                updateMetrics()
+            }
+        }
+
+        // 诊断工具测试
+        window.runDiagnosticTest = async function() {
+            testMetrics.total++
+            updateMetrics()
+
+            log('开始诊断工具测试...')
+
+            try {
+                if (!await initializeComponents()) {
+                    testMetrics.failed++
+                    updateMetrics()
+                    return
+                }
+
+                // 创建问题冲突
+                await stateManager.createConflict({
+                    entityType: 'card',
+                    entityId: 'stale-card',
+                    conflictType: 'content',
+                    status: 'pending',
+                    severity: 'critical',
+                    localData: { content: '过期内容' },
+                    cloudData: { content: '新内容' },
+                    localVersion: 1,
+                    cloudVersion: 2,
+                    localTimestamp: new Date(Date.now() - 600000),
+                    cloudTimestamp: new Date(),
+                    detectionTime: Date.now(),
+                    sourceDevice: 'test-device',
+                    retryCount: 4,
+                    maxRetries: 3
+                })
+
+                // 运行诊断
+                const results = await diagnosticTools.runFullDiagnostic()
+                log(`诊断完成，发现 ${results.length} 个问题`, 'info')
+
+                if (results.length > 0) {
+                    results.slice(0, 3).forEach((result, index) => {
+                        log(`问题 ${index + 1}: [${result.severity.toUpperCase()}] ${result.title}`, 'warning')
+                    })
+                }
+
+                // 获取健康报告
+                const healthReport = await diagnosticTools.getHealthReport()
+                log(`系统健康状态: ${healthReport.overallHealth}`, 'info')
+
+                log('诊断工具测试完成', 'success')
+                testMetrics.passed++
+
+            } catch (error) {
+                log(`诊断工具测试失败: ${error.message}`, 'error')
+                testMetrics.failed++
+            } finally {
+                await cleanupComponents()
+                updateMetrics()
+            }
+        }
+
+        // 存储优化测试
+        window.runStorageTest = async function() {
+            testMetrics.total++
+            updateMetrics()
+
+            log('开始存储优化测试...')
+
+            try {
+                if (!await initializeComponents()) {
+                    testMetrics.failed++
+                    updateMetrics()
+                    return
+                }
+
+                // 创建测试冲突
+                const conflictId = await stateManager.createConflict({
+                    entityType: 'card',
+                    entityId: 'test-card-storage',
+                    conflictType: 'content',
+                    status: 'pending',
+                    severity: 'medium',
+                    localData: { content: '本地内容'.repeat(100) },
+                    cloudData: { content: '云端内容'.repeat(100) },
+                    localVersion: 1,
+                    cloudVersion: 2,
+                    localTimestamp: new Date(),
+                    cloudTimestamp: new Date(),
+                    detectionTime: Date.now(),
+                    sourceDevice: 'test-device',
+                    retryCount: 0,
+                    maxRetries: 3
+                })
+
+                // 存储测试
+                const state = stateManager.getConflictState(conflictId)
+                await storageOptimizer.storeConflict(state!)
+                log('冲突状态存储成功', 'success')
+
+                // 查询测试
+                const queryResults = await storageOptimizer.queryConflicts({ limit: 10 })
+                log(`查询成功，返回 ${queryResults.length} 个结果`, 'info')
+
+                // 存储优化测试
+                const optimizationResult = await storageOptimizer.optimizeStorage()
+                log(`存储优化完成，节省 ${Math.round(optimizationResult.spaceSaved / 1024)}KB`, 'success')
+
+                log('存储优化测试完成', 'success')
+                testMetrics.passed++
+
+            } catch (error) {
+                log(`存储优化测试失败: ${error.message}`, 'error')
+                testMetrics.failed++
+            } finally {
+                await cleanupComponents()
+                updateMetrics()
+            }
+        }
+
+        // 集成测试
+        window.runIntegrationTest = async function() {
+            testMetrics.total++
+            updateMetrics()
+
+            log('开始集成测试...')
+
+            try {
+                if (!await initializeComponents()) {
+                    testMetrics.failed++
+                    updateMetrics()
+                    return
+                }
+
+                // 创建多个冲突
+                const conflictIds = []
+                for (let i = 0; i < 5; i++) {
+                    const id = await stateManager.createConflict({
+                        entityType: 'card',
+                        entityId: `test-card-integration-${i}`,
+                        conflictType: 'content',
+                        status: 'pending',
+                        severity: i % 2 === 0 ? 'medium' : 'high',
+                        localData: { content: `本地内容 ${i}` },
+                        cloudData: { content: `云端内容 ${i}` },
+                        localVersion: i,
+                        cloudVersion: i + 1,
+                        localTimestamp: new Date(),
+                        cloudTimestamp: new Date(),
+                        detectionTime: Date.now(),
+                        sourceDevice: 'test-device',
+                        retryCount: 0,
+                        maxRetries: 3
+                    })
+                    conflictIds.push(id)
+                }
+
+                log(`创建 ${conflictIds.length} 个冲突`, 'info')
+
+                // 持久化测试
+                await stateManager.persistAllStates()
+                log('所有冲突状态持久化完成', 'success')
+
+                // 解决部分冲突
+                for (let i = 0; i < 3; i++) {
+                    await stateManager.resolveConflict(conflictIds[i], {
+                        type: i % 2 === 0 ? 'keep_local' : 'merge',
+                        strategy: 'timestamp',
+                        success: true,
+                        reasoning: `集成测试解决 ${i}`,
+                        timestamp: new Date()
+                    })
+                }
+
+                log('解决 3 个冲突', 'info')
+
+                // 运行诊断
+                const diagnosticResults = await diagnosticTools.runFullDiagnostic()
+                log(`集成诊断完成，发现 ${diagnosticResults.length} 个问题`, 'info')
+
+                // 获取最终指标
+                const metrics = stateManager.getMetrics()
+                log(`最终指标: ${metrics.totalConflicts} 总冲突, ${metrics.resolvedConflicts} 已解决`, 'info')
+
+                log('集成测试完成', 'success')
+                testMetrics.passed++
+
+            } catch (error) {
+                log(`集成测试失败: ${error.message}`, 'error')
+                testMetrics.failed++
+            } finally {
+                await cleanupComponents()
+                updateMetrics()
+            }
+        }
+
+        // 清空结果
+        window.clearResults = function() {
+            testResults = []
+            testMetrics = { total: 0, passed: 0, failed: 0 }
+            updateTestResults()
+            updateMetrics()
+            log('测试结果已清空')
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            log('Phase 1 冲突状态管理验证页面已加载')
+            log('点击测试按钮开始验证各个组件功能')
+        })
+    </script>
+</body>
+</html>

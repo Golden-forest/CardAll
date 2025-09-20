@@ -81,7 +81,7 @@ class AppInitializationService {
         result.migrationResult = await migrationService.migrateFromLocalStorage()
         
         if (!result.migrationResult.success) {
-          throw new Error('数据迁移失败: ' + result.migrationResult.errors.join(', '))
+          throw new Error(`数据迁移失败: ${  result.migrationResult.errors.join(', ')}`)
         }
       }
 
@@ -144,7 +144,7 @@ class AppInitializationService {
       this.updateStatus({
         step: 'error',
         progress: 0,
-        message: '初始化失败: ' + (error instanceof Error ? error.message : '未知错误'),
+        message: `初始化失败: ${  error instanceof Error ? error.message : '未知错误'}`,
         isComplete: false,
         hasError: true,
         error: error instanceof Error ? error.message : '未知错误'
