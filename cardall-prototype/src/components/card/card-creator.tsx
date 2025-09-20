@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from 'react'
+import { useCardAllCards } from '@/contexts/cardall-context'
+import { useStorageAdapter } from '@/hooks/use-cards-adapter'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -6,22 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { DatabaseService } from '@/services/database/database.service'
-import { CardData } from '@/types/card'
-import { unifiedSyncService } from '@/services/core/sync/unified-sync.service'
+import { Card as CardType, DEFAULT_CARD_STYLE } from '@/types/card'
 
 interface CardCreatorProps {
-  onCardCreated?: (card: CardData) => void
+  onCardCreated?: (card: CardType) => void
   className?: string
 }
 
 export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
+  const { dispatch } = useCardAllCards()
+  const { isReady } = useStorageAdapter()
+
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    category: '',
-    tags: [] as string[],
-    priority: 'medium'
+    frontTitle: '',
+    frontContent: '',
+    backTitle: '',
+    backContent: '',
+    tags: [] as string[]
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -32,37 +35,51 @@ export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
     setIsSubmitting(true)
     setError(null)
 
+    if (!isReady) {
+      setError('系统未就绪，请稍后再试')
+      setIsSubmitting(false)
+      return
+    }
+
     try {
-      const newCard: CardData = {
+      const now = new Date()
+      const newCard: CardType = {
         id: crypto.randomUUID(),
-        title: formData.title,
-        content: formData.content,
-        category: formData.category,
-        tags: formData.tags,
-        priority: formData.priority as 'low' | 'medium' | 'high',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        syncStatus: 'pending'
+        frontContent: {
+          title: formData.frontTitle,
+          text: formData.frontContent,
+          images: [],
+          tags: formData.tags,
+          lastModified: now
+        },
+        backContent: {
+          title: formData.backTitle,
+          text: formData.backContent,
+          images: [],
+          tags: [],
+          lastModified: now
+        },
+        style: DEFAULT_CARD_STYLE,
+        isFlipped: false,
+        createdAt: now,
+        updatedAt: now
       }
 
-      // 保存到本地数据库
-      await DatabaseService.getInstance().saveCard(newCard)
-
-      // 触发同步
-      await unifiedSyncService.sync({
-        type: 'incremental',
-        direction: 'upload'
+      // 使用dispatch保存卡片
+      await dispatch({
+        type: 'CREATE_CARD',
+        payload: newCard
       })
 
       onCardCreated?.(newCard)
 
       // 重置表单
       setFormData({
-        title: '',
-        content: '',
-        category: '',
-        tags: [],
-        priority: 'medium'
+        frontTitle: '',
+        frontContent: '',
+        backTitle: '',
+        backContent: '',
+        tags: []
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建卡片失败')
@@ -70,10 +87,26 @@ export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
     } finally {
       setIsSubmitting(false)
     }
-  }, [formData, onCardCreated])
+  }, [formData, onCardCreated, dispatch, isReady])
 
   const handleInputChange = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }))
+  }
+
+  // 禁用表单如果系统未就绪
+  if (!isReady) {
+    return (
+      <Card className={className}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+              <p className="text-sm text-muted-foreground">系统初始化中...</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -89,62 +122,91 @@ export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
             </div>
           )}
 
+          {/* 正面内容 */}
           <div>
-            <Label htmlFor="title">标题 *</Label>
+            <Label htmlFor="frontTitle">正面标题 *</Label>
             <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="输入卡片标题"
+              id="frontTitle"
+              value={formData.frontTitle}
+              onChange={(e) => handleInputChange('frontTitle', e.target.value)}
+              placeholder="输入卡片正面标题"
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="content">内容 *</Label>
+            <Label htmlFor="frontContent">正面内容 *</Label>
             <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => handleInputChange('content', e.target.value)}
-              placeholder="输入卡片内容"
+              id="frontContent"
+              value={formData.frontContent}
+              onChange={(e) => handleInputChange('frontContent', e.target.value)}
+              placeholder="输入卡片正面内容"
               rows={4}
               required
             />
           </div>
 
+          {/* 背面内容 */}
           <div>
-            <Label htmlFor="category">分类</Label>
-            <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="选择分类" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="work">工作</SelectItem>
-                <SelectItem value="personal">个人</SelectItem>
-                <SelectItem value="learning">学习</SelectItem>
-                <SelectItem value="ideas">想法</SelectItem>
-                <SelectItem value="other">其他</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="backTitle">背面标题</Label>
+            <Input
+              id="backTitle"
+              value={formData.backTitle}
+              onChange={(e) => handleInputChange('backTitle', e.target.value)}
+              placeholder="输入卡片背面标题（可选）"
+            />
           </div>
 
           <div>
-            <Label htmlFor="priority">优先级</Label>
-            <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">低</SelectItem>
-                <SelectItem value="medium">中</SelectItem>
-                <SelectItem value="high">高</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="backContent">背面内容</Label>
+            <Textarea
+              id="backContent"
+              value={formData.backContent}
+              onChange={(e) => handleInputChange('backContent', e.target.value)}
+              placeholder="输入卡片背面内容（可选）"
+              rows={4}
+            />
+          </div>
+
+          {/* 标签 */}
+          <div>
+            <Label htmlFor="tags">标签</Label>
+            <div className="flex gap-2 flex-wrap">
+              {formData.tags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newTags = [...formData.tags]
+                      newTags.splice(index, 1)
+                      handleInputChange('tags', newTags)
+                    }}
+                    className="ml-1 hover:text-red-500"
+                  >
+                    ×
+                  </button>
+                </Badge>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const newTag = prompt('输入标签名称:')
+                  if (newTag && !formData.tags.includes(newTag)) {
+                    handleInputChange('tags', [...formData.tags, newTag])
+                  }
+                }}
+              >
+                + 添加标签
+              </Button>
+            </div>
           </div>
 
           <Button
             type="submit"
-            disabled={isSubmitting || !formData.title || !formData.content}
+            disabled={isSubmitting || !formData.frontTitle || !formData.frontContent}
             className="w-full"
           >
             {isSubmitting ? '创建中...' : '创建卡片'}

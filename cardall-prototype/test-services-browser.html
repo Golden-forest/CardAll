@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 服务测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .loading {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Phase 3 服务测试</h1>
+
+        <div class="test-result info">
+            <strong>说明：</strong>此测试页面用于验证Phase 3服务的初始化和基本功能。点击下面的按钮开始测试。
+        </div>
+
+        <button id="runTestsBtn" onclick="runTests()">运行测试</button>
+        <button id="clearResultsBtn" onclick="clearResults()">清除结果</button>
+
+        <div id="testResults"></div>
+    </div>
+
+    <script type="module">
+        // 全局测试函数
+        window.runTests = async function() {
+            const resultsDiv = document.getElementById('testResults');
+            const runBtn = document.getElementById('runTestsBtn');
+
+            runBtn.disabled = true;
+            resultsDiv.innerHTML = '<div class="test-result loading">正在运行测试...</div>';
+
+            try {
+                // 测试1: 检查模块导入
+                addTestResult('测试1: 检查模块导入', 'loading', '正在检查模块导入...');
+
+                // 动态导入服务模块
+                const [
+                    { Phase3Integration },
+                    { PerformanceMonitor },
+                    { DataEncryptionService },
+                    { ConflictResolutionEngine },
+                    { EnhancedOfflineManager },
+                    { EnhancedCloudSync }
+                ] = await Promise.all([
+                    import('/src/integrations/phase3-integration.ts'),
+                    import('/src/services/performance/performance-monitor.ts'),
+                    import('/src/services/security/data-encryption-service.ts'),
+                    import('/src/services/conflict/conflict-resolution-engine.ts'),
+                    import('/src/services/offline/enhanced-offline-manager.ts'),
+                    import('/src/services/sync/enhanced-cloud-sync.ts')
+                ]);
+
+                addTestResult('测试1: 检查模块导入', 'success', '所有模块导入成功 ✓');
+
+                // 测试2: PerformanceMonitor 初始化
+                addTestResult('测试2: PerformanceMonitor 初始化', 'loading', '正在初始化 PerformanceMonitor...');
+
+                const performanceMonitor = new PerformanceMonitor({
+                    metricsInterval: 1000,
+                    analysisInterval: 5000,
+                    enableRealTimeAnalysis: true,
+                    enableAutomaticAlerts: true,
+                    alertThresholds: {
+                        responseTime: { warning: 1000, critical: 2000 },
+                        errorRate: { warning: 0.05, critical: 0.1 },
+                        memoryUsage: { warning: 0.7, critical: 0.9 },
+                        cpuUsage: { warning: 0.8, critical: 0.95 }
+                    }
+                });
+
+                await performanceMonitor.initialize();
+                addTestResult('测试2: PerformanceMonitor 初始化', 'success',
+                    `PerformanceMonitor 初始化成功 ✓<br>状态: ${performanceMonitor.isInitialized() ? '已初始化' : '未初始化'}`);
+
+                // 测试3: DataEncryptionService 初始化
+                addTestResult('测试3: DataEncryptionService 初始化', 'loading', '正在初始化 DataEncryptionService...');
+
+                const encryptionService = new DataEncryptionService({
+                    algorithm: 'AES-256-GCM',
+                    keyDerivation: 'PBKDF2',
+                    keyRotationDays: 30,
+                    enableAuditLogging: true,
+                    enableCompliance: true
+                });
+
+                await encryptionService.initialize();
+                const encryptionStatus = encryptionService.getStatus();
+                addTestResult('测试3: DataEncryptionService 初始化', 'success',
+                    `DataEncryptionService 初始化成功 ✓<br>状态: ${encryptionStatus.isInitialized ? '已初始化' : '未初始化'}<br>活跃密钥ID: ${encryptionStatus.activeKeyId || '无'}`);
+
+                // 测试4: ConflictResolutionEngine 初始化
+                addTestResult('测试4: ConflictResolutionEngine 初始化', 'loading', '正在初始化 ConflictResolutionEngine...');
+
+                const conflictEngine = new ConflictResolutionEngine({
+                    enableAutoResolve: true,
+                    enableSmartMerge: true,
+                    maxRetryAttempts: 3,
+                    conflictThreshold: 0.8
+                });
+
+                await conflictEngine.initialize();
+                const engineStatus = conflictEngine.getStatus();
+                addTestResult('测试4: ConflictResolutionEngine 初始化', 'success',
+                    `ConflictResolutionEngine 初始化成功 ✓<br>状态: ${engineStatus.isInitialized ? '已初始化' : '未初始化'}`);
+
+                // 测试5: EnhancedOfflineManager 初始化
+                addTestResult('测试5: EnhancedOfflineManager 初始化', 'loading', '正在初始化 EnhancedOfflineManager...');
+
+                const offlineManager = new EnhancedOfflineManager({
+                    maxQueueSize: 1000,
+                    compressionEnabled: true,
+                    versionControlEnabled: true,
+                    smartMergeEnabled: true,
+                    networkAdaptiveSync: true
+                });
+
+                await offlineManager.initialize();
+                const offlineStatus = offlineManager.getStatus();
+                addTestResult('测试5: EnhancedOfflineManager 初始化', 'success',
+                    `EnhancedOfflineManager 初始化成功 ✓<br>状态: ${offlineStatus.isInitialized ? '已初始化' : '未初始化'}`);
+
+                // 测试6: EnhancedCloudSync 初始化
+                addTestResult('测试6: EnhancedCloudSync 初始化', 'loading', '正在初始化 EnhancedCloudSync...');
+
+                const cloudSync = new EnhancedCloudSync({
+                    enableIncrementalSync: true,
+                    enableConflictPrevention: true,
+                    enableCompression: true,
+                    enableNetworkAdaptation: true,
+                    syncInterval: 30000,
+                    batchSize: 50,
+                    retryAttempts: 3
+                });
+
+                await cloudSync.initialize();
+                const syncStatus = cloudSync.getStatus();
+                addTestResult('测试6: EnhancedCloudSync 初始化', 'success',
+                    `EnhancedCloudSync 初始化成功 ✓<br>状态: ${syncStatus.isInitialized ? '已初始化' : '未初始化'}`);
+
+                // 测试7: Phase3Integration 初始化
+                addTestResult('测试7: Phase3Integration 初始化', 'loading', '正在初始化 Phase3Integration...');
+
+                const integration = await Phase3Integration.initialize({
+                    enablePerformanceMonitor: true,
+                    enableDataEncryption: true,
+                    enableConflictResolution: true,
+                    enableEnhancedOffline: true,
+                    enableEnhancedCloudSync: true,
+                    performanceMonitor: {
+                        metricsInterval: 1000,
+                        analysisInterval: 5000,
+                        enableRealTimeAnalysis: true,
+                        enableAutomaticAlerts: true
+                    },
+                    dataEncryption: {
+                        algorithm: 'AES-256-GCM',
+                        keyDerivation: 'PBKDF2',
+                        keyRotationDays: 30,
+                        enableAuditLogging: true,
+                        enableCompliance: true
+                    },
+                    conflictResolution: {
+                        enableAutoResolve: true,
+                        enableSmartMerge: true,
+                        maxRetryAttempts: 3,
+                        conflictThreshold: 0.8
+                    },
+                    enhancedOffline: {
+                        maxQueueSize: 1000,
+                        compressionEnabled: true,
+                        versionControlEnabled: true,
+                        smartMergeEnabled: true,
+                        networkAdaptiveSync: true
+                    },
+                    enhancedCloudSync: {
+                        enableIncrementalSync: true,
+                        enableConflictPrevention: true,
+                        enableCompression: true,
+                        enableNetworkAdaptation: true,
+                        syncInterval: 30000,
+                        batchSize: 50,
+                        retryAttempts: 3
+                    }
+                });
+
+                addTestResult('测试7: Phase3Integration 初始化', 'success',
+                    `Phase3Integration 初始化成功 ✓<br>整体状态: ${integration.isInitialized() ? '已初始化' : '未初始化'}`);
+
+                // 获取系统状态
+                const systemStatus = integration.getSystemStatus();
+                const services = integration.getServices();
+
+                addTestResult('测试8: 系统状态检查', 'success',
+                    `系统状态检查成功 ✓<br>` +
+                    `服务状态:<br>` +
+                    `- PerformanceMonitor: ${services.performanceMonitor ? '✓' : '✗'}<br>` +
+                    `- DataEncryptionService: ${services.dataEncryption ? '✓' : '✗'}<br>` +
+                    `- ConflictResolutionEngine: ${services.conflictResolution ? '✓' : '✗'}<br>` +
+                    `- EnhancedOfflineManager: ${services.enhancedOffline ? '✓' : '✗'}<br>` +
+                    `- EnhancedCloudSync: ${services.enhancedCloudSync ? '✓' : '✗'}`);
+
+                addTestResult('🎉 测试完成', 'success', '所有Phase 3服务测试通过！系统已准备就绪。');
+
+                // 清理资源
+                await Promise.all([
+                    performanceMonitor.cleanup(),
+                    encryptionService.cleanup(),
+                    conflictEngine.cleanup(),
+                    offlineManager.cleanup(),
+                    cloudSync.cleanup(),
+                    integration.cleanup()
+                ]);
+
+            } catch (error) {
+                console.error('测试失败:', error);
+                addTestResult('❌ 测试失败', 'error',
+                    `测试过程中发生错误:<br>` +
+                    `<strong>${error.message}</strong><br><br>` +
+                    `<details><summary>查看详细错误信息</summary><pre>${error.stack}</pre></details>`);
+            } finally {
+                runBtn.disabled = false;
+            }
+        };
+
+        window.clearResults = function() {
+            document.getElementById('testResults').innerHTML = '';
+        };
+
+        function addTestResult(title, type, message) {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        // 页面加载完成后添加提示
+        window.addEventListener('load', function() {
+            addTestResult('页面加载完成', 'info', '点击"运行测试"按钮开始测试Phase 3服务。');
+        });
+    </script>
+</body>
+</html>

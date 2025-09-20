@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
 import { useCardAllCards } from '@/contexts/cardall-context'
+import { useStorageAdapter } from '@/hooks/use-cards-adapter'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -52,12 +53,19 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
     getAllTagNames 
   } = useCardAllTags()
 
-  const { 
-    filter, 
-    setFilter, 
-    viewSettings, 
-    setViewSettings 
+  const {
+    filter,
+    setFilter,
+    viewSettings,
+    setViewSettings
   } = useCardAllCards()
+
+  // Storage adapter for migration status
+  const {
+    isReady,
+    isUsingLocalStorage,
+    isUsingIndexedDB
+  } = useStorageAdapter()
 
   // 文件夹状态
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
@@ -102,7 +110,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
             )}
           </div>
         </div>
-        
+
         {folder.children && folder.children.length > 0 && (
           <div className="ml-2">
             {renderFolderTree(folder.children, level + 1)}
@@ -110,7 +118,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
         )}
       </div>
     ))
-  }, [collapsed, selectedFolderId, setSelectedFolderId])
+  }, [collapsed, selectedFolderId, setSelectedFolderId, isReady])
 
   // 优化的折叠文件夹渲染
   const renderCollapsedFolderTree = useCallback((folders: any[] = []) => {
@@ -137,7 +145,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
             )}
           </div>
         </div>
-        
+
         {folder.children && folder.children.length > 0 && (
           <div className="ml-4 border-l border-border pl-2">
             {renderCollapsedFolderTree(folder.children)}
@@ -145,7 +153,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
         )}
       </div>
     ))
-  }, [selectedFolderId, setSelectedFolderId])
+  }, [selectedFolderId, setSelectedFolderId, isReady])
 
   // 计算文件夹统计
   const folderStats = useMemo(() => {
@@ -252,6 +260,13 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
           <div className="text-sm text-muted-foreground">
             {folderStats.totalFolders} 文件夹
           </div>
+
+          {/* 存储模式指示器 */}
+          {isReady && (
+            <div className="text-xs text-muted-foreground">
+              {isUsingIndexedDB ? 'IndexedDB' : 'localStorage'}
+            </div>
+          )}
         </div>
 
         {/* 文件夹区域 */}

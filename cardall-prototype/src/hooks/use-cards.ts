@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
+import { DataConverterAdapter } from '@/services/data-converter-adapter'
 
-// Mock data for development
+// Mock data for development (only used when no data exists)
 const mockCards: Card[] = [
   {
     id: '1',
@@ -70,7 +71,8 @@ const mockCards: Card[] = [
 ]
 
 export function useCards() {
-  const [cards, setCards] = useState<Card[]>(mockCards)
+  const [cards, setCards] = useState<Card[]>([])
+  const [isInitialized, setIsInitialized] = useState(false)
   const [filter, setFilter] = useState<CardFilter>({
     searchTerm: '',
     tags: []
@@ -288,29 +290,44 @@ export function useCards() {
     )
   }, [cards])
 
+  // Load data from localStorage on mount
+  useEffect(() => {
+    if (isInitialized) return
+
+    try {
+      // 使用DataConverterAdapter加载和验证数据
+      const savedCards = DataConverterAdapter.loadFromLocalStorage()
+
+      if (savedCards.length > 0) {
+        setCards(savedCards)
+      } else {
+        // 只有当没有数据时才使用mock数据
+        setCards(mockCards)
+      }
+
+      setIsInitialized(true)
+    } catch (error) {
+      console.error('Failed to load cards from localStorage:', error)
+      // 加载失败时使用mock数据
+      setCards(mockCards)
+      setIsInitialized(true)
+    }
+  }, [isInitialized])
+
   // Auto-save to localStorage
   useEffect(() => {
+    if (!isInitialized) return
+
     const saveTimer = setTimeout(() => {
-      secureStorage.set('cards', cards, {
-        validate: true,
-        encrypt: true
-      })
+      try {
+        DataConverterAdapter.saveToLocalStorage(cards)
+      } catch (error) {
+        console.error('Failed to save cards to localStorage:', error)
+      }
     }, 1000)
 
     return () => clearTimeout(saveTimer)
-  }, [cards])
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const savedCards = secureStorage.get<Card[]>('cards', {
-      validate: true,
-      encrypt: true
-    })
-
-    if (savedCards) {
-      setCards(savedCards)
-    }
-  }, [])
+  }, [cards, isInitialized])
 
   return {
     cards: filteredCards(),
@@ -325,6 +342,7 @@ export function useCards() {
     getSelectedCards,
     getAllTags,
     updateTagsInAllCards,
-    getCardsWithTag
+    getCardsWithTag,
+    isInitialized
   }
 }

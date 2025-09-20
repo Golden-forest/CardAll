@@ -1,10 +1,10 @@
 import React, { createContext, useContext, ReactNode } from 'react'
-import { useCards } from '@/hooks/use-cards'
+import { useCardsAdapter } from '@/hooks/use-cards-adapter'
 import { useFolders } from '@/hooks/use-folders'
 import { useTags } from '@/hooks/use-tags'
 
 interface CardAllContextType {
-  cards: ReturnType<typeof useCards>
+  cards: ReturnType<typeof useCardsAdapter>
   folders: ReturnType<typeof useFolders>
   tags: ReturnType<typeof useTags>
 }
@@ -16,18 +16,20 @@ interface CardAllProviderProps {
 }
 
 export function CardAllProvider({ children }: CardAllProviderProps) {
-  const cards = useCards()
+  const cards = useCardsAdapter()
   const folders = useFolders()
   const tags = useTags()
 
-  // Sync tags with card data
+  // Sync tags with card data (only when ready and not migrating)
   React.useEffect(() => {
-    const allCardTags: string[] = []
-    cards.allCards.forEach(card => {
-      allCardTags.push(...card.frontContent.tags, ...card.backContent.tags)
-    })
-    tags.syncTagsWithCards(allCardTags)
-  }, [cards.allCards, tags.syncTagsWithCards])
+    if (cards.isReady && !cards.isMigrating) {
+      const allCardTags: string[] = []
+      cards.allCards.forEach(card => {
+        allCardTags.push(...card.frontContent.tags, ...card.backContent.tags)
+      })
+      tags.syncTagsWithCards(allCardTags)
+    }
+  }, [cards.allCards, cards.isReady, cards.isMigrating, tags.syncTagsWithCards])
 
   const value: CardAllContextType = {
     cards,

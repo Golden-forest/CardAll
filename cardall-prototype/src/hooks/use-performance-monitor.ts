@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react'
-import { performanceMonitor, type PerformanceMetrics, type UserExperienceMetrics } from '@/services/ui/performance-monitor'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { PerformanceMonitor, PerformanceMonitorConfig, PerformanceMetrics, PerformanceAlert, PerformanceReport } from '@/services/performance/performance-monitor'
+import { performanceMonitor, type PerformanceMetrics as UIPerformanceMetrics, type UserExperienceMetrics } from '@/services/ui/performance-monitor'
 
 interface UsePerformanceMonitorOptions {
   enableMetricsCollection?: boolean
@@ -19,6 +20,391 @@ interface PerformanceStats {
   successfulOperations: number
 }
 
+/**
+ * 高级性能监控配置接口
+ */
+interface AdvancedPerformanceHookConfig {
+  metricsInterval?: number
+  analysisInterval?: number
+  alertThresholds?: {
+    memory?: number
+    cpu?: number
+    networkLatency?: number
+    frameTime?: number
+    storageOperations?: number
+  }
+  enableRealTimeAnalysis?: boolean
+  enableAutomaticAlerts?: boolean
+}
+
+/**
+ * 性能趋势分析结果
+ */
+interface PerformanceTrend {
+  metricName: string
+  trend: 'improving' | 'stable' | 'degrading'
+  changeRate: number
+  confidence: number
+  predictedValue: number
+  timeFrame: number
+}
+
+/**
+ * 性能瓶颈分析结果
+ */
+interface BottleneckAnalysis {
+  severity: 'low' | 'medium' | 'high' | 'critical'
+  category: 'memory' | 'cpu' | 'network' | 'storage' | 'rendering'
+  description: string
+  impact: string
+  recommendations: string[]
+  estimatedImprovement: number
+  priority: number
+}
+
+/**
+ * 高级性能监控Hook
+ * 提供对高级性能监控功能的访问
+ */
+export function useAdvancedPerformanceMonitor(config: AdvancedPerformanceHookConfig = {}) {
+  const [monitor, setMonitor] = useState<PerformanceMonitor | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(false)
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null)
+  const [alerts, setAlerts] = useState<PerformanceAlert[]>([])
+  const [trends, setTrends] = useState<PerformanceTrend[]>([])
+  const [bottlenecks, setBottlenecks] = useState<BottleneckAnalysis[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+
+  const monitorRef = useRef<PerformanceMonitor | null>(null)
+  const metricsIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 创建监控配置
+  const createMonitorConfig = useCallback((): PerformanceMonitorConfig => {
+    return {
+      collectionInterval: config.metricsInterval || 5000,
+      analysisInterval: config.analysisInterval || 30000,
+      alertThresholds: config.alertThresholds || {
+        memory: 100 * 1024 * 1024, // 100MB
+        cpu: 80, // 80%
+        networkLatency: 1000, // 1s
+        frameTime: 16.67, // 60fps
+        storageOperations: 100 // 100 ops/sec
+      },
+      enableRealTimeAnalysis: config.enableRealTimeAnalysis || true,
+      enableAutomaticAlerts: config.enableAutomaticAlerts || true,
+      maxMetricsHistory: 1000,
+      enableDetailedProfiling: true,
+      enableNetworkMonitoring: true,
+      enableMemoryTracking: true,
+      enableCPUMonitoring: true
+    }
+  }, [config])
+
+  // 初始化监控器
+  useEffect(() => {
+    if (isInitializing || monitorRef.current) {
+      return
+    }
+
+    const initializeMonitor = async () => {
+      setIsInitializing(true)
+      setError(null)
+
+      try {
+        const performanceMonitor = new PerformanceMonitor(createMonitorConfig())
+        await performanceMonitor.initialize()
+
+        monitorRef.current = performanceMonitor
+        setMonitor(performanceMonitor)
+        setIsInitialized(true)
+
+        // 获取初始指标
+        const initialMetrics = performanceMonitor.getCurrentMetrics()
+        setMetrics(initialMetrics)
+
+        // 设置指标更新间隔
+        if (config.metricsInterval !== 0) {
+          metricsIntervalRef.current = setInterval(async () => {
+            try {
+              const currentMetrics = performanceMonitor.getCurrentMetrics()
+              setMetrics(currentMetrics)
+            } catch (err) {
+              console.error('获取性能指标失败:', err)
+            }
+          }, config.metricsInterval || 5000)
+        }
+
+        // 设置分析间隔
+        if (config.enableRealTimeAnalysis && config.analysisInterval !== 0) {
+          analysisIntervalRef.current = setInterval(async () => {
+            await runAnalysis()
+          }, config.analysisInterval || 30000)
+        }
+
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '初始化失败'
+        setError(errorMessage)
+        console.error('PerformanceMonitor 初始化失败:', err)
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+
+    initializeMonitor()
+
+    return () => {
+      // 清理
+      if (metricsIntervalRef.current) {
+        clearInterval(metricsIntervalRef.current)
+      }
+      if (analysisIntervalRef.current) {
+        clearInterval(analysisIntervalRef.current)
+      }
+      if (monitorRef.current) {
+        monitorRef.current.destroy().catch(err => {
+          console.error('PerformanceMonitor 销毁失败:', err)
+        })
+      }
+    }
+  }, [createMonitorConfig, config.metricsInterval, config.analysisInterval, config.enableRealTimeAnalysis])
+
+  // 运行性能分析
+  const runAnalysis = useCallback(async () => {
+    if (!monitor || isAnalyzing) {
+      return
+    }
+
+    setIsAnalyzing(true)
+
+    try {
+      // 分析性能趋势
+      const trendAnalysis = await monitor.analyzePerformanceTrends()
+      const formattedTrends: PerformanceTrend[] = trendAnalysis.map(trend => ({
+        metricName: trend.metricName,
+        trend: trend.trend,
+        changeRate: trend.changeRate,
+        confidence: trend.confidence,
+        predictedValue: trend.predictedValue,
+        timeFrame: trend.timeFrame
+      }))
+      setTrends(formattedTrends)
+
+      // 分析瓶颈
+      const bottleneckAnalysis = await monitor.analyzeBottlenecks()
+      const formattedBottlenecks: BottleneckAnalysis[] = bottleneckAnalysis.map(bottleneck => ({
+        severity: bottleneck.severity,
+        category: bottleneck.category,
+        description: bottleneck.description,
+        impact: bottleneck.impact,
+        recommendations: bottleneck.recommendations,
+        estimatedImprovement: bottleneck.estimatedImprovement,
+        priority: bottleneck.priority
+      }))
+      setBottlenecks(formattedBottlenecks)
+
+      // 获取最新告警
+      const currentAlerts = monitor.getAlerts()
+      setAlerts(currentAlerts)
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '分析失败'
+      setError(errorMessage)
+      console.error('性能分析失败:', err)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [monitor, isAnalyzing])
+
+  // 手动触发分析
+  const triggerAnalysis = useCallback(async () => {
+    await runAnalysis()
+  }, [runAnalysis])
+
+  // 生成性能报告
+  const generateReport = useCallback(async (timeRange?: { start: Date; end: Date }) => {
+    if (!monitor) {
+      throw new Error('PerformanceMonitor 未初始化')
+    }
+
+    try {
+      const report = await monitor.generatePerformanceReport(timeRange)
+      return report
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '生成报告失败'
+      setError(errorMessage)
+      throw err
+    }
+  }, [monitor])
+
+  // 获取性能摘要
+  const getPerformanceSummary = useCallback(() => {
+    if (!metrics) {
+      return null
+    }
+
+    return {
+      overallHealth: calculateOverallHealth(),
+      criticalIssues: alerts.filter(alert => alert.severity === 'critical').length,
+      warningIssues: alerts.filter(alert => alert.severity === 'warning').length,
+      bottlenecksCount: bottlenecks.filter(b => b.severity === 'critical' || b.severity === 'high').length,
+      lastUpdated: new Date()
+    }
+  }, [metrics, alerts, bottlenecks])
+
+  // 计算整体健康度
+  const calculateOverallHealth = useCallback((): 'excellent' | 'good' | 'fair' | 'poor' => {
+    if (!metrics) {
+      return 'poor'
+    }
+
+    const criticalAlerts = alerts.filter(alert => alert.severity === 'critical').length
+    const highBottlenecks = bottlenecks.filter(b => b.severity === 'critical' || b.severity === 'high').length
+
+    if (criticalAlerts > 0 || highBottlenecks > 0) {
+      return 'poor'
+    } else if (alerts.length > 2 || bottlenecks.length > 1) {
+      return 'fair'
+    } else if (alerts.length > 0 || bottlenecks.length > 0) {
+      return 'good'
+    } else {
+      return 'excellent'
+    }
+  }, [metrics, alerts, bottlenecks])
+
+  // 优化性能
+  const optimizePerformance = useCallback(async () => {
+    if (!monitor) {
+      throw new Error('PerformanceMonitor 未初始化')
+    }
+
+    try {
+      const optimizations = await monitor.optimizePerformance()
+
+      // 刷新指标和分析结果
+      const currentMetrics = monitor.getCurrentMetrics()
+      setMetrics(currentMetrics)
+
+      await runAnalysis()
+
+      return optimizations
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '优化失败'
+      setError(errorMessage)
+      throw err
+    }
+  }, [monitor, runAnalysis])
+
+  // 清除告警
+  const clearAlerts = useCallback(async (alertIds?: string[]) => {
+    if (!monitor) {
+      return
+    }
+
+    try {
+      await monitor.clearAlerts(alertIds)
+      const currentAlerts = monitor.getAlerts()
+      setAlerts(currentAlerts)
+    } catch (err) {
+      console.error('清除告警失败:', err)
+    }
+  }, [monitor])
+
+  // 获取性能建议
+  const getRecommendations = useCallback(() => {
+    const recommendations: string[] = []
+
+    // 从瓶颈分析中提取建议
+    bottlenecks.forEach(bottleneck => {
+      recommendations.push(...bottleneck.recommendations)
+    })
+
+    // 从趋势分析中提取建议
+    trends.forEach(trend => {
+      if (trend.trend === 'degrading') {
+        recommendations.push(`检测到 ${trend.metricName} 性能下降，建议检查相关组件`)
+      }
+    })
+
+    // 从告警中提取建议
+    alerts.forEach(alert => {
+      if (alert.recommendation) {
+        recommendations.push(alert.recommendation)
+      }
+    })
+
+    // 去重
+    return [...new Set(recommendations)]
+  }, [bottlenecks, trends, alerts])
+
+  // 导出性能数据
+  const exportPerformanceData = useCallback(async (format: 'json' | 'csv' = 'json') => {
+    if (!monitor) {
+      throw new Error('PerformanceMonitor 未初始化')
+    }
+
+    try {
+      const data = await monitor.exportMetrics(format)
+      return data
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '导出失败'
+      setError(errorMessage)
+      throw err
+    }
+  }, [monitor])
+
+  // 刷新数据
+  const refreshData = useCallback(async () => {
+    if (!monitor) {
+      return
+    }
+
+    try {
+      const currentMetrics = monitor.getCurrentMetrics()
+      setMetrics(currentMetrics)
+
+      const currentAlerts = monitor.getAlerts()
+      setAlerts(currentAlerts)
+
+      await runAnalysis()
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '刷新失败'
+      setError(errorMessage)
+    }
+  }, [monitor, runAnalysis])
+
+  // 清除错误
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
+  return {
+    monitor,
+    isInitialized,
+    isInitializing,
+    metrics,
+    alerts,
+    trends,
+    bottlenecks,
+    error,
+    isAnalyzing,
+    triggerAnalysis,
+    generateReport,
+    getPerformanceSummary,
+    optimizePerformance,
+    clearAlerts,
+    getRecommendations,
+    exportPerformanceData,
+    refreshData,
+    clearError
+  }
+}
+
+/**
+ * UI性能监控Hook（原有功能）
+ */
 export function usePerformanceMonitor(options: UsePerformanceMonitorOptions = {}) {
   const {
     enableMetricsCollection = true,

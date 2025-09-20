@@ -1,0 +1,12 @@
+{
+  "id": "approval_1758368897893_vbz56u5ed",
+  "title": "IndexedDB迁移需求文档 - 已基于代码分析更新",
+  "filePath": ".spec-workflow/specs/indexeddb-migration/requirements.md",
+  "type": "document",
+  "status": "approved",
+  "createdAt": "2025-09-20T11:48:17.893Z",
+  "category": "spec",
+  "categoryName": "indexeddb-migration",
+  "response": "Approved",
+  "respondedAt": "2025-09-20T13:32:52.132Z"
+}
