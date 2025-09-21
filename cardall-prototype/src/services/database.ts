@@ -141,38 +141,51 @@ class CardAllUnifiedDatabase extends Dexie {
   sessions!: Table<UserSession>
 
   constructor() {
-    super('CardAllUnifiedDatabase')
-    
-    // 版本 3: 完整的统一数据库架构
-    this.version(3).stores({
-      // 核心实体表 - 优化的索引设计
-      cards: '++id, userId, folderId, createdAt, updatedAt, syncVersion, pendingSync, [userId+folderId], searchVector',
-      folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth',
-      tags: '++id, userId, name, createdAt, syncVersion, pendingSync, [userId+name]',
-      images: '++id, cardId, userId, createdAt, updatedAt, syncVersion, pendingSync, storageMode, [cardId+userId]',
-      
-      // 同步和设置表
-      syncQueue: '++id, type, entity, entityId, userId, timestamp, retryCount, priority, [userId+priority]',
-      settings: '++id, key, updatedAt, scope, [key+scope]',
-      sessions: '++id, userId, deviceId, lastActivity, isActive, [userId+deviceId]'
-    })
+    console.log('创建CardAllUnifiedDatabase实例...')
+    try {
+      super('CardAllUnifiedDB_v3')
 
-    // 数据库升级逻辑 - 支持从旧版本迁移
-    this.upgradeDatabase()
+      // 版本 3: 完整的统一数据库架构
+      console.log('设置数据库版本3...')
+      this.version(3).stores({
+        // 核心实体表 - 优化的索引设计
+        cards: '++id, userId, folderId, createdAt, updatedAt, syncVersion, pendingSync, [userId+folderId], searchVector',
+        folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth',
+        tags: '++id, userId, name, createdAt, syncVersion, pendingSync, [userId+name]',
+        images: '++id, cardId, userId, createdAt, updatedAt, syncVersion, pendingSync, storageMode, [cardId+userId]',
+
+        // 同步和设置表
+        syncQueue: '++id, type, entity, entityId, userId, timestamp, retryCount, priority, status, [userId+priority]',
+        settings: '++id, key, updatedAt, scope, [key+scope]',
+        sessions: '++id, userId, deviceId, lastActivity, isActive, [userId+deviceId]'
+      })
+
+      console.log('数据库版本设置完成')
+      // 重新启用升级逻辑，确保数据库结构完整
+      this.upgradeDatabase()
+      console.log('CardAllUnifiedDatabase实例创建完成')
+    } catch (error) {
+      console.error('数据库构造函数出错:', error)
+      throw error
+    }
   }
 
   private async upgradeDatabase(): Promise<void> {
+    console.log('开始数据库升级逻辑...')
     // 版本 1 -> 2: 添加用户支持
     this.version(2).upgrade(async (tx) => {
       console.log('Upgrading to version 2: Adding user support...')
-      
+
       // 检查是否需要从旧数据库迁移
+      console.log('检查旧数据库...')
       const oldDb = new CardAllDatabase_v1()
       try {
+        console.log('尝试打开旧数据库...')
         await oldDb.open()
         console.log('Found old database, migrating data...')
-        
+
         // 迁移卡片
+        console.log('迁移卡片数据...')
         const oldCards = await oldDb.cards.toArray()
         const newCards = oldCards.map(card => ({
           ...card,
@@ -180,8 +193,9 @@ class CardAllUnifiedDatabase extends Dexie {
           updatedAt: new Date()
         }))
         await this.cards.bulkAdd(newCards)
-        
+
         // 迁移文件夹
+        console.log('迁移文件夹数据...')
         const oldFolders = await oldDb.folders.toArray()
         const newFolders = oldFolders.map(folder => ({
           ...folder,
@@ -189,8 +203,9 @@ class CardAllUnifiedDatabase extends Dexie {
           updatedAt: new Date()
         }))
         await this.folders.bulkAdd(newFolders)
-        
+
         // 迁移标签
+        console.log('迁移标签数据...')
         const oldTags = await oldDb.tags.toArray()
         const newTags = oldTags.map(tag => ({
           ...tag,
@@ -198,7 +213,7 @@ class CardAllUnifiedDatabase extends Dexie {
           updatedAt: new Date()
         }))
         await this.tags.bulkAdd(newTags)
-        
+
         console.log('Migration completed successfully')
       } catch (error) {
         console.log('No old database found or migration failed:', error)
@@ -208,16 +223,22 @@ class CardAllUnifiedDatabase extends Dexie {
     // 版本 2 -> 3: 优化索引和添加新功能
     this.version(3).upgrade(async (tx) => {
       console.log('Upgrading to version 3: Optimizing indexes and adding new features...')
-      
+
+      console.log('初始化默认设置...')
       // 添加默认设置
       await this.initializeDefaultSettings()
-      
+
+      console.log('重建搜索索引...')
       // 重建搜索索引
       await this.rebuildSearchIndexes()
+
+      console.log('版本3升级完成')
     })
+    console.log('数据库升级逻辑设置完成')
   }
 
   private async initializeDefaultSettings(): Promise<void> {
+    console.log('初始化默认设置...')
     const defaultSettings = [
       {
         key: 'storageMode',
@@ -251,12 +272,18 @@ class CardAllUnifiedDatabase extends Dexie {
       }
     ]
 
+    console.log('添加', defaultSettings.length, '个默认设置...')
     for (const setting of defaultSettings) {
+      console.log('检查设置:', setting.key)
       const exists = await this.settings.where('key').equals(setting.key).first()
       if (!exists) {
+        console.log('添加新设置:', setting.key)
         await this.settings.add(setting)
+      } else {
+        console.log('设置已存在:', setting.key)
       }
     }
+    console.log('默认设置初始化完成')
   }
 
   private async rebuildSearchIndexes(): Promise<void> {
@@ -299,32 +326,52 @@ class CardAllUnifiedDatabase extends Dexie {
 
   // 获取数据库统计信息
   async getStats(): Promise<DatabaseStats> {
-    const [cards, folders, tags, images, pendingSync] = await Promise.all([
-      this.cards.count(),
-      this.folders.count(),
-      this.tags.count(),
-      this.images.count(),
-      this.syncQueue.count()
-    ])
+    console.log('开始获取数据库统计信息...')
+    try {
+      const [cards, folders, tags, images, pendingSync] = await Promise.all([
+        this.cards.count(),
+        this.folders.count(),
+        this.tags.count(),
+        this.images.count(),
+        this.syncQueue.count()
+      ])
 
-    // 计算总大小（简化版本）
-    const totalSize = await this.calculateTotalSize()
+      console.log('基本统计:', { cards, folders, tags, images, pendingSync })
 
-    return {
-      cards,
-      folders,
-      tags,
-      images,
-      pendingSync,
-      totalSize,
-      version: '3.0.0'
+      // 计算总大小（简化版本）
+      const totalSize = await this.calculateTotalSize()
+      console.log('总大小:', totalSize)
+
+      const stats = {
+        cards,
+        folders,
+        tags,
+        images,
+        pendingSync,
+        totalSize,
+        version: '3.0.0'
+      }
+      console.log('数据库统计信息:', stats)
+      return stats
+    } catch (error) {
+      console.error('获取数据库统计信息失败:', error)
+      throw error
     }
   }
 
   private async calculateTotalSize(): Promise<number> {
-    // 计算所有图片的总大小
-    const images = await this.images.toArray()
-    return images.reduce((total, image) => total + image.metadata.size, 0)
+    console.log('开始计算总大小...')
+    try {
+      // 计算所有图片的总大小
+      const images = await this.images.toArray()
+      console.log('找到', images.length, '张图片')
+      const totalSize = images.reduce((total, image) => total + image.metadata.size, 0)
+      console.log('计算的总大小:', totalSize)
+      return totalSize
+    } catch (error) {
+      console.error('计算总大小失败:', error)
+      return 0
+    }
   }
 
   // 统一的卡片操作
@@ -422,31 +469,38 @@ class CardAllUnifiedDatabase extends Dexie {
     issues: string[]
     stats: DatabaseStats
   }> {
+    console.log('开始数据库健康检查...')
     const issues: string[] = []
-    
+
     try {
+      console.log('检查数据库连接...')
       // 检查数据库连接
       await this.tables.toArray()
-      
+      console.log('数据库连接正常')
+
+      console.log('检查数据一致性...')
       // 检查数据一致性
       const stats = await this.getStats()
-      
+      console.log('数据统计:', stats)
+
       // 检查是否有大量待同步项目
       if (stats.pendingSync > 1000) {
         issues.push(`High number of pending sync operations: ${stats.pendingSync}`)
       }
-      
+
       // 检查数据库大小
       if (stats.totalSize > 500 * 1024 * 1024) { // 500MB
         issues.push(`Database size is large: ${(stats.totalSize / 1024 / 1024).toFixed(2)} MB`)
       }
-      
+
+      console.log('数据库健康检查完成')
       return {
         isHealthy: issues.length === 0,
         issues,
         stats
       }
     } catch (error) {
+      console.error('数据库健康检查失败:', error)
       return {
         isHealthy: false,
         issues: [`Database connection failed: ${error}`],
@@ -538,45 +592,82 @@ class CardAllDatabase_v1 extends Dexie {
   }
 }
 
-// 创建数据库实例
-export const db = new CardAllUnifiedDatabase()
+// 延迟创建数据库实例，避免过早初始化
+let dbInstance: CardAllUnifiedDatabase | null = null
+
+export const getDatabase = (): CardAllUnifiedDatabase => {
+  if (!dbInstance) {
+    console.log('创建数据库实例...')
+    dbInstance = new CardAllUnifiedDatabase()
+    console.log('数据库实例创建完成')
+  }
+  return dbInstance
+}
+
+export const db = getDatabase()
 
 // 数据库初始化
 export const initializeDatabase = async (): Promise<void> => {
+  console.log('开始数据库初始化...')
+  console.log('时间戳:', new Date().toISOString())
+
   try {
-    // 添加事件监听器
-    db.on('error', (error) => {
-      console.error('Database error:', error)
-    })
+    console.log('创建新的数据库实例...')
+    // 直接创建数据库实例，避免使用全局实例
+    const dbInstance = new CardAllUnifiedDatabase()
+    console.log('数据库实例创建完成')
 
-    db.on('blocked', () => {
-      console.warn('Database operation blocked')
-    })
+    console.log('开始打开数据库连接...')
+    console.log('数据库名称:', 'CardAllUnifiedDB_v3')
 
-    db.on('versionchange', () => {
-      console.warn('Database version changed, reloading page...')
-      window.location.reload()
-    })
-
-    db.on('ready', () => {
-      console.log('Database is ready')
-    })
-    
     // 打开数据库连接
-    await db.open()
+    await dbInstance.open()
+    console.log('数据库连接打开成功')
+    console.log('数据库版本:', dbInstance.verno)
     console.log('CardAll unified database initialized successfully')
-    
-    // 执行健康检查
-    const health = await db.healthCheck()
-    if (!health.isHealthy) {
-      console.warn('Database health issues detected:', health.issues)
+
+    console.log('设置数据库事件监听器...')
+    // 添加事件监听器 - 在数据库打开后设置
+    try {
+      dbInstance.on('error', (error) => {
+        console.error('Database error:', error)
+      })
+
+      dbInstance.on('blocked', () => {
+        console.warn('Database operation blocked')
+      })
+
+      dbInstance.on('versionchange', () => {
+        console.warn('Database version changed, reloading page...')
+        window.location.reload()
+      })
+
+      dbInstance.on('ready', () => {
+        console.log('Database is ready')
+      })
+      console.log('数据库事件监听器设置完成')
+    } catch (eventError) {
+      console.warn('设置事件监听器失败，但不影响初始化:', eventError)
     }
-    
-    // 定期清理
-    setInterval(() => {
-      db.cleanup().catch(console.error)
-    }, 24 * 60 * 60 * 1000) // 每天清理一次
-    
+
+    console.log('执行简化的数据库健康检查...')
+    // 执行简化的健康检查
+    try {
+      console.log('调用 dbInstance.healthCheck()...')
+      const health = await dbInstance.healthCheck()
+      console.log('健康检查结果:', health)
+      if (health.isHealthy) {
+        console.log('数据库健康检查通过')
+      } else {
+        console.warn('数据库健康检查发现问题:', health.issues)
+      }
+    } catch (healthError) {
+      console.warn('数据库健康检查失败，但不影响初始化:', healthError)
+    }
+
+    console.log('数据库初始化完成')
+    console.log('结束时间戳:', new Date().toISOString())
+
   } catch (error) {
     console.error('Failed to initialize database:', error)
     throw error

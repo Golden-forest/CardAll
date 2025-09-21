@@ -216,29 +216,61 @@ export class CardAllProviderAdapter {
    */
   private async determineStorageMode(): Promise<'localStorage' | 'indexeddb' | 'hybrid'> {
     try {
-      // 检查IndexedDB是否可用
-      const indexedDBAvailable = await this.isIndexedDBAvailable()
+      console.log('Determining optimal storage mode...')
+
+      // 使用 UniversalStorageAdapter 的统一方法进行检查
+      const indexedDBAvailable = await this.storageAdapter.isIndexedDBAvailable()
+      console.log(`IndexedDB available: ${indexedDBAvailable}`)
 
       if (!indexedDBAvailable) {
+        console.log('IndexedDB not available, using localStorage')
         return 'localStorage'
       }
 
-      // 检查是否有数据在IndexedDB中
-      const hasIndexedDBData = await this.hasIndexedDBData()
+      // 检查IndexedDB数据存在性
+      const hasIndexedDBData = await this.storageAdapter.hasIndexedDBData()
+      console.log(`IndexedDB has data: ${hasIndexedDBData}`)
 
-      if (hasIndexedDBData) {
+      // 检查localStorage数据存在性
+      const hasLocalStorageData = await this.hasLocalStorageData()
+      console.log(`localStorage has data: ${hasLocalStorageData}`)
+
+      // 执行数据完整性验证
+      const indexedDBIntegrity = hasIndexedDBData ? await this.validateDataIntegrity('indexeddb') : true
+      const localStorageIntegrity = hasLocalStorageData ? await this.validateDataIntegrity('localStorage') : true
+      console.log(`Data integrity - IndexedDB: ${indexedDBIntegrity}, localStorage: ${localStorageIntegrity}`)
+
+      // 决策逻辑
+      if (hasIndexedDBData && indexedDBIntegrity) {
+        console.log('Using IndexedDB: has valid data')
         return 'indexeddb'
       }
 
-      // 检查是否有数据在localStorage中
-      const hasLocalStorageData = await this.hasLocalStorageData()
-
-      if (hasLocalStorageData) {
+      if (hasLocalStorageData && localStorageIntegrity) {
+        console.log('Using localStorage: has valid data')
         return 'localStorage'
       }
 
-      // 默认使用localStorage
+      if (hasIndexedDBData && !indexedDBIntegrity) {
+        console.warn('IndexedDB data corrupted, falling back to localStorage')
+        return 'localStorage'
+      }
+
+      if (hasLocalStorageData && !localStorageIntegrity) {
+        console.warn('localStorage data corrupted, attempting IndexedDB')
+        return 'indexeddb'
+      }
+
+      // 两种存储都有数据且都完整，根据性能选择
+      if (hasIndexedDBData && hasLocalStorageData && indexedDBIntegrity && localStorageIntegrity) {
+        console.log('Both storages have valid data, choosing IndexedDB for better performance')
+        return 'indexeddb'
+      }
+
+      // 没有数据，默认使用localStorage保持兼容性
+      console.log('No data found, using localStorage for compatibility')
       return 'localStorage'
+
     } catch (error) {
       console.warn('Failed to determine storage mode, defaulting to localStorage:', error)
       return 'localStorage'
@@ -246,35 +278,38 @@ export class CardAllProviderAdapter {
   }
 
   /**
-   * 检查IndexedDB是否可用
+   * 验证数据完整性
    */
-  private async isIndexedDBAvailable(): Promise<boolean> {
+  private async validateDataIntegrity(storageMode: 'localStorage' | 'indexeddb'): Promise<boolean> {
     try {
-      return 'indexedDB' in window
-    } catch {
+      if (storageMode === 'indexeddb') {
+        // 验证IndexedDB数据完整性
+        const healthCheck = await this.storageAdapter.healthCheck()
+        return healthCheck.healthy && healthCheck.score >= 70
+      } else {
+        // 验证localStorage数据完整性
+        const cards = await this.storageAdapter.getCards()
+        return Array.isArray(cards) && cards.every(card =>
+          card.id &&
+          card.frontContent &&
+          card.backContent &&
+          card.createdAt &&
+          card.updatedAt
+        )
+      }
+    } catch (error) {
+      console.warn(`Data integrity check failed for ${storageMode}:`, error)
       return false
     }
   }
 
   /**
-   * 检查IndexedDB中是否有数据
-   */
-  private async hasIndexedDBData(): Promise<boolean> {
-    try {
-      // 这里可以添加检查IndexedDB数据的逻辑
-      return false
-    } catch {
-      return false
-    }
-  }
-
-  /**
-   * 检查localStorage中是否有数据
+   * 检查localStorage中是否有数据（保持向后兼容）
    */
   private async hasLocalStorageData(): Promise<boolean> {
     try {
-      const data = localStorage.getItem('cards')
-      return data !== null && data.length > 0
+      const cards = await this.storageAdapter.getCards()
+      return cards.length > 0
     } catch {
       return false
     }

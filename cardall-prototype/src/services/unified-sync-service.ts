@@ -11,7 +11,8 @@ import { dataConverter } from './data-converter'
 import { queryOptimizer } from './query-optimizer'
 import { localOperationService, type LocalSyncOperation } from './local-operation'
 import { offlineManager, type OfflineOperation, type NetworkInfo } from './offline-manager'
-import { dataSyncService, type SyncSession, type SyncDirection, type SyncMetrics as DataSyncMetrics, type ConsistencyLevel } from './data-sync-service'
+import { dataSyncService, type SyncSession, type SyncDirection, type SyncMetrics as DataSyncMetrics } from './data-sync-service'
+import { dataConsistencyValidator, type ConsistencyLevel } from './data-consistency-validator'
 import type { DbCard, DbFolder, DbTag } from './database'
 
 // ============================================================================
@@ -154,7 +155,7 @@ export class UnifiedSyncService {
   private initializeDataSyncIntegration(): void {
     // 配置数据验证参数
     dataSyncService.configureValidation({
-      level: ConsistencyLevel.RELAXED,
+      level: 'relaxed' as const,
       autoRepair: true,
       scheduledValidation: true
     })

@@ -16,29 +16,14 @@ class AuthService {
     loading: true,
     error: null
   }
+  private authSubscription: any = null
 
   constructor() {
     this.initialize()
-    // 延迟设置认证服务到同步服务，避免循环依赖
-    setTimeout(() => {
-      this.setupSyncService()
-    }, 0)
+    // 移除循环依赖的设置，让外部调用者设置sync service
   }
 
-  // 设置统一同步服务（解决循环依赖）
-  private setupSyncService() {
-    try {
-      // 动态导入避免循环依赖
-      import('./unified-sync-service').then(({ unifiedSyncService }) => {
-        unifiedSyncService.setAuthService(this)
-      }).catch(error => {
-        console.warn('Failed to setup unified sync service:', error)
-      })
-    } catch (error) {
-      console.warn('Failed to setup unified sync service:', error)
-    }
-  }
-
+  
   // 初始化认证服务
   private async initialize() {
     try {
@@ -63,52 +48,63 @@ class AuthService {
       }
 
       // 监听认证状态变化
-      supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-        console.log('Auth state changed:', event, session?.user?.id)
-        
-        if (event === 'SIGNED_OUT') {
-          // 用户登出，清理同步状态但保留本地数据
-          try {
-            // 动态获取同步服务
-            const { unifiedSyncService } = await import('./unified-sync-service')
-            await unifiedSyncService.clearHistory()
-          } catch (error) {
-            console.warn('Failed to clear sync history on signout:', error)
-          }
-          
-          this.updateState({ 
-            user: null, 
-            session: null, 
-            loading: false, 
-            error: null 
-          })
-        } else if (session?.user) {
-          const user = await this.fetchUserProfile(session.user.id)
-          this.updateState({ 
-            user, 
-            session, 
-            loading: false, 
-            error: null 
-          })
-          
-          // 触发完整同步
-          if (event === 'SIGNED_IN') {
-            try {
-              const { unifiedSyncService } = await import('./unified-sync-service')
-              await unifiedSyncService.performFullSync()
-            } catch (error) {
-              console.warn('Failed to perform full sync after signin:', error)
+      if (supabase && supabase.auth) {
+        try {
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+            console.log('Auth state changed:', event, session?.user?.id)
+
+            if (event === 'SIGNED_OUT') {
+              // 用户登出，清理同步状态但保留本地数据
+              try {
+                // 动态获取同步服务
+                const { unifiedSyncService } = await import('./unified-sync-service')
+                await unifiedSyncService.clearHistory()
+              } catch (error) {
+                console.warn('Failed to clear sync history on signout:', error)
+              }
+
+              this.updateState({
+                user: null,
+                session: null,
+                loading: false,
+                error: null
+              })
+            } else if (session?.user) {
+              const user = await this.fetchUserProfile(session.user.id)
+              this.updateState({
+                user,
+                session,
+                loading: false,
+                error: null
+              })
+
+              // 触发完整同步
+              if (event === 'SIGNED_IN') {
+                try {
+                  const { unifiedSyncService } = await import('./unified-sync-service')
+                  await unifiedSyncService.performFullSync()
+                } catch (error) {
+                  console.warn('Failed to perform full sync after signin:', error)
+                }
+              }
+            } else {
+              this.updateState({
+                user: null,
+                session: null,
+                loading: false,
+                error: null
+              })
             }
-          }
-        } else {
-          this.updateState({ 
-            user: null, 
-            session: null, 
-            loading: false, 
-            error: null 
           })
+
+          // 存储订阅以便清理
+          this.authSubscription = subscription
+        } catch (error) {
+          console.warn('Failed to setup auth state change listener:', error)
         }
-      })
+      } else {
+        console.warn('Supabase auth not available, skipping auth state change listener')
+      }
     } catch (error) {
       console.error('Auth initialization failed:', error)
       this.updateState({ 
@@ -346,6 +342,15 @@ class AuthService {
   // 获取当前会话
   getCurrentSession(): Session | null {
     return this.currentState.session
+  }
+
+  // 清理资源
+  cleanup(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe()
+      this.authSubscription = null
+    }
+    this.listeners = []
   }
 }
 

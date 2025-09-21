@@ -41,6 +41,7 @@ class AppInitializationService {
 
   // 初始化应用
   async initialize(): Promise<InitializationResult> {
+    console.log('开始应用初始化...')
     const result: InitializationResult = {
       success: false,
       fileSystemAccess: false
@@ -48,6 +49,7 @@ class AppInitializationService {
 
     try {
       // 步骤1: 初始化数据库
+      console.log('步骤1: 开始初始化数据库...')
       this.updateStatus({
         step: 'database',
         progress: 10,
@@ -56,7 +58,21 @@ class AppInitializationService {
         hasError: false
       })
 
-      await initializeDatabase()
+      console.log('调用 initializeDatabase()...')
+      try {
+        await initializeDatabase()
+        console.log('数据库初始化完成')
+        this.updateStatus({
+          step: 'database',
+          progress: 20,
+          message: '数据库初始化完成',
+          isComplete: true,
+          hasError: false
+        })
+      } catch (dbError) {
+        console.error('数据库初始化失败:', dbError)
+        throw new Error(`数据库初始化失败: ${dbError instanceof Error ? dbError.message : '未知错误'}`)
+      }
 
       // 步骤2: 检查迁移需求
       this.updateStatus({
@@ -67,22 +83,33 @@ class AppInitializationService {
         hasError: false
       })
 
-      const migrationStatus = await migrationService.getMigrationStatus()
-      
-      if (migrationStatus.migrationNeeded) {
+      try {
+        const migrationStatus = await migrationService.getMigrationStatus()
+
+        if (migrationStatus.migrationNeeded) {
+          this.updateStatus({
+            step: 'migration',
+            progress: 40,
+            message: '正在迁移现有数据...',
+            isComplete: false,
+            hasError: false
+          })
+
+          result.migrationResult = await migrationService.migrateFromLocalStorage()
+
+          if (!result.migrationResult.success) {
+            throw new Error(`数据迁移失败: ${result.migrationResult.errors.join(', ')}`)
+          }
+        }
+      } catch (migrationError) {
+        console.error('数据迁移检查失败:', migrationError)
         this.updateStatus({
-          step: 'migration',
-          progress: 40,
-          message: '正在迁移现有数据...',
-          isComplete: false,
+          step: 'migration-check',
+          progress: 30,
+          message: '数据迁移检查失败，跳过迁移',
+          isComplete: true,
           hasError: false
         })
-
-        result.migrationResult = await migrationService.migrateFromLocalStorage()
-        
-        if (!result.migrationResult.success) {
-          throw new Error(`数据迁移失败: ${  result.migrationResult.errors.join(', ')}`)
-        }
       }
 
       // 步骤3: 请求文件系统访问权限
@@ -118,12 +145,23 @@ class AppInitializationService {
         hasError: false
       })
 
-      // 设置认证服务到同步服务
-      unifiedSyncService.setAuthService(authService)
-      
-      // 如果用户已登录，执行完整同步
-      if (authService.isAuthenticated()) {
-        await unifiedSyncService.performFullSync()
+      try {
+        // 设置认证服务到同步服务
+        unifiedSyncService.setAuthService(authService)
+
+        // 如果用户已登录，执行完整同步
+        if (authService.isAuthenticated()) {
+          await unifiedSyncService.performFullSync()
+        }
+      } catch (syncError) {
+        console.error('同步服务初始化失败:', syncError)
+        this.updateStatus({
+          step: 'sync',
+          progress: 85,
+          message: '同步服务初始化失败，使用离线模式',
+          isComplete: true,
+          hasError: false
+        })
       }
 
       // 步骤5: 完成初始化
@@ -144,7 +182,7 @@ class AppInitializationService {
       this.updateStatus({
         step: 'error',
         progress: 0,
-        message: `初始化失败: ${  error instanceof Error ? error.message : '未知错误'}`,
+        message: `初始化失败: ${error instanceof Error ? error.message : '未知错误'}`,
         isComplete: false,
         hasError: true,
         error: error instanceof Error ? error.message : '未知错误'

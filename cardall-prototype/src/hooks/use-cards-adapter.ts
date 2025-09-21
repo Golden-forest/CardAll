@@ -19,6 +19,146 @@ interface AdapterState {
 }
 
 /**
+ * 智能确定存储模式
+ *
+ * 根据数据可用性和完整性智能选择最佳的存储模式
+ * 优先选择有数据的存储位置，确保数据不丢失
+ */
+async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
+  const storageAdapter = new UniversalStorageAdapter()
+
+  try {
+    // 1. 检查IndexedDB可用性和数据
+    const indexedDbAvailable = await storageAdapter.isIndexedDBAvailable()
+    let hasIndexedDbData = false
+    let indexedDbDataCount = 0
+
+    if (indexedDbAvailable) {
+      hasIndexedDbData = await storageAdapter.hasIndexedDBData()
+
+      // 获取IndexedDB中的数据量统计
+      if (hasIndexedDbData) {
+        try {
+          const db = await import('@/services/database').then(m => m.db)
+          if (db && db.isOpen()) {
+            indexedDbDataCount = await db.cards.count()
+
+            // 检查其他表的数据
+            const [folders, tags, images] = await Promise.all([
+              db.folders.count().catch(() => 0),
+              db.tags.count().catch(() => 0),
+              db.images.count().catch(() => 0)
+            ])
+
+            indexedDbDataCount += folders + tags + images
+            console.debug(`IndexedDB data count: ${indexedDbDataCount} (cards: ${await db.cards.count()}, folders: ${folders}, tags: ${tags}, images: ${images})`)
+          }
+        } catch (error) {
+          console.debug('Failed to get IndexedDB data count:', error)
+        }
+      }
+    }
+
+    // 2. 检查localStorage数据
+    let hasLocalStorageData = false
+    let localStorageDataCount = 0
+
+    try {
+      const localStorageCards = localStorage.getItem('cards')
+      if (localStorageCards) {
+        const parsedCards = JSON.parse(localStorageCards)
+        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
+          hasLocalStorageData = true
+          localStorageDataCount = parsedCards.length
+          console.debug(`localStorage data count: ${localStorageDataCount}`)
+        }
+      }
+
+      // 检查其他localStorage数据
+      const otherKeys = ['folders', 'tags', 'settings']
+      for (const key of otherKeys) {
+        const data = localStorage.getItem(key)
+        if (data) {
+          try {
+            const parsed = JSON.parse(data)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              hasLocalStorageData = true
+              localStorageDataCount += parsed.length
+            }
+          } catch (e) {
+            console.debug(`Failed to parse localStorage ${key}:`, e)
+          }
+        }
+      }
+    } catch (error) {
+      console.debug('Failed to check localStorage data:', error)
+    }
+
+    // 3. 智能选择逻辑
+    if (!indexedDbAvailable) {
+      console.debug('IndexedDB not available, using localStorage')
+      return 'localStorage'
+    }
+
+    if (hasIndexedDbData && !hasLocalStorageData) {
+      console.debug('Only IndexedDB has data, using IndexedDB')
+      return 'indexeddb'
+    }
+
+    if (!hasIndexedDbData && hasLocalStorageData) {
+      console.debug('Only localStorage has data, using localStorage')
+      return 'localStorage'
+    }
+
+    if (hasIndexedDbData && hasLocalStorageData) {
+      // 两个存储都有数据，选择数据量更多的
+      if (indexedDbDataCount > localStorageDataCount) {
+        console.debug(`Both have data, IndexedDB has more (${indexedDbDataCount} > ${localStorageDataCount}), using IndexedDB`)
+        return 'indexeddb'
+      } else if (localStorageDataCount > indexedDbDataCount) {
+        console.debug(`Both have data, localStorage has more (${localStorageDataCount} > ${indexedDbDataCount}), using localStorage`)
+        return 'localStorage'
+      } else {
+        // 数据量相同，优先使用IndexedDB（更现代化）
+        console.debug('Both have equal data, preferring IndexedDB')
+        return 'indexeddb'
+      }
+    }
+
+    // 4. 都没有数据，检查用户偏好设置
+    try {
+      const userPreference = localStorage.getItem('preferredStorageMode')
+      if (userPreference === 'indexeddb' && indexedDbAvailable) {
+        console.debug('User prefers IndexedDB, using IndexedDB')
+        return 'indexeddb'
+      } else if (userPreference === 'localStorage') {
+        console.debug('User prefers localStorage, using localStorage')
+        return 'localStorage'
+      }
+    } catch (error) {
+      console.debug('Failed to get user preference:', error)
+    }
+
+    // 5. 默认策略：如果IndexedDB可用，优先使用IndexedDB
+    if (indexedDbAvailable) {
+      console.debug('Default: IndexedDB available, using IndexedDB')
+      return 'indexeddb'
+    }
+
+    console.debug('Default: using localStorage')
+    return 'localStorage'
+
+  } catch (error) {
+    console.error('Error determining storage mode:', error)
+    // 出错时回退到localStorage
+    return 'localStorage'
+  }
+}
+
+// 导出函数以便测试
+export { determineStorageMode }
+
+/**
  * 统一的卡片Hook适配器
  *
  * 这个适配器根据当前状态自动选择使用localStorage或IndexedDB
@@ -62,12 +202,8 @@ export function useCardsAdapter() {
           })
         }
 
-        // 检查IndexedDB数据
-        const storageAdapter = new UniversalStorageAdapter()
-        const indexedDbAvailable = await storageAdapter.isIndexedDBAvailable()
-        const hasIndexedDbData = await storageAdapter.hasIndexedDBData()
-
-        const finalMode = indexedDbAvailable && hasIndexedDbData ? 'indexeddb' : 'localStorage'
+        // 使用智能的存储模式选择
+        const finalMode = await determineStorageMode()
 
         setAdapterState({
           mode: finalMode,

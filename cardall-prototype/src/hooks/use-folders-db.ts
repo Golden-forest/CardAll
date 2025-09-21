@@ -75,9 +75,9 @@ export function useFoldersDb() {
     })
 
     return () => {
-      subscription.unsubscribe()
-      updateSubscription.unsubscribe()
-      deleteSubscription.unsubscribe()
+      subscription?.unsubscribe()
+      updateSubscription?.unsubscribe()
+      deleteSubscription?.unsubscribe()
     }
   }, [])
 

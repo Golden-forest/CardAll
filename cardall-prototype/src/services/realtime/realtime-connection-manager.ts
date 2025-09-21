@@ -199,6 +199,10 @@ export class RealtimeConnectionManager {
       this.connectionStartTime.set(channelName, startTime)
 
       // 创建新的Realtime通道
+      if (!this.supabase) {
+        throw new Error('Supabase client not available')
+      }
+
       const channel = this.supabase
         .channel(channelName)
         .on(
@@ -412,11 +416,16 @@ export class RealtimeConnectionManager {
     }
 
     this.updateConnectionState(channelName, ConnectionState.CONNECTING)
-    
+
     // 重新订阅
-    connection.subscribe((status) => {
-      this.handleSubscriptionStatus(channelName, status)
-    })
+    try {
+      connection.subscribe((status) => {
+        this.handleSubscriptionStatus(channelName, status)
+      })
+    } catch (error) {
+      console.error(`Failed to reconnect to channel ${channelName}:`, error)
+      this.updateConnectionState(channelName, ConnectionState.ERROR)
+    }
   }
 
   /**

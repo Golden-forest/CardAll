@@ -274,14 +274,26 @@ export class SyncQueueManager {
   private async getNextBatch(): Promise<SyncOperation[]> {
     try {
       // 按优先级和时间排序获取操作
-      return await db.syncQueue
+      const operations = await db.syncQueue
         .where('status')
         .equals('pending' as any)
-        .orderBy('priority') // 高优先级先处理
-        .reverse()
-        .offset(0)
-        .limit(this.batchSize)
         .toArray()
+
+      // 手动排序：优先级高的优先，同优先级按时间排序
+      return operations
+        .sort((a, b) => {
+          const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 }
+          const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] || 1
+          const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] || 1
+
+          if (aPriority !== bPriority) {
+            return bPriority - aPriority // 高优先级先处理
+          }
+
+          // 同优先级按时间排序，先来的先处理
+          return a.timestamp.getTime() - b.timestamp.getTime()
+        })
+        .slice(0, this.batchSize)
     } catch (error) {
       console.error('Failed to get next batch:', error)
       return []

@@ -7,10 +7,12 @@ import { CheckCircle, AlertCircle, RefreshCw, FolderOpen } from 'lucide-react'
 import { appInitService, InitializationStatus, InitializationResult } from '@/services/app-init'
 
 interface AppInitializationProps {
-  onInitialized: (result: InitializationResult) => void
+  onInitialized: (_result: InitializationResult) => void
+  onError?: (_error: string) => void
+  onSkipInitialization?: () => void
 }
 
-export function AppInitialization({ onInitialized }: AppInitializationProps) {
+export function AppInitialization({ onInitialized, onError, onSkipInitialization }: AppInitializationProps) {
   const [status, setStatus] = useState<InitializationStatus>({
     step: 'starting',
     progress: 0,
@@ -23,21 +25,35 @@ export function AppInitialization({ onInitialized }: AppInitializationProps) {
 
   // 开始初始化
   const startInitialization = async () => {
+    console.log('开始初始化流程...')
+    console.log('时间戳:', new Date().toISOString())
     setIsInitializing(true)
     setResult(null)
-    
+
     try {
+      console.log('调用appInitService.initialize()...')
       const initResult = await appInitService.initialize()
+      console.log('初始化结果:', initResult)
+      console.log('结果详情:', JSON.stringify(initResult, null, 2))
       setResult(initResult)
-      
+
       if (initResult.success) {
+        console.log('初始化成功，准备进入应用...')
+        console.log('成功时间戳:', new Date().toISOString())
         // 延迟一下让用户看到完成状态
         setTimeout(() => {
           onInitialized(initResult)
         }, 1000)
+      } else {
+        console.log('初始化失败:', initResult.error)
+        console.log('失败时间戳:', new Date().toISOString())
       }
     } catch (error) {
       console.error('初始化过程出错:', error)
+      console.error('错误时间戳:', new Date().toISOString())
+      if (onError) {
+        onError(error instanceof Error ? error.message : '初始化失败')
+      }
     } finally {
       setIsInitializing(false)
     }
@@ -45,7 +61,12 @@ export function AppInitialization({ onInitialized }: AppInitializationProps) {
 
   // 监听初始化状态
   useEffect(() => {
-    const unsubscribe = appInitService.onStatusChange(setStatus)
+    console.log('设置状态监听器...')
+    const unsubscribe = appInitService.onStatusChange((newStatus) => {
+      console.log('收到状态更新:', newStatus)
+      setStatus(newStatus)
+    })
+    console.log('状态监听器设置完成')
     return unsubscribe
   }, [])
 
@@ -145,24 +166,35 @@ export function AppInitialization({ onInitialized }: AppInitializationProps) {
           {/* 操作按钮 */}
           <div className="flex gap-2">
             {status.hasError && (
-              <Button 
-                onClick={startInitialization}
-                disabled={isInitializing}
-                className="flex-1"
-              >
-                {isInitializing ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    重试中...
-                  </>
-                ) : (
-                  '重试初始化'
+              <>
+                <Button
+                  onClick={startInitialization}
+                  disabled={isInitializing}
+                  className="flex-1"
+                >
+                  {isInitializing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      重试中...
+                    </>
+                  ) : (
+                    '重试初始化'
+                  )}
+                </Button>
+                {onSkipInitialization && (
+                  <Button
+                    onClick={onSkipInitialization}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    跳过初始化
+                  </Button>
                 )}
-              </Button>
+              </>
             )}
-            
+
             {result?.success && (
-              <Button 
+              <Button
                 onClick={() => onInitialized(result)}
                 className="flex-1"
               >

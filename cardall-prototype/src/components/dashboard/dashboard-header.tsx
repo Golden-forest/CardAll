@@ -17,6 +17,7 @@ import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-utils'
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
+import { DataIntegrityIndicator } from '@/components/data-integrity/data-integrity-indicator'
 
 interface DashboardHeaderProps {
   authState: AuthState
@@ -150,6 +151,9 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
 
         {/* 操作按钮 */}
         <div className="flex items-center space-x-2">
+          {/* 数据完整性指示器 */}
+          <DataIntegrityIndicator showDetails={true} />
+
           <Button
             variant="outline"
             size="sm"

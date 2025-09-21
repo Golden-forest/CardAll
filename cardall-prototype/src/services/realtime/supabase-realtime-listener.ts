@@ -104,28 +104,37 @@ export class SupabaseRealtimeListener {
    * 设置Realtime订阅
    */
   private async setupSubscriptions(): Promise<void> {
+    if (!this.supabase) {
+      console.warn('Supabase client not available, skipping realtime subscriptions')
+      return
+    }
+
     for (const table of this.config.tables) {
-      const channelName = `${table}-changes-${this.config.userId}`
-      
-      // 创建Realtime频道
-      const channel = this.supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table,
-            filter: `user_id=eq.${this.config.userId}`
-          },
-          (payload) => this.handleRealtimeEvent(payload)
-        )
-        .subscribe((status) => {
-          this.handleSubscriptionStatus(table, status, channelName)
-        })
-      
-      this.subscriptions.set(channelName, channel)
-      console.log(`📡 Realtime订阅已建立: ${channelName}`)
+      try {
+        const channelName = `${table}-changes-${this.config.userId}`
+
+        // 创建Realtime频道
+        const channel = this.supabase
+          .channel(channelName)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table,
+              filter: `user_id=eq.${this.config.userId}`
+            },
+            (payload) => this.handleRealtimeEvent(payload)
+          )
+          .subscribe((status) => {
+            this.handleSubscriptionStatus(table, status, channelName)
+          })
+
+        this.subscriptions.set(channelName, channel)
+        console.log(`📡 Realtime订阅已建立: ${channelName}`)
+      } catch (error) {
+        console.error(`Failed to setup realtime subscription for table ${table}:`, error)
+      }
     }
   }
 

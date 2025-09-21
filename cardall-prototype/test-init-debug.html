@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>初始化测试</title>
+</head>
+<body>
+    <h1>初始化测试页面</h1>
+    <div id="log"></div>
+    <button onclick="testDatabase()">测试数据库初始化</button>
+
+    <script type="module">
+        // 重写console.log以显示在页面上
+        const logDiv = document.getElementById('log');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg =>
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            logDiv.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+        };
+
+        // 导入数据库模块
+        import('/src/services/database.js').then(module => {
+            console.log('数据库模块加载成功');
+            window.testDatabase = async function() {
+                console.log('开始测试数据库初始化...');
+                try {
+                    await module.initializeDatabase();
+                    console.log('数据库初始化成功');
+                } catch (error) {
+                    console.error('数据库初始化失败:', error);
+                }
+            };
+        }).catch(error => {
+            console.error('数据库模块加载失败:', error);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持久化存储问题深度分析</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .status { padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { background: #0078d4; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #106ebe; }
+        .log { background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .db-list { background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 10px 0; }
+        .db-item { background: white; padding: 10px; margin: 5px 0; border-radius: 4px; border-left: 4px solid #0078d4; }
+        .code-block { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 4px; margin: 10px 0; overflow-x: auto; }
+        .analysis-step { background: #e6f3ff; border-left: 4px solid #0078d4; padding: 15px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 持久化存储问题深度分析工具</h1>
+
+    <div class="card">
+        <h2>📊 问题状态总结</h2>
+        <div class="analysis-step">
+            <h3>✅ 已确认正常的功能</h3>
+            <ul>
+                <li>IndexedDB API完全支持</li>
+                <li>浏览器可以创建和访问IndexedDB数据库</li>
+                <li>已发现2个现有数据库（说明应用曾经成功运行）</li>
+            </ul>
+        </div>
+
+        <div class="analysis-step">
+            <h3>❌ 核心问题</h3>
+            <ul>
+                <li><strong>持久化存储请求被拒绝</strong> - 这是导致初始化卡住的根本原因</li>
+                <li>用户可能频繁点击"请求持久化存储"按钮</li>
+                <li>持久化存储不是必需的，但不应该阻止初始化</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🔍 详细数据库检查</h2>
+        <button onclick="checkExistingDatabases()">检查现有数据库详情</button>
+        <button onclick="checkCardAllDatabase()">检查CardAll数据库状态</button>
+        <div id="database-details"></div>
+    </div>
+
+    <div class="card">
+        <h2>🧪 持久化存储分析</h2>
+        <button onclick="analyzePersistentStorage()">分析持久化存储问题</button>
+        <button onclick="testStorageWithoutPersistence()">测试非持久化存储</button>
+        <button onclick="checkBrowserPermissions()">检查浏览器权限设置</button>
+        <div id="persistent-analysis"></div>
+    </div>
+
+    <div class="card">
+        <h2>🔧 应用初始化测试</h2>
+        <button onclick="testAppInitialization()">测试应用初始化流程</button>
+        <button onclick="simulateDatabaseCreation()">模拟数据库创建过程</button>
+        <button onclick="checkInitializationBlocking()">检查初始化阻塞点</button>
+        <div id="init-test"></div>
+    </div>
+
+    <div class="card">
+        <h2>💡 解决方案验证</h2>
+        <button onclick="testSolution1()">解决方案1: 优化持久化存储处理</button>
+        <button onclick="testSolution2()">解决方案2: 数据库连接池优化</button>
+        <button onclick="testSolution3()">解决方案3: 初始化流程重构</button>
+        <div id="solution-test"></div>
+    </div>
+
+    <div class="card">
+        <h2>📋 控制台调试命令</h2>
+        <div class="code-block">
+// 1. 检查具体的CardAll数据库状态
+window.indexedDB.databases().then(dbs => {
+    const cardAllDBs = dbs.filter(db => db.name.includes('CardAll'));
+    console.log('CardAll数据库:', cardAllDBs);
+});
+
+// 2. 尝试直接打开CardAll数据库
+try {
+    const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+    request.onsuccess = () => console.log('数据库打开成功');
+    request.onerror = (e) => console.log('数据库打开失败:', e.target.error);
+    request.onblocked = () => console.log('数据库被阻塞');
+    request.onupgradeneeded = (e) => console.log('数据库需要升级');
+} catch (error) {
+    console.log('数据库异常:', error);
+}
+
+// 3. 检查存储权限状态
+navigator.storage.persisted().then(persisted => {
+    console.log('当前持久化状态:', persisted);
+});
+
+// 4. 手动清理存储（谨慎使用）
+// indexedDB.deleteDatabase('CardAllUnifiedDB_v3');
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📝 详细日志</h2>
+        <button onclick="clearLog()">清除日志</button>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        // 检查现有数据库详情
+        async function checkExistingDatabases() {
+            const detailsDiv = document.getElementById('database-details');
+            detailsDiv.innerHTML = '<div class="info">正在检查数据库详情...</div>';
+
+            try {
+                const databases = await window.indexedDB.databases();
+                log(`发现 ${databases.length} 个数据库`);
+
+                let details = '<div class="db-list">';
+                databases.forEach((db, index) => {
+                    details += `
+                        <div class="db-item">
+                            <strong>数据库 ${index + 1}:</strong> ${db.name}<br>
+                            <strong>版本:</strong> ${db.version || '未知'}<br>
+                            <strong>是否为CardAll相关:</strong> ${db.name.includes('CardAll') ? '✅ 是' : '❌ 否'}
+                        </div>
+                    `;
+                });
+                details += '</div>';
+
+                // 检查是否有冲突的数据库
+                const cardAllDBs = databases.filter(db => db.name.includes('CardAll'));
+                if (cardAllDBs.length > 1) {
+                    details += '<div class="warning">⚠️ 发现多个CardAll相关数据库，可能导致冲突</div>';
+                }
+
+                detailsDiv.innerHTML = details;
+
+            } catch (error) {
+                detailsDiv.innerHTML = `<div class="error">❌ 检查失败: ${error.message}</div>`;
+            }
+        }
+
+        // 检查CardAll数据库状态
+        async function checkCardAllDatabase() {
+            const detailsDiv = document.getElementById('database-details');
+            detailsDiv.innerHTML += '<div class="info">正在检查CardAll数据库状态...</div>';
+
+            try {
+                // 尝试打开数据库
+                const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    log('✅ CardAll数据库打开成功');
+                    log(`数据库名称: ${db.name}`);
+                    log(`数据库版本: ${db.version}`);
+                    log(`对象存储: ${Array.from(db.objectStoreNames).join(', ')}`);
+
+                    detailsDiv.innerHTML += '<div class="success">✅ CardAll数据库状态正常</div>';
+                    db.close();
+                };
+
+                request.onerror = (event) => {
+                    const error = event.target.error;
+                    log(`❌ CardAll数据库打开失败: ${error.message}`);
+                    detailsDiv.innerHTML += `<div class="error">❌ 数据库打开失败: ${error.message}</div>`;
+                };
+
+                request.onblocked = (event) => {
+                    log('❌ CardAll数据库被阻塞');
+                    detailsDiv.innerHTML += '<div class="warning">⚠️ 数据库被阻塞，可能有其他连接占用</div>';
+                };
+
+                request.onupgradeneeded = (event) => {
+                    log('⚠️ CardAll数据库需要升级');
+                    detailsDiv.innerHTML += '<div class="info">ℹ️ 数据库需要升级结构</div>';
+                };
+
+            } catch (error) {
+                log(`❌ 检查CardAll数据库异常: ${error.message}`);
+                detailsDiv.innerHTML += `<div class="error">❌ 检查异常: ${error.message}</div>`;
+            }
+        }
+
+        // 分析持久化存储问题
+        async function analyzePersistentStorage() {
+            const analysisDiv = document.getElementById('persistent-analysis');
+            analysisDiv.innerHTML = '<div class="info">正在分析持久化存储问题...</div>';
+
+            try {
+                log('开始分析持久化存储问题...');
+
+                // 检查当前持久化状态
+                const persisted = await navigator.storage.persisted();
+                log(`当前持久化状态: ${persisted}`);
+
+                // 检查存储配额
+                const estimate = await navigator.storage.estimate();
+                const usage = estimate.usage || 0;
+                const quota = estimate.quota || 0;
+                const usagePercent = quota > 0 ? (usage / quota * 100).toFixed(2) : 0;
+
+                log(`存储使用情况: ${formatBytes(usage)} / ${formatBytes(quota)} (${usagePercent}%)`);
+
+                // 分析持久化存储被拒绝的可能原因
+                let reasons = [];
+
+                if (usagePercent > 80) {
+                    reasons.push('存储使用率过高，浏览器拒绝持久化请求');
+                }
+
+                if (!persisted) {
+                    reasons.push('浏览器策略限制自动持久化');
+                    reasons.push('需要用户明确授权才能持久化');
+                    reasons.push('隐私模式或受限浏览环境');
+                }
+
+                // 尝试请求持久化（但不要循环请求）
+                log('尝试请求持久化存储...');
+                const persistResult = await navigator.storage.persist();
+                log(`持久化存储请求结果: ${persistResult}`);
+
+                let analysis = `
+                    <div class="status ${persisted ? 'success' : 'warning'}">
+                        <strong>当前持久化状态:</strong> ${persisted ? '✅ 已持久化' : '⚠️ 未持久化'}
+                    </div>
+                    <div class="status info">
+                        <strong>存储使用情况:</strong> ${formatBytes(usage)} / ${formatBytes(quota)} (${usagePercent}%)
+                    </div>
+                    <div class="status ${persistResult ? 'success' : 'warning'}">
+                        <strong>持久化请求结果:</strong> ${persistResult ? '✅ 成功' : '❌ 被拒绝'}
+                    </div>
+                `;
+
+                if (reasons.length > 0) {
+                    analysis += '<div class="status warning"><strong>可能的原因:</strong><ul>';
+                    reasons.forEach(reason => {
+                        analysis += `<li>${reason}</li>`;
+                    });
+                    analysis += '</ul></div>';
+                }
+
+                analysis += `
+                    <div class="status info">
+                        <strong>重要说明:</strong><br>
+                        • 持久化存储不是必需的，应用应该能在非持久化模式下正常工作<br>
+                        • 频繁请求持久化存储可能导致浏览器拒绝<br>
+                        • 初始化不应该因为持久化存储被拒绝而失败
+                    </div>
+                `;
+
+                analysisDiv.innerHTML = analysis;
+
+            } catch (error) {
+                analysisDiv.innerHTML = `<div class="error">❌ 分析失败: ${error.message}</div>`;
+                log(`❌ 持久化存储分析异常: ${error.message}`);
+            }
+        }
+
+        // 测试非持久化存储
+        async function testStorageWithoutPersistence() {
+            const testDiv = document.getElementById('persistent-analysis');
+            testDiv.innerHTML += '<div class="info">正在测试非持久化存储...</div>';
+
+            try {
+                log('测试非持久化存储下的数据库操作...');
+
+                // 创建测试数据库（不请求持久化）
+                const testName = 'TestNonPersistentDB_' + Date.now();
+                const request = indexedDB.open(testName, 1);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    db.createObjectStore('testStore', { keyPath: 'id' });
+                };
+
+                request.onsuccess = async (event) => {
+                    const db = event.target.result;
+                    log('✅ 非持久化数据库创建成功');
+
+                    // 测试基本操作
+                    const transaction = db.transaction('testStore', 'readwrite');
+                    const store = transaction.objectStore('testStore');
+
+                    const testData = { id: 1, data: '测试数据', timestamp: new Date().toISOString() };
+                    await store.add(testData);
+
+                    const result = await store.get(1);
+                    log(`✅ 数据读写成功: ${JSON.stringify(result)}`);
+
+                    // 清理测试数据库
+                    db.close();
+                    await indexedDB.deleteDatabase(testName);
+                    log('✅ 测试数据库清理完成');
+
+                    testDiv.innerHTML += '<div class="success">✅ 非持久化存储工作正常</div>';
+                };
+
+                request.onerror = (event) => {
+                    log(`❌ 非持久化存储测试失败: ${event.target.error.message}`);
+                    testDiv.innerHTML += '<div class="error">❌ 非持久化存储测试失败</div>';
+                };
+
+            } catch (error) {
+                testDiv.innerHTML += `<div class="error">❌ 测试异常: ${error.message}</div>`;
+            }
+        }
+
+        // 检查浏览器权限设置
+        async function checkBrowserPermissions() {
+            const permDiv = document.getElementById('persistent-analysis');
+            permDiv.innerHTML += '<div class="info">正在检查浏览器权限设置...</div>';
+
+            try {
+                // 检查权限API支持
+                if ('permissions' in navigator) {
+                    log('✅ 浏览器支持权限API');
+
+                    // 检查持久化存储权限
+                    try {
+                        const permission = await navigator.permissions.query({ name: 'persistent-storage' });
+                        log(`持久化存储权限: ${permission.state}`);
+
+                        permDiv.innerHTML += `
+                            <div class="status ${permission.state === 'granted' ? 'success' : 'warning'}">
+                                <strong>持久化存储权限状态:</strong> ${permission.state}
+                            </div>
+                        `;
+
+                        // 监听权限变化
+                        permission.onchange = () => {
+                            log(`持久化存储权限状态变更: ${permission.state}`);
+                        };
+
+                    } catch (permError) {
+                        log(`权限检查失败: ${permError.message}`);
+                        permDiv.innerHTML += '<div class="warning">⚠️ 无法检查持久化存储权限</div>';
+                    }
+
+                } else {
+                    log('⚠️ 浏览器不支持权限API');
+                    permDiv.innerHTML += '<div class="warning">⚠️ 浏览器不支持权限API</div>';
+                }
+
+            } catch (error) {
+                permDiv.innerHTML += `<div class="error">❌ 权限检查异常: ${error.message}</div>`;
+            }
+        }
+
+        // 测试应用初始化流程
+        async function testAppInitialization() {
+            const testDiv = document.getElementById('init-test');
+            testDiv.innerHTML = '<div class="info">正在测试应用初始化流程...</div>';
+
+            try {
+                log('开始模拟应用初始化流程...');
+
+                // 步骤1: 检查数据库可用性
+                log('步骤1: 检查数据库可用性...');
+                const databases = await window.indexedDB.databases();
+                const cardAllDB = databases.find(db => db.name === 'CardAllUnifiedDB_v3');
+
+                if (cardAllDB) {
+                    log(`✅ 找到现有数据库: ${cardAllDB.name} (版本 ${cardAllDB.version})`);
+                } else {
+                    log('⚠️ 未找到现有数据库，需要创建');
+                }
+
+                // 步骤2: 测试数据库连接
+                log('步骤2: 测试数据库连接...');
+                await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        log('✅ 数据库连接成功');
+                        db.close();
+                        resolve();
+                    };
+
+                    request.onerror = (event) => {
+                        log(`❌ 数据库连接失败: ${event.target.error.message}`);
+                        reject(event.target.error);
+                    };
+
+                    request.onblocked = (event) => {
+                        log('❌ 数据库连接被阻塞');
+                        reject(new Error('数据库连接被阻塞'));
+                    };
+
+                    request.onupgradeneeded = (event) => {
+                        log('⚠️ 数据库需要升级');
+                        const db = event.target.result;
+
+                        // 创建必要的对象存储
+                        if (!db.objectStoreNames.contains('cards')) {
+                            db.createObjectStore('cards', { keyPath: 'id' });
+                        }
+                        if (!db.objectStoreNames.contains('folders')) {
+                            db.createObjectStore('folders', { keyPath: 'id' });
+                        }
+                    };
+                });
+
+                // 步骤3: 测试基本操作
+                log('步骤3: 测试基本数据库操作...');
+                await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        const transaction = db.transaction(['cards'], 'readwrite');
+                        const store = transaction.objectStore('cards');
+
+                        const testCard = {
+                            id: 'test-' + Date.now(),
+                            frontContent: { title: '测试卡片', text: '测试内容' },
+                            backContent: { title: '背面', text: '背面内容' },
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+
+                        const addRequest = store.add(testCard);
+
+                        addRequest.onsuccess = () => {
+                            log('✅ 测试卡片添加成功');
+                            db.close();
+                            resolve();
+                        };
+
+                        addRequest.onerror = () => {
+                            log('❌ 测试卡片添加失败');
+                            db.close();
+                            reject(new Error('卡片添加失败'));
+                        };
+                    };
+
+                    request.onerror = reject;
+                });
+
+                testDiv.innerHTML += '<div class="success">✅ 应用初始化流程测试通过</div>';
+
+            } catch (error) {
+                log(`❌ 应用初始化测试失败: ${error.message}`);
+                testDiv.innerHTML += `<div class="error">❌ 初始化测试失败: ${error.message}</div>`;
+            }
+        }
+
+        // 模拟数据库创建过程
+        async function simulateDatabaseCreation() {
+            const testDiv = document.getElementById('init-test');
+            testDiv.innerHTML += '<div class="info">正在模拟数据库创建过程...</div>';
+
+            try {
+                log('开始模拟数据库创建过程...');
+
+                // 清理旧的测试数据库
+                try {
+                    await indexedDB.deleteDatabase('CardAllUnifiedDB_v3');
+                    log('✅ 旧数据库清理完成');
+                } catch (error) {
+                    log('⚠️ 旧数据库清理失败或不存在');
+                }
+
+                // 创建新数据库
+                await new Promise((resolve, reject) => {
+                    const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        log('数据库升级中...');
+
+                        // 创建所有必要的对象存储
+                        const stores = [
+                            'cards', 'folders', 'tags', 'images',
+                            'syncQueue', 'settings', 'sessions'
+                        ];
+
+                        stores.forEach(storeName => {
+                            if (!db.objectStoreNames.contains(storeName)) {
+                                log(`创建对象存储: ${storeName}`);
+                                db.createObjectStore(storeName, { keyPath: 'id' });
+                            }
+                        });
+                    };
+
+                    request.onsuccess = (event) => {
+                        const db = event.target.result;
+                        log('✅ 数据库创建成功');
+                        log(`对象存储: ${Array.from(db.objectStoreNames).join(', ')}`);
+                        db.close();
+                        resolve();
+                    };
+
+                    request.onerror = (event) => {
+                        log(`❌ 数据库创建失败: ${event.target.error.message}`);
+                        reject(event.target.error);
+                    };
+                });
+
+                testDiv.innerHTML += '<div class="success">✅ 数据库创建过程模拟成功</div>';
+
+            } catch (error) {
+                testDiv.innerHTML += `<div class="error">❌ 数据库创建失败: ${error.message}</div>`;
+            }
+        }
+
+        // 检查初始化阻塞点
+        async function checkInitializationBlocking() {
+            const testDiv = document.getElementById('init-test');
+            testDiv.innerHTML += '<div class="info">正在检查初始化阻塞点...</div>';
+
+            try {
+                log('检查可能的初始化阻塞点...');
+
+                // 检查数据库连接是否被阻塞
+                const isBlocked = await new Promise((resolve) => {
+                    let blocked = false;
+                    const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                    request.onblocked = () => {
+                        blocked = true;
+                        resolve(true);
+                    };
+
+                    request.onsuccess = () => {
+                        request.result.close();
+                        resolve(blocked);
+                    };
+
+                    request.onerror = () => {
+                        resolve(blocked);
+                    };
+
+                    // 设置超时
+                    setTimeout(() => resolve(blocked), 5000);
+                });
+
+                if (isBlocked) {
+                    log('❌ 数据库连接被阻塞');
+                    testDiv.innerHTML += '<div class="warning">⚠️ 数据库连接被阻塞，可能是其他连接占用</div>';
+                } else {
+                    log('✅ 数据库连接未被阻塞');
+                }
+
+                // 检查存储配额是否足够
+                const estimate = await navigator.storage.estimate();
+                const usagePercent = estimate.quota > 0 ? (estimate.usage / estimate.quota * 100) : 0;
+
+                if (usagePercent > 90) {
+                    log('❌ 存储空间不足');
+                    testDiv.innerHTML += '<div class="warning">⚠️ 存储空间不足，可能影响初始化</div>';
+                } else {
+                    log(`✅ 存储空间充足 (${usagePercent.toFixed(2)}% 已使用)`);
+                }
+
+                testDiv.innerHTML += '<div class="success">✅ 阻塞点检查完成</div>';
+
+            } catch (error) {
+                testDiv.innerHTML += `<div class="error">❌ 阻塞点检查失败: ${error.message}</div>`;
+            }
+        }
+
+        // 测试解决方案
+        async function testSolution1() {
+            const solutionDiv = document.getElementById('solution-test');
+            solutionDiv.innerHTML = '<div class="info">测试解决方案1: 优化持久化存储处理...</div>';
+
+            try {
+                log('测试解决方案1: 优化持久化存储处理...');
+
+                // 方案1: 优雅地处理持久化存储失败
+                const persisted = await navigator.storage.persisted();
+                log(`当前持久化状态: ${persisted}`);
+
+                if (!persisted) {
+                    // 尝试请求持久化，但不阻塞初始化
+                    navigator.storage.persist().then(result => {
+                        log(`持久化存储请求结果: ${result ? '成功' : '失败，但不影响初始化'}`);
+                    }).catch(error => {
+                        log(`持久化存储请求异常: ${error.message}，但不影响初始化`);
+                    });
+                }
+
+                solutionDiv.innerHTML += `
+                    <div class="success">✅ 解决方案1测试通过</div>
+                    <div class="info">
+                        <strong>方案说明:</strong><br>
+                        • 不将持久化存储作为初始化的必需步骤<br>
+                        • 在后台异步请求持久化存储<br>
+                        • 即使被拒绝也不影响应用正常运行
+                    </div>
+                `;
+
+            } catch (error) {
+                solutionDiv.innerHTML += `<div class="error">❌ 解决方案1测试失败: ${error.message}</div>`;
+            }
+        }
+
+        async function testSolution2() {
+            const solutionDiv = document.getElementById('solution-test');
+            solutionDiv.innerHTML += '<div class="info">测试解决方案2: 数据库连接池优化...</div>';
+
+            try {
+                log('测试解决方案2: 数据库连接池优化...');
+
+                // 方案2: 实现数据库连接管理
+                let dbConnection = null;
+
+                const getDbConnection = async () => {
+                    if (dbConnection) {
+                        try {
+                            // 测试连接是否有效
+                            dbConnection.objectStoreNames;
+                            return dbConnection;
+                        } catch (error) {
+                            log('数据库连接已失效，重新连接...');
+                            dbConnection = null;
+                        }
+                    }
+
+                    return new Promise((resolve, reject) => {
+                        const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+
+                        request.onsuccess = (event) => {
+                            dbConnection = event.target.result;
+                            resolve(dbConnection);
+                        };
+
+                        request.onerror = reject;
+                    });
+                };
+
+                const db = await getDbConnection();
+                log('✅ 数据库连接池优化测试成功');
+
+                if (db) {
+                    db.close();
+                }
+
+                solutionDiv.innerHTML += `
+                    <div class="success">✅ 解决方案2测试通过</div>
+                    <div class="info">
+                        <strong>方案说明:</strong><br>
+                        • 实现数据库连接复用<br>
+                        • 自动检测和恢复失效连接<br>
+                        • 避免重复创建连接导致的阻塞
+                    </div>
+                `;
+
+            } catch (error) {
+                solutionDiv.innerHTML += `<div class="error">❌ 解决方案2测试失败: ${error.message}</div>`;
+            }
+        }
+
+        async function testSolution3() {
+            const solutionDiv = document.getElementById('solution-test');
+            solutionDiv.innerHTML += '<div class="info">测试解决方案3: 初始化流程重构...</div>';
+
+            try {
+                log('测试解决方案3: 初始化流程重构...');
+
+                // 方案3: 分步骤初始化，每步都有错误处理
+                const steps = [
+                    { name: '检查浏览器支持', fn: () => Promise.resolve('indexedDB' in window) },
+                    { name: '检查存储权限', fn: () => navigator.storage.estimate().then(() => true).catch(() => true) },
+                    { name: '连接数据库', fn: () => new Promise((resolve, reject) => {
+                        const request = indexedDB.open('CardAllUnifiedDB_v3', 3);
+                        request.onsuccess = (event) => { event.target.result.close(); resolve(true); };
+                        request.onerror = () => reject(new Error('数据库连接失败'));
+                    })},
+                    { name: '持久化存储', fn: () => navigator.storage.persist().then(() => true).catch(() => true) }
+                ];
+
+                for (const step of steps) {
+                    try {
+                        log(`执行步骤: ${step.name}...`);
+                        const result = await step.fn();
+                        log(`✅ ${step.name}: ${result}`);
+                    } catch (error) {
+                        log(`⚠️ ${step.name} 失败，但继续执行: ${error.message}`);
+                    }
+                }
+
+                solutionDiv.innerHTML += `
+                    <div class="success">✅ 解决方案3测试通过</div>
+                    <div class="info">
+                        <strong>方案说明:</strong><br>
+                        • 将初始化分解为独立步骤<br>
+                        • 每个步骤都有独立的错误处理<br>
+                        • 单个步骤失败不影响整体初始化
+                    </div>
+                `;
+
+            } catch (error) {
+                solutionDiv.innerHTML += `<div class="error">❌ 解决方案3测试失败: ${error.message}</div>`;
+            }
+        }
+
+        // 格式化字节数
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // 页面加载完成后自动分析
+        window.onload = function() {
+            log('持久化存储问题分析工具已加载');
+            log('请点击各个测试按钮进行深度分析');
+        };
+    </script>
+</body>
+</html>

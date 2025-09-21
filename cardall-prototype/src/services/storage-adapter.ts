@@ -13,6 +13,9 @@ export interface StorageAdapter {
   getStorageMode(): 'localStorage' | 'indexeddb'
   setStorageMode(mode: 'localStorage' | 'indexeddb'): Promise<void>
 
+  // 增强的存储模式切换
+  switchStorageMode(mode: 'localStorage' | 'indexeddb'): Promise<StorageModeSwitchResult>
+
   // 数据迁移
   migrateFromLocalStorage(): Promise<MigrationResult>
   backupData(): Promise<BackupResult>
@@ -148,6 +151,31 @@ export interface ConfigValidationResult {
 }
 
 /**
+ * 存储模式切换结果
+ */
+export interface StorageModeSwitchResult {
+  success: boolean
+  message: string
+  fromMode: 'localStorage' | 'indexeddb'
+  toMode: 'localStorage' | 'indexeddb'
+  dataMigrated: boolean
+  rollbackPerformed: boolean
+  duration?: number
+  backup?: BackupResult
+  validation: StorageValidationResult
+}
+
+/**
+ * 存储验证结果
+ */
+export interface StorageValidationResult {
+  isValid: boolean
+  issues: string[]
+  warnings?: string[]
+  details?: Record<string, unknown>
+}
+
+/**
  * 存储事件类型
  */
 export type StorageEventType =
@@ -161,6 +189,9 @@ export type StorageEventType =
   | 'backupCreated'
   | 'backupRestored'
   | 'storageModeChanged'
+  | 'storageModeSwitchProgress'
+  | 'storageModeSwitchCancelled'
+  | 'storageModeSwitchFailed'
   | 'error'
 
 /**

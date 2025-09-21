@@ -84,9 +84,9 @@ export function useCardsDb() {
     })
 
     return () => {
-      subscription.unsubscribe()
-      updateSubscription.unsubscribe()
-      deleteSubscription.unsubscribe()
+      subscription?.unsubscribe()
+      updateSubscription?.unsubscribe()
+      deleteSubscription?.unsubscribe()
     }
   }, [])
 

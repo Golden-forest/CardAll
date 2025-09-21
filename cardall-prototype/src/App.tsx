@@ -8,13 +8,33 @@ import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
 import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTriangle } from 'lucide-react'
 import './globals.css'
 
-function AppContent() {
+interface AppProps {
+  initializationError?: string
+}
+
+function AppContent({ initializationError }: AppProps) {
   const { isOpen, closeModal } = useAuthModal()
 
   return (
     <div className="min-h-screen bg-background">
+      {/* 初始化错误提示 */}
+      {initializationError && (
+        <div className="border-b bg-destructive/5">
+          <div className="container mx-auto px-4 py-2">
+            <Alert variant="destructive" className="mb-0">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {initializationError}
+              </AlertDescription>
+            </Alert>
+          </div>
+        </div>
+      )}
+
       <CardAllProvider>
         <StylePanelProvider>
           <TagPanelProvider>
@@ -22,23 +42,23 @@ function AppContent() {
           </TagPanelProvider>
         </StylePanelProvider>
       </CardAllProvider>
-      
+
       {/* PWA Install Prompt */}
       <InstallPrompt />
-      
+
       {/* Authentication Modal */}
       <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />
-      
+
       <Toaster />
     </div>
   )
 }
 
-function App() {
+function App({ initializationError }: AppProps) {
   return (
     <ThemeProvider defaultTheme="light" storageKey="cardall-theme">
       <AuthModalProvider>
-        <AppContent />
+        <AppContent initializationError={initializationError} />
       </AuthModalProvider>
     </ThemeProvider>
   )

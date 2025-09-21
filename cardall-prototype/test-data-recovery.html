@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据恢复系统测试</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .recovery-point-item {
+            transition: all 0.2s ease;
+        }
+        .recovery-point-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Mock implementations for testing
+        const mockStorageMonitorService = {
+            recordOperation: (type, operation, duration, success, dataSize, error, context) => {
+                console.log('Operation recorded:', { type, operation, duration, success, dataSize, error, context });
+            }
+        };
+
+        const mockUniversalStorageAdapter = {
+            getInstance: () => ({
+                getCards: async () => [
+                    { id: 'card1', title: '测试卡片1', content: '内容1', updatedAt: Date.now() },
+                    { id: 'card2', title: '测试卡片2', content: '内容2', updatedAt: Date.now() - 1000 }
+                ],
+                getFolders: async () => [
+                    { id: 'folder1', name: '测试文件夹', updatedAt: Date.now() }
+                ],
+                getTags: async () => [
+                    { id: 'tag1', name: '测试标签', updatedAt: Date.now() }
+                ],
+                getSettings: async () => ({
+                    theme: 'light',
+                    language: 'zh-CN'
+                }),
+                saveCards: async (cards) => {
+                    console.log('Cards saved:', cards);
+                    return cards;
+                },
+                saveFolders: async (folders) => {
+                    console.log('Folders saved:', folders);
+                    return folders;
+                },
+                saveTags: async (tags) => {
+                    console.log('Tags saved:', tags);
+                    return tags;
+                },
+                saveSettings: async (settings) => {
+                    console.log('Settings saved:', settings);
+                    return settings;
+                }
+            })
+        };
+
+        // Mock localStorage
+        const mockLocalStorage = {
+            data: {},
+            getItem: (key) => {
+                console.log('localStorage.getItem:', key);
+                return mockLocalStorage.data[key] || null;
+            },
+            setItem: (key, value) => {
+                console.log('localStorage.setItem:', key, value);
+                mockLocalStorage.data[key] = value;
+            },
+            removeItem: (key) => {
+                console.log('localStorage.removeItem:', key);
+                delete mockLocalStorage.data[key];
+            },
+            clear: () => {
+                console.log('localStorage.clear');
+                mockLocalStorage.data = {};
+            }
+        };
+
+        // Set up global mocks
+        window.localStorage = mockLocalStorage;
+        window.storageMonitorService = mockStorageMonitorService;
+        window.UniversalStorageAdapter = mockUniversalStorageAdapter;
+
+        // Data Recovery Service Mock Implementation
+        class MockDataRecoveryService {
+            constructor() {
+                this.recoveryPoints = [];
+                this.config = {
+                    autoBackup: {
+                        enabled: true,
+                        interval: 60,
+                        maxPoints: 50,
+                        triggers: ['startup', 'shutdown']
+                    },
+                    retention: {
+                        maxTotalSize: 100,
+                        maxAge: 30,
+                        minPoints: 10
+                    },
+                    compression: {
+                        enabled: true,
+                        level: 6,
+                        threshold: 10
+                    },
+                    encryption: {
+                        enabled: false,
+                        algorithm: 'AES-256-GCM'
+                    },
+                    validation: {
+                        integrityCheck: true,
+                        checksumVerification: true,
+                        schemaValidation: true
+                    }
+                };
+                this.initialized = false;
+            }
+
+            async initialize() {
+                console.log('Initializing Data Recovery Service...');
+                this.initialized = true;
+
+                // Load saved data
+                const savedPoints = mockLocalStorage.getItem('cardall_recovery_points');
+                if (savedPoints) {
+                    try {
+                        this.recoveryPoints = JSON.parse(savedPoints);
+                    } catch (error) {
+                        console.error('Failed to parse saved recovery points:', error);
+                        this.recoveryPoints = [];
+                    }
+                }
+
+                console.log('Data Recovery Service initialized');
+            }
+
+            async createRecoveryPoint(type = 'manual', description) {
+                if (!this.initialized) {
+                    throw new Error('Service not initialized');
+                }
+
+                const startTime = performance.now();
+
+                // Get current data
+                const adapter = mockUniversalStorageAdapter.getInstance();
+                const [cards, folders, tags, settings] = await Promise.all([
+                    adapter.getCards(),
+                    adapter.getFolders(),
+                    adapter.getTags(),
+                    adapter.getSettings()
+                ]);
+
+                const recoveryPoint = {
+                    id: `rp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    timestamp: Date.now(),
+                    type,
+                    description: description || this.getDefaultDescription(type),
+                    data: {
+                        cards,
+                        folders,
+                        tags,
+                        settings,
+                        version: '1.0',
+                        schema: 'cardall-v1'
+                    },
+                    metadata: {
+                        createdby: 'user',
+                        reason: description || '',
+                        tags: this.generateTags(type),
+                        storageLocation: 'localStorage',
+                        estimatedDataSize: JSON.stringify({ cards, folders, tags, settings }).length
+                    },
+                    checksum: this.calculateChecksum({ cards, folders, tags, settings }),
+                    size: JSON.stringify({ cards, folders, tags, settings }).length
+                };
+
+                this.recoveryPoints.push(recoveryPoint);
+                this.saveRecoveryPoints();
+
+                const duration = performance.now() - startTime;
+                mockStorageMonitorService.recordOperation(
+                    'write',
+                    'create_recovery_point',
+                    duration,
+                    true,
+                    recoveryPoint.size,
+                    undefined,
+                    { recoveryPointId: recoveryPoint.id, type }
+                );
+
+                console.log('Recovery point created:', recoveryPoint);
+                return recoveryPoint;
+            }
+
+            async recoverFromPoint(recoveryPointId, options = {}) {
+                if (!this.initialized) {
+                    throw new Error('Service not initialized');
+                }
+
+                const startTime = performance.now();
+                const recoveryPoint = this.recoveryPoints.find(rp => rp.id === recoveryPointId);
+                if (!recoveryPoint) {
+                    throw new Error(`Recovery point not found: ${recoveryPointId}`);
+                }
+
+                const adapter = mockUniversalStorageAdapter.getInstance();
+
+                // Create backup if requested
+                if (options.backupBeforeRecovery !== false) {
+                    await this.createRecoveryPoint('auto', `Pre-recovery backup for ${recoveryPointId}`);
+                }
+
+                // Perform recovery
+                try {
+                    if (options.targetData?.includes('cards') || !options.targetData) {
+                        await adapter.saveCards(recoveryPoint.data.cards);
+                    }
+                    if (options.targetData?.includes('folders') || !options.targetData) {
+                        await adapter.saveFolders(recoveryPoint.data.folders);
+                    }
+                    if (options.targetData?.includes('tags') || !options.targetData) {
+                        await adapter.saveTags(recoveryPoint.data.tags);
+                    }
+                    if (options.targetData?.includes('settings') || !options.targetData) {
+                        await adapter.saveSettings(recoveryPoint.data.settings);
+                    }
+
+                    const duration = performance.now() - startTime;
+                    const result = {
+                        success: true,
+                        message: 'Recovery completed successfully',
+                        restoredItems: {
+                            cards: recoveryPoint.data.cards.length,
+                            folders: recoveryPoint.data.folders.length,
+                            tags: recoveryPoint.data.tags.length,
+                            settings: true
+                        },
+                        conflicts: [],
+                        warnings: [],
+                        recoveryPoint,
+                        duration
+                    };
+
+                    mockStorageMonitorService.recordOperation(
+                        'write',
+                        'recover_data',
+                        duration,
+                        true,
+                        recoveryPoint.size,
+                        undefined,
+                        { recoveryPointId, itemsRestored: result.restoredItems }
+                    );
+
+                    console.log('Recovery successful:', result);
+                    return result;
+                } catch (error) {
+                    const duration = performance.now() - startTime;
+                    const result = {
+                        success: false,
+                        message: error.message,
+                        restoredItems: { cards: 0, folders: 0, tags: 0, settings: false },
+                        conflicts: [],
+                        warnings: [],
+                        duration
+                    };
+
+                    mockStorageMonitorService.recordOperation(
+                        'write',
+                        'recover_data',
+                        duration,
+                        false,
+                        0,
+                        error.message
+                    );
+
+                    console.error('Recovery failed:', error);
+                    return result;
+                }
+            }
+
+            getRecoveryPoints() {
+                return [...this.recoveryPoints].sort((a, b) => b.timestamp - a.timestamp);
+            }
+
+            getRecoveryPoint(id) {
+                return this.recoveryPoints.find(rp => rp.id === id) || null;
+            }
+
+            async deleteRecoveryPoint(id) {
+                const index = this.recoveryPoints.findIndex(rp => rp.id === id);
+                if (index === -1) {
+                    return false;
+                }
+
+                this.recoveryPoints.splice(index, 1);
+                this.saveRecoveryPoints();
+                return true;
+            }
+
+            getStatistics() {
+                const points = this.recoveryPoints.sort((a, b) => a.timestamp - b.timestamp);
+                const totalSize = this.recoveryPoints.reduce((sum, rp) => sum + rp.size, 0);
+
+                return {
+                    totalRecoveryPoints: this.recoveryPoints.length,
+                    totalSize,
+                    oldestRecoveryPoint: points.length > 0 ? new Date(points[0].timestamp) : null,
+                    newestRecoveryPoint: points.length > 0 ? new Date(points[points.length - 1].timestamp) : null,
+                    recoverySuccessRate: 0.95,
+                    averageRecoveryTime: 1500,
+                    lastRecoveryDate: null,
+                    storageUsage: {
+                        used: totalSize,
+                        total: 50 * 1024 * 1024,
+                        percentage: (totalSize / (50 * 1024 * 1024)) * 100
+                    }
+                };
+            }
+
+            getConfig() {
+                return { ...this.config };
+            }
+
+            async updateConfig(newConfig) {
+                this.config = { ...this.config, ...newConfig };
+                mockLocalStorage.setItem('cardall_recovery_config', JSON.stringify(this.config));
+            }
+
+            async validateRecoveryPoint(recoveryPoint) {
+                // Simple validation - check basic structure
+                return !!recoveryPoint.data && !!recoveryPoint.data.cards;
+            }
+
+            async exportRecoveryPoint(id) {
+                const recoveryPoint = this.recoveryPoints.find(rp => rp.id === id);
+                if (!recoveryPoint) {
+                    throw new Error('Recovery point not found');
+                }
+
+                const exportData = {
+                    version: '1.0',
+                    exportedAt: Date.now(),
+                    recoveryPoint
+                };
+
+                return JSON.stringify(exportData, null, 2);
+            }
+
+            async importRecoveryPoint(exportData) {
+                try {
+                    const parsed = JSON.parse(exportData);
+                    if (!parsed.recoveryPoint || !parsed.version) {
+                        throw new Error('Invalid export format');
+                    }
+
+                    const recoveryPoint = parsed.recoveryPoint;
+                    recoveryPoint.id = `rp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    recoveryPoint.metadata.createdby = 'user';
+                    recoveryPoint.metadata.reason = 'Imported recovery point';
+                    recoveryPoint.timestamp = Date.now();
+
+                    const isValid = await this.validateRecoveryPoint(recoveryPoint);
+                    if (!isValid) {
+                        throw new Error('Invalid recovery point data');
+                    }
+
+                    this.recoveryPoints.push(recoveryPoint);
+                    this.saveRecoveryPoints();
+
+                    return recoveryPoint;
+                } catch (error) {
+                    console.error('Import failed:', error);
+                    throw error;
+                }
+            }
+
+            destroy() {
+                this.initialized = false;
+                this.recoveryPoints = [];
+            }
+
+            // Helper methods
+            getDefaultDescription(type) {
+                const descriptions = {
+                    manual: 'Manual backup',
+                    auto: 'Automatic backup',
+                    migration: 'Pre-migration backup',
+                    integrity_check: 'Pre-integrity check backup'
+                };
+                return descriptions[type] || 'Backup';
+            }
+
+            generateTags(type) {
+                const tagMap = {
+                    manual: ['manual', 'user'],
+                    auto: ['auto', 'scheduled'],
+                    migration: ['migration', 'system'],
+                    integrity_check: ['integrity', 'system']
+                };
+                return tagMap[type] || ['backup'];
+            }
+
+            calculateChecksum(data) {
+                const dataString = JSON.stringify(data);
+                let hash = 0;
+                for (let i = 0; i < dataString.length; i++) {
+                    const char = dataString.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                return hash.toString(36);
+            }
+
+            saveRecoveryPoints() {
+                mockLocalStorage.setItem('cardall_recovery_points', JSON.stringify(this.recoveryPoints));
+            }
+        }
+
+        // Create service instance
+        const dataRecoveryService = new MockDataRecoveryService();
+
+        // Test Component
+        const DataRecoveryTest = () => {
+            const [initialized, setInitialized] = React.useState(false);
+            const [statistics, setStatistics] = React.useState(null);
+            const [recoveryPoints, setRecoveryPoints] = React.useState([]);
+            const [selectedPoint, setSelectedPoint] = React.useState(null);
+            const [isWorking, setIsWorking] = React.useState(false);
+            const [lastResult, setLastResult] = React.useState(null);
+            const [showAdvanced, setShowAdvanced] = React.useState(false);
+
+            React.useEffect(() => {
+                initializeService();
+            }, []);
+
+            const initializeService = async () => {
+                try {
+                    setIsWorking(true);
+                    await dataRecoveryService.initialize();
+                    setInitialized(true);
+                    await loadData();
+                } catch (error) {
+                    console.error('Initialization failed:', error);
+                } finally {
+                    setIsWorking(false);
+                }
+            };
+
+            const loadData = async () => {
+                try {
+                    const [stats, points] = await Promise.all([
+                        dataRecoveryService.getStatistics(),
+                        dataRecoveryService.getRecoveryPoints()
+                    ]);
+                    setStatistics(stats);
+                    setRecoveryPoints(points);
+                } catch (error) {
+                    console.error('Failed to load data:', error);
+                }
+            };
+
+            const createRecoveryPoint = async (type, description) => {
+                try {
+                    setIsWorking(true);
+                    const point = await dataRecoveryService.createRecoveryPoint(type, description);
+                    await loadData();
+                    return point;
+                } catch (error) {
+                    console.error('Failed to create recovery point:', error);
+                    throw error;
+                } finally {
+                    setIsWorking(false);
+                }
+            };
+
+            const recoverFromPoint = async (pointId) => {
+                try {
+                    setIsWorking(true);
+                    const result = await dataRecoveryService.recoverFromPoint(pointId, {
+                        targetData: ['cards', 'folders', 'tags', 'settings'],
+                        mergeStrategy: 'smart_merge',
+                        conflictResolution: 'newer_wins',
+                        backupBeforeRecovery: true,
+                        validateIntegrity: true
+                    });
+                    setLastResult(result);
+                    await loadData();
+                    return result;
+                } catch (error) {
+                    console.error('Recovery failed:', error);
+                    throw error;
+                } finally {
+                    setIsWorking(false);
+                }
+            };
+
+            const deleteRecoveryPoint = async (pointId) => {
+                if (!window.confirm('确定要删除这个恢复点吗？此操作不可撤销。')) {
+                    return;
+                }
+
+                try {
+                    setIsWorking(true);
+                    await dataRecoveryService.deleteRecoveryPoint(pointId);
+                    await loadData();
+                } catch (error) {
+                    console.error('Failed to delete recovery point:', error);
+                } finally {
+                    setIsWorking(false);
+                }
+            };
+
+            const exportRecoveryPoint = async (pointId) => {
+                try {
+                    const exportData = await dataRecoveryService.exportRecoveryPoint(pointId);
+                    const blob = new Blob([exportData], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `recovery-point-${pointId}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error('Export failed:', error);
+                }
+            };
+
+            const importRecoveryPoint = async () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+
+                input.onchange = async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    try {
+                        setIsWorking(true);
+                        const text = await file.text();
+                        await dataRecoveryService.importRecoveryPoint(text);
+                        await loadData();
+                    } catch (error) {
+                        console.error('Import failed:', error);
+                        alert('导入失败：文件格式不正确或数据已损坏');
+                    } finally {
+                        setIsWorking(false);
+                    }
+                };
+
+                input.click();
+            };
+
+            const formatDate = (timestamp) => {
+                return new Date(timestamp).toLocaleString('zh-CN');
+            };
+
+            const formatSize = (bytes) => {
+                if (bytes < 1024) return `${bytes} B`;
+                if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+                return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+            };
+
+            const getTypeColor = (type) => {
+                const colors = {
+                    manual: 'bg-blue-100 text-blue-800',
+                    auto: 'bg-green-100 text-green-800',
+                    migration: 'bg-purple-100 text-purple-800',
+                    integrity_check: 'bg-yellow-100 text-yellow-800'
+                };
+                return colors[type] || 'bg-gray-100 text-gray-800';
+            };
+
+            const getTypeText = (type) => {
+                const texts = {
+                    manual: '手动',
+                    auto: '自动',
+                    migration: '迁移前',
+                    integrity_check: '完整性检查前'
+                };
+                return texts[type] || '未知';
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 py-8">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-900 mb-4">数据恢复系统测试</h1>
+                            <p className="text-lg text-gray-600">
+                                测试智能数据恢复系统的所有功能
+                            </p>
+                        </div>
+
+                        {/* Status */}
+                        {!initialized && (
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="pulse-dot w-3 h-3 bg-yellow-600 rounded-full"></div>
+                                        <span className="text-yellow-800 font-medium">服务未初始化</span>
+                                    </div>
+                                    <button
+                                        onClick={initializeService}
+                                        disabled={isWorking}
+                                        className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 transition-colors"
+                                    >
+                                        {isWorking ? '初始化中...' : '初始化服务'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {initialized && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-3 h-3 bg-green-600 rounded-full"></div>
+                                        <span className="text-green-800 font-medium">服务已就绪</span>
+                                    </div>
+                                    <button
+                                        onClick={() => dataRecoveryService.destroy()}
+                                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                    >
+                                        停止服务
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Statistics */}
+                        {statistics && (
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-900">恢复点总数</h3>
+                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-bold text-blue-600">{statistics.totalRecoveryPoints}</div>
+                                    <div className="text-sm text-gray-500 mt-1">个恢复点</div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-900">总存储大小</h3>
+                                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-bold text-green-600">{formatSize(statistics.totalSize)}</div>
+                                    <div className="text-sm text-gray-500 mt-1">已使用</div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-900">恢复成功率</h3>
+                                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-bold text-purple-600">
+                                        {(statistics.recoverySuccessRate * 100).toFixed(0)}%
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-1">成功率</div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-semibold text-gray-900">存储使用率</h3>
+                                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-bold text-orange-600">
+                                        {statistics.storageUsage.percentage.toFixed(1)}%
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-1">使用率</div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="bg-white rounded-lg shadow p-6 mb-8">
+                            <h2 className="text-xl font-semibold text-gray-900 mb-4">快速操作</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <button
+                                    onClick={() => createRecoveryPoint('manual', '手动备份测试')}
+                                    disabled={isWorking || !initialized}
+                                    className="p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex flex-col items-center space-y-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    <span>创建备份</span>
+                                </button>
+
+                                <button
+                                    onClick={() => createRecoveryPoint('auto', '自动备份测试')}
+                                    disabled={isWorking || !initialized}
+                                    className="p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex flex-col items-center space-y-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    <span>自动备份</span>
+                                </button>
+
+                                <button
+                                    onClick={importRecoveryPoint}
+                                    disabled={isWorking || !initialized}
+                                    className="p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors flex flex-col items-center space-y-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <span>导入备份</span>
+                                </button>
+
+                                <button
+                                    onClick={() => setShowAdvanced(!showAdvanced)}
+                                    disabled={isWorking || !initialized}
+                                    className="p-4 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors flex flex-col items-center space-y-2"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>高级选项</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Recovery Points */}
+                        <div className="bg-white rounded-lg shadow p-6 mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-xl font-semibold text-gray-900">恢复点列表</h2>
+                                <button
+                                    onClick={loadData}
+                                    disabled={isWorking || !initialized}
+                                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                                >
+                                    刷新
+                                </button>
+                            </div>
+
+                            {recoveryPoints.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                    </svg>
+                                    <p className="text-gray-500 text-lg">暂无恢复点</p>
+                                    <p className="text-gray-400">点击上方"创建备份"开始保护您的数据</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {recoveryPoints.map((point) => (
+                                        <div
+                                            key={point.id}
+                                            className="recovery-point-item border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-all"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center space-x-3 mb-2">
+                                                        <span className={`px-2 py-1 text-xs rounded-full ${getTypeColor(point.type)}`}>
+                                                            {getTypeText(point.type)}
+                                                        </span>
+                                                        <span className="text-sm text-gray-600">{formatDate(point.timestamp)}</span>
+                                                        <span className="text-sm text-gray-500">{formatSize(point.size)}</span>
+                                                    </div>
+                                                    <div className="text-sm font-medium text-gray-900 mb-1">
+                                                        {point.description}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        数据: {point.data.cards.length} 卡片, {point.data.folders.length} 文件夹, {point.data.tags.length} 标签
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <button
+                                                        onClick={() => recoverFromPoint(point.id)}
+                                                        disabled={isWorking}
+                                                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        恢复
+                                                    </button>
+                                                    <button
+                                                        onClick={() => exportRecoveryPoint(point.id)}
+                                                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        导出
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteRecoveryPoint(point.id)}
+                                                        disabled={isWorking}
+                                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        删除
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Last Result */}
+                        {lastResult && (
+                            <div className={`rounded-lg p-6 mb-8 fade-in ${
+                                lastResult.success
+                                    ? 'bg-green-50 border border-green-200'
+                                    : 'bg-red-50 border border-red-200'
+                            }`}>
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                        lastResult.success ? 'bg-green-600' : 'bg-red-600'
+                                    }`}>
+                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            {lastResult.success ? (
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            ) : (
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            )}
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 className={`text-lg font-semibold ${
+                                            lastResult.success ? 'text-green-900' : 'text-red-900'
+                                        }`}>
+                                            {lastResult.success ? '恢复成功' : '恢复失败'}
+                                        </h3>
+                                        <p className={`text-sm ${
+                                            lastResult.success ? 'text-green-700' : 'text-red-700'
+                                        }`}>
+                                            {lastResult.message}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {lastResult.success && (
+                                    <div className="grid grid-cols-4 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-green-600">卡片:</span>
+                                            <span className="ml-1 font-medium">{lastResult.restoredItems.cards}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-green-600">文件夹:</span>
+                                            <span className="ml-1 font-medium">{lastResult.restoredItems.folders}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-green-600">标签:</span>
+                                            <span className="ml-1 font-medium">{lastResult.restoredItems.tags}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-green-600">设置:</span>
+                                            <span className="ml-1 font-medium">{lastResult.restoredItems.settings ? '已恢复' : '未恢复'}</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="mt-4 text-sm text-gray-600">
+                                    <span>耗时: </span>
+                                    <span className="font-medium">{lastResult.duration.toFixed(2)}ms</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Advanced Options */}
+                        {showAdvanced && (
+                            <div className="bg-gray-100 rounded-lg p-6 mb-8">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">高级选项</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-2">服务控制</h4>
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={() => dataRecoveryService.destroy()}
+                                                className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                                            >
+                                                销毁服务
+                                            </button>
+                                            <button
+                                                onClick={initializeService}
+                                                className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                                            >
+                                                重新初始化
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="font-medium text-gray-900 mb-2">数据管理</h4>
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={() => {
+                                                    localStorage.clear();
+                                                    loadData();
+                                                }}
+                                                className="w-full px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+                                            >
+                                                清除本地存储
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    const points = dataRecoveryService.getRecoveryPoints();
+                                                    console.log('Recovery points:', points);
+                                                    alert(`当前有 ${points.length} 个恢复点，请查看控制台`);
+                                                }}
+                                                className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                                            >
+                                                调试信息
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Test Instructions */}
+                        <div className="bg-blue-50 rounded-lg p-6">
+                            <h3 className="text-lg font-semibold text-blue-900 mb-3">测试说明</h3>
+                            <div className="space-y-3 text-sm text-blue-800">
+                                <div>
+                                    <h4 className="font-medium mb-1">基本功能测试：</h4>
+                                    <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>点击"初始化服务"启动数据恢复服务</li>
+                                        <li>使用"创建备份"生成不同类型的恢复点</li>
+                                        <li>点击"恢复"测试数据恢复功能</li>
+                                        <li>使用"导出/导入"测试数据迁移</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-medium mb-1">高级功能测试：</h4>
+                                    <ul className="list-disc list-inside space-y-1 ml-4">
+                                        <li>测试不同类型恢复点的创建和管理</li>
+                                        <li>验证恢复操作的完整性和准确性</li>
+                                        <li>测试存储空间管理和清理功能</li>
+                                        <li>检查错误处理和边界情况</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-medium mb-1">监控信息：</h4>
+                                    <p className="ml-4">
+                                        请打开浏览器开发者工具查看控制台日志，了解详细的操作信息。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the component
+        ReactDOM.render(<DataRecoveryTest />, document.getElementById('root'));
+    </script>
+</body>
+</html>
