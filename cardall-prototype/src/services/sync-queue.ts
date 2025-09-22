@@ -1,6 +1,8 @@
 import { db, type SyncOperation } from './database-unified'
 import { localOperationService } from './local-operation'
 import { conflictResolutionEngine } from './conflict-resolution-engine'
+import { conflictResolver, type ConflictResolutionRequest } from './conflict-resolver'
+import { networkManager } from './network-manager'
 
 // ============================================================================
 // 同步队列状态枚举
@@ -32,6 +34,55 @@ export interface QueueOperation {
   status: SyncQueueStatus
   error?: string
   dependencies?: string[] // 依赖的操作ID
+  // 增强的持久化字段
+  processingTime?: number
+  nextRetryTime?: Date
+  operationMetadata?: {
+    createdAt: Date
+    lastAttempt?: Date
+    networkInfo?: {
+      type: string
+      effectiveType?: string
+      downlink?: number
+      rtt?: number
+    }
+    resourceUsage?: {
+      memory: number
+      cpu: number
+    }
+  }
+}
+
+// 操作历史记录接口
+export interface OperationHistory {
+  operationId: string
+  attempts: OperationAttempt[]
+  finalStatus: SyncQueueStatus
+  totalProcessingTime: number
+  createdAt: Date
+  completedAt?: Date
+  errors: string[]
+  successRate: number
+}
+
+export interface OperationAttempt {
+  attemptNumber: number
+  startTime: Date
+  endTime?: Date
+  duration?: number
+  status: SyncQueueStatus
+  error?: string
+  networkInfo?: {
+    type: string
+    effectiveType?: string
+    downlink?: number
+    rtt?: number
+  }
+  resourceUsage?: {
+    memoryBefore: number
+    memoryAfter: number
+    cpuUsage: number
+  }
 }
 
 export interface BatchSyncResult {
@@ -42,6 +93,19 @@ export interface BatchSyncResult {
   errors: string[]
   executionTime: number
   timestamp: Date
+  // 增强的批处理结果
+  processingDetails: {
+    averageOperationTime: number
+    networkConditions: {
+      type: string
+      effectiveType?: string
+      rtt?: number
+    }
+    resourceUsage: {
+      memoryUsed: number
+      cpuUsage: number
+    }
+  }
 }
 
 export interface QueueStats {
@@ -60,10 +124,31 @@ export interface QueueStats {
 export class SyncQueueManager {
   private isProcessing = false
   private processingInterval?: NodeJS.Timeout
-  private retryDelays = [1000, 2000, 5000, 10000, 30000] // 指数退避重试延迟
+  private retryDelays = [1000, 2000, 5000, 10000, 30000, 60000, 120000] // 增强的指数退避重试延迟
   private batchSize = 10 // 每批处理的操作数量
   private maxConcurrentBatches = 3 // 最大并发批处理数
   private currentBatches = 0
+
+  // 增强的持久化和恢复机制
+  private queueStorage = new Map<string, QueueOperation>()
+  private operationHistory = new Map<string, OperationHistory>()
+  private recoveryMode = false
+  private lastPersistenceTime = 0
+  private persistenceInterval = 30000 // 30秒持久化间隔
+
+  // 增强的错误处理
+  private errorThreshold = 5 // 5分钟内错误阈值
+  private recentErrors: Array<{ timestamp: number; error: string; operationId: string }> = []
+  private circuitBreakerOpen = false
+  private circuitBreakerTimeout = 60000 // 1分钟断路器超时
+
+  // 性能监控
+  private performanceMetrics = {
+    totalProcessed: 0,
+    totalFailed: 0,
+    averageProcessingTime: 0,
+    lastResetTime: Date.now()
+  }
   
   // 事件监听器
   private listeners: {
@@ -71,11 +156,17 @@ export class SyncQueueManager {
     onBatchComplete?: (result: BatchSyncResult) => void
     onQueueError?: (error: Error) => void
     onStatusChange?: (stats: QueueStats) => void
+    onRecoveryModeChange?: (recoveryMode: boolean) => void
+    onCircuitBreakerChange?: (isOpen: boolean) => void
+    onPerformanceMetricsUpdate?: (metrics: typeof SyncQueueManager.prototype.performanceMetrics) => void
   } = {}
 
   constructor() {
     this.initializeQueue()
     this.startQueueProcessor()
+    this.initializePersistence()
+    this.initializeCircuitBreaker()
+    this.initializePerformanceMonitoring()
   }
 
   // ============================================================================
@@ -86,11 +177,21 @@ export class SyncQueueManager {
    * 添加操作到同步队列
    */
   async enqueueOperation(operation: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>): Promise<string> {
+    // 检查断路器状态
+    if (this.circuitBreakerOpen) {
+      throw new Error('Circuit breaker is open - queue processing is temporarily suspended')
+    }
+
     const queueOperation: QueueOperation = {
       ...operation,
       id: crypto.randomUUID(),
       status: SyncQueueStatus.PENDING,
-      timestamp: new Date()
+      timestamp: new Date(),
+      operationMetadata: {
+        createdAt: new Date(),
+        networkInfo: await this.getCurrentNetworkInfo(),
+        resourceUsage: this.getCurrentResourceUsage()
+      }
     }
 
     try {
@@ -99,6 +200,10 @@ export class SyncQueueManager {
         await this.validateDependencies(operation.dependencies)
       }
 
+      // 增强的错误处理和验证
+      await this.validateOperation(queueOperation)
+
+      // 持久化到数据库
       await db.syncQueue.add({
         id: queueOperation.id,
         type: operation.type,
@@ -110,11 +215,21 @@ export class SyncQueueManager {
         timestamp: queueOperation.timestamp,
         retryCount: operation.retryCount,
         maxRetries: operation.maxRetries,
-        error: operation.error
+        error: operation.error,
+        // 新增字段
+        processingTime: 0,
+        nextRetryTime: undefined,
+        operationMetadata: queueOperation.operationMetadata
       })
 
+      // 持久化到内存存储
+      this.queueStorage.set(queueOperation.id, queueOperation)
+
+      // 初始化操作历史
+      this.initializeOperationHistory(queueOperation)
+
       this.notifyStatusChange()
-      
+
       // 如果有高优先级操作，立即触发处理
       if (operation.priority === 'high' && !this.isProcessing) {
         this.processNextBatch()
@@ -122,7 +237,7 @@ export class SyncQueueManager {
 
       return queueOperation.id
     } catch (error) {
-      console.error('Failed to enqueue operation:', error)
+      await this.handleError(error as Error, 'enqueueOperation', queueOperation.id)
       throw error
     }
   }
@@ -131,11 +246,24 @@ export class SyncQueueManager {
    * 批量添加操作到同步队列
    */
   async enqueueBatch(operations: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>[]): Promise<string[]> {
+    // 检查断路器状态
+    if (this.circuitBreakerOpen) {
+      throw new Error('Circuit breaker is open - queue processing is temporarily suspended')
+    }
+
+    const networkInfo = await this.getCurrentNetworkInfo()
+    const resourceUsage = this.getCurrentResourceUsage()
+
     const queueOperations = operations.map(op => ({
       ...op,
       id: crypto.randomUUID(),
       status: SyncQueueStatus.PENDING as SyncQueueStatus,
-      timestamp: new Date()
+      timestamp: new Date(),
+      operationMetadata: {
+        createdAt: new Date(),
+        networkInfo,
+        resourceUsage
+      }
     }))
 
     try {
@@ -143,11 +271,17 @@ export class SyncQueueManager {
       const allDependencies = queueOperations
         .filter(op => op.dependencies && op.dependencies.length > 0)
         .flatMap(op => op.dependencies!)
-      
+
       if (allDependencies.length > 0) {
         await this.validateDependencies(allDependencies)
       }
 
+      // 增强的批量验证
+      for (const operation of queueOperations) {
+        await this.validateOperation(operation)
+      }
+
+      // 批量持久化到数据库
       const syncOperations = queueOperations.map(op => ({
         id: op.id,
         type: op.type,
@@ -159,16 +293,34 @@ export class SyncQueueManager {
         timestamp: op.timestamp,
         retryCount: op.retryCount,
         maxRetries: op.maxRetries,
-        error: op.error
+        error: op.error,
+        // 新增字段
+        processingTime: 0,
+        nextRetryTime: undefined,
+        operationMetadata: op.operationMetadata
       }))
 
       await db.syncQueue.bulkAdd(syncOperations)
+
+      // 批量持久化到内存存储
+      queueOperations.forEach(op => {
+        this.queueStorage.set(op.id, op)
+        this.initializeOperationHistory(op)
+      })
+
       this.notifyStatusChange()
+
+      // 如果有高优先级操作，立即触发处理
+      const hasHighPriority = queueOperations.some(op => op.priority === 'high')
+      if (hasHighPriority && !this.isProcessing) {
+        this.processNextBatch()
+      }
 
       // 返回操作ID列表
       return queueOperations.map(op => op.id)
     } catch (error) {
-      console.error('Failed to enqueue batch operations:', error)
+      // 部分失败处理
+      await this.handleBatchError(error as Error, 'enqueueBatch', queueOperations)
       throw error
     }
   }
@@ -344,6 +496,8 @@ export class SyncQueueManager {
       }
 
       const executionTime = performance.now() - startTime
+      const networkInfo = await this.getCurrentNetworkInfo()
+      const resourceUsage = this.getCurrentResourceUsage()
 
       return {
         batchId,
@@ -352,7 +506,15 @@ export class SyncQueueManager {
         failed: failed.length,
         errors,
         executionTime,
-        timestamp: new Date()
+        timestamp: new Date(),
+        processingDetails: {
+          averageOperationTime: executionTime / operations.length,
+          networkConditions: networkInfo,
+          resourceUsage: {
+            memoryUsed: resourceUsage.memory,
+            cpuUsage: resourceUsage.cpu
+          }
+        }
       }
     } catch (error) {
       const executionTime = performance.now() - startTime
@@ -363,6 +525,9 @@ export class SyncQueueManager {
         await this.handleOperationFailure(operation, errorMsg)
       }
 
+      const networkInfo = await this.getCurrentNetworkInfo()
+      const resourceUsage = this.getCurrentResourceUsage()
+
       return {
         batchId,
         operations: operations.length,
@@ -370,7 +535,15 @@ export class SyncQueueManager {
         failed: operations.length,
         errors: [errorMsg],
         executionTime,
-        timestamp: new Date()
+        timestamp: new Date(),
+        processingDetails: {
+          averageOperationTime: executionTime / operations.length,
+          networkConditions: networkInfo,
+          resourceUsage: {
+            memoryUsed: resourceUsage.memory,
+            cpuUsage: resourceUsage.cpu
+          }
+        }
       }
     }
   }
@@ -406,7 +579,41 @@ export class SyncQueueManager {
     recommendations: string[]
   }> {
     try {
-      // 获取同一实体的最近操作
+      // 使用新的冲突预测功能
+      const cloudData = await this.fetchCloudData(operation)
+      const localData = await this.fetchLocalData(operation)
+
+      const prediction = await conflictResolver.predictConflicts(
+        localData,
+        cloudData,
+        operation.entity,
+        operation.userId || ''
+      )
+
+      // 基于预测结果映射到现有的风险等级
+      let highRisk = 0
+      let mediumRisk = 0
+      let lowRisk = 0
+
+      switch (prediction.riskLevel) {
+        case 'critical':
+          highRisk = 3
+          mediumRisk = 2
+          break
+        case 'high':
+          highRisk = 2
+          mediumRisk = 1
+          break
+        case 'medium':
+          mediumRisk = 2
+          lowRisk = 1
+          break
+        case 'low':
+          lowRisk = 1
+          break
+      }
+
+      // 结合传统的队列分析
       const recentOperations = await db.syncQueue
         .where('entityId')
         .equals(operation.entityId)
@@ -415,54 +622,18 @@ export class SyncQueueManager {
           return timeDiff < 5 * 60 * 1000 && op.id !== operation.id
         })
         .toArray()
-      
-      let highRisk = 0
-      let mediumRisk = 0
-      const lowRisk = 0
-      const recommendations: string[] = []
-      
+
       // 分析并发操作风险
       if (recentOperations.length > 2) {
         highRisk++
-        recommendations.push('Multiple concurrent operations on same entity')
       }
-      
-      // 分析用户操作频率
-      const userRecentOps = await db.syncQueue
-        .where('userId')
-        .equals(operation.userId)
-        .filter(op => {
-          const timeDiff = Date.now() - op.timestamp.getTime()
-          return timeDiff < 60 * 1000
-        })
-        .toArray()
-      
-      if (userRecentOps.length > 10) {
-        highRisk++
-        recommendations.push('User operating too frequently')
+
+      return {
+        highRisk,
+        mediumRisk,
+        lowRisk,
+        recommendations: prediction.recommendations
       }
-      
-      // 分析历史失败率
-      const failedOps = await db.syncQueue
-        .where('entity')
-        .equals(operation.entity)
-        .filter(op => op.status === 'failed' as any)
-        .toArray()
-      
-      const failureRate = failedOps.length / Math.max(1, await db.syncQueue.count())
-      
-      if (failureRate > 0.3) {
-        mediumRisk++
-        recommendations.push(`High failure rate (${(failureRate * 100).toFixed(1)}%) for entity type`)
-      }
-      
-      // 根据操作类型分析风险
-      if (operation.type === 'delete') {
-        mediumRisk++
-        recommendations.push('Delete operations require extra caution')
-      }
-      
-      return { highRisk, mediumRisk, lowRisk, recommendations }
     } catch (error) {
       console.error('Failed to analyze operation conflicts:', error)
       return { highRisk: 0, mediumRisk: 1, lowRisk: 0, recommendations: ['Unable to analyze conflicts'] }
@@ -473,59 +644,52 @@ export class SyncQueueManager {
    * 带冲突解决的同步操作执行
    */
   private async executeWithConflictResolution(
-    operation: SyncOperation, 
+    operation: SyncOperation,
     conflictAnalysis: any
   ): Promise<boolean> {
     try {
-      // 构建冲突上下文
-      const conflictContext = {
-        userId: operation.userId || '',
-        timestamp: new Date(),
-        networkInfo: { effectiveType: '4g' }, // 简化网络信息
-        deviceInfo: { deviceType: 'unknown' },
-        userPreferences: {},
-        syncHistory: []
-      }
-      
       // 获取当前云端数据（模拟）
       const cloudData = await this.fetchCloudData(operation)
-      
+
       // 获取本地数据
       const localData = await this.fetchLocalData(operation)
-      
-      // 使用冲突解决引擎检测和解决冲突
-      const conflicts = await conflictResolutionEngine.detectAllConflicts(
+
+      // 使用新的冲突解析器
+      const conflictRequest: ConflictResolutionRequest = {
         localData,
         cloudData,
-        operation.entity,
-        operation.entityId,
-        conflictContext
-      )
-      
-      if (conflicts.length > 0) {
-        console.log(`Detected ${conflicts.length} conflicts for operation ${operation.id}`)
-        
-        // 尝试自动解决冲突
-        const resolvedConflicts = await conflictResolutionEngine.resolveConflicts(
-          conflicts,
-          conflictContext
-        )
-        
-        // 检查是否所有冲突都已解决
-        const unresolvedConflicts = resolvedConflicts.filter(c => c.resolution === 'manual')
-        
-        if (unresolvedConflicts.length > 0) {
-          console.warn(`Unable to auto-resolve ${unresolvedConflicts.length} conflicts for operation ${operation.id}`)
+        entityType: operation.entity as 'card' | 'folder' | 'tag' | 'image',
+        entityId: operation.entityId,
+        userId: operation.userId || '',
+        context: {
+          networkInfo: { effectiveType: '4g' }, // 简化网络信息
+          deviceInfo: { deviceType: 'unknown' }
+        }
+      }
+
+      const resolutionResult = await conflictResolver.resolveConflicts(conflictRequest)
+
+      if (resolutionResult.success) {
+        if (resolutionResult.conflicts.length > 0) {
+          console.log(`Successfully resolved ${resolutionResult.conflicts.length} conflicts for operation ${operation.id} using strategy: ${resolutionResult.resolutionStrategy}`)
+        }
+
+        // 使用解决后的数据执行同步
+        return await this.performSyncOperation({
+          ...operation,
+          data: resolutionResult.resolvedData
+        })
+      } else {
+        console.warn(`Unable to auto-resolve conflicts for operation ${operation.id}. Strategy: ${resolutionResult.resolutionStrategy}, Confidence: ${resolutionResult.confidence}`)
+
+        // 如果需要用户操作，标记操作为等待状态
+        if (resolutionResult.userActionRequired) {
+          await this.updateOperationStatus(operation.id, SyncQueueStatus.RETRYING, 'Awaiting user conflict resolution')
           return false
         }
-        
-        // 使用解决后的数据执行同步
-        const resolvedData = this.extractResolvedData(resolvedConflicts, localData, cloudData)
-        return await this.performSyncOperation({ ...operation, data: resolvedData })
+
+        return false
       }
-      
-      // 无冲突，正常执行
-      return await this.performSyncOperation(operation)
     } catch (error) {
       console.error(`Conflict resolution failed for operation ${operation.id}:`, error)
       return false
@@ -624,28 +788,73 @@ export class SyncQueueManager {
    */
   private async handleOperationFailure(operation: SyncOperation, error: string): Promise<void> {
     const newRetryCount = operation.retryCount + 1
-    
+    const queueOperation = this.queueStorage.get(operation.id)
+
+    // 记录操作尝试失败
+    if (queueOperation) {
+      this.recordOperationAttempt(
+        queueOperation,
+        newRetryCount,
+        new Date(),
+        undefined,
+        error
+      )
+    }
+
+    // 更新性能指标
+    this.updatePerformanceMetrics(0, false)
+
     if (newRetryCount >= operation.maxRetries) {
       // 达到最大重试次数，标记为失败
       await this.updateOperationStatus(operation.id, SyncQueueStatus.FAILED, error)
+
+      // 记录最终失败
+      if (queueOperation) {
+        const history = this.operationHistory.get(operation.id)
+        if (history) {
+          history.finalStatus = SyncQueueStatus.FAILED
+          history.completedAt = new Date()
+          history.errors.push(error)
+        }
+      }
     } else {
       // 计算下次重试时间
       const retryDelay = this.retryDelays[Math.min(newRetryCount - 1, this.retryDelays.length - 1)]
-      
+      const nextRetryTime = new Date(Date.now() + retryDelay)
+
       // 标记为重试中，并设置延迟
       await db.syncQueue.where('id').equals(operation.id).modify({
         retryCount: newRetryCount,
         status: 'retrying' as any,
         error,
-        // 可以添加下次重试时间字段
+        nextRetryTime
       })
-      
+
+      // 更新内存存储
+      if (queueOperation) {
+        queueOperation.retryCount = newRetryCount
+        queueOperation.status = SyncQueueStatus.RETRYING
+        queueOperation.error = error
+        queueOperation.nextRetryTime = nextRetryTime
+        this.queueStorage.set(operation.id, queueOperation)
+      }
+
       // 延迟后重新加入队列
       setTimeout(async () => {
-        await db.syncQueue.where('id').equals(operation.id).modify({
-          status: 'pending' as any
-        })
-        this.notifyStatusChange()
+        try {
+          await db.syncQueue.where('id').equals(operation.id).modify({
+            status: 'pending' as any
+          })
+
+          if (queueOperation) {
+            queueOperation.status = SyncQueueStatus.PENDING
+            this.queueStorage.set(operation.id, queueOperation)
+          }
+
+          this.notifyStatusChange()
+        } catch (error) {
+          console.error('Failed to retry operation:', error)
+        }
       }, retryDelay)
     }
   }
@@ -853,29 +1062,29 @@ export class SyncQueueManager {
   private initializeQueue(): void {
     // 初始化时检查是否有未完成的重试操作
     this.checkRetryOperations()
+
+    // 尝试恢复队列状态
+    this.recoverQueueState().catch(console.error)
   }
 
   private startQueueProcessor(): void {
     // 定期处理队列
     this.processingInterval = setInterval(() => {
-      if (!this.isProcessing) {
+      if (!this.isProcessing && !this.circuitBreakerOpen) {
         this.processNextBatch()
       }
     }, 5000) // 每5秒检查一次队列
-    
+
     // 定期优化队列处理策略（每2分钟）
     setInterval(() => {
       this.optimizeQueueProcessing().catch(console.error)
     }, 120000)
 
-    // 网络恢复时立即处理
-    if (typeof window !== 'undefined' && window.addEventListener) {
-      window.addEventListener('online', () => {
-        if (!this.isProcessing) {
-          this.processNextBatch()
-        }
-      })
-    }
+    // 网络状态监听
+    this.setupNetworkListeners()
+
+    // 内存和资源监控
+    this.setupResourceMonitoring()
   }
 
   private async checkRetryOperations(): Promise<void> {
@@ -943,7 +1152,488 @@ export class SyncQueueManager {
       retryCount: syncOp.retryCount,
       maxRetries: syncOp.maxRetries,
       status: syncOp.status as SyncQueueStatus,
-      error: syncOp.error
+      error: syncOp.error,
+      processingTime: syncOp.processingTime,
+      nextRetryTime: syncOp.nextRetryTime,
+      operationMetadata: syncOp.operationMetadata
+    }
+  }
+
+  // ============================================================================
+  // 增强的错误处理和持久化方法
+  // ============================================================================
+
+  /**
+   * 初始化持久化机制
+   */
+  private initializePersistence(): void {
+    // 定期持久化队列状态
+    setInterval(() => {
+      this.persistQueueState().catch(console.error)
+    }, this.persistenceInterval)
+
+    // 页面卸载时保存状态
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', () => {
+        this.persistQueueState().catch(console.error)
+      })
+    }
+  }
+
+  /**
+   * 初始化断路器
+   */
+  private initializeCircuitBreaker(): void {
+    // 定期检查错误状态
+    setInterval(() => {
+      this.checkCircuitBreaker().catch(console.error)
+    }, 60000) // 每分钟检查一次
+  }
+
+  /**
+   * 初始化性能监控
+   */
+  private initializePerformanceMonitoring(): void {
+    // 定期重置性能指标
+    setInterval(() => {
+      this.resetPerformanceMetrics()
+    }, 300000) // 每5分钟重置一次
+  }
+
+  /**
+   * 获取当前网络信息
+   */
+  private async getCurrentNetworkInfo(): Promise<{
+    type: string
+    effectiveType?: string
+    downlink?: number
+    rtt?: number
+  }> {
+    try {
+      const networkStatus = await networkManager.getNetworkStatus()
+      return {
+        type: networkStatus.type,
+        effectiveType: networkStatus.effectiveType,
+        downlink: networkStatus.downlink,
+        rtt: networkStatus.rtt
+      }
+    } catch (error) {
+      console.warn('Failed to get network info:', error)
+      return { type: 'unknown' }
+    }
+  }
+
+  /**
+   * 获取当前资源使用情况
+   */
+  private getCurrentResourceUsage(): {
+    memory: number
+    cpu: number
+  } {
+    try {
+      if (typeof performance !== 'undefined' && 'memory' in performance) {
+        const memory = (performance as any).memory
+        return {
+          memory: memory.usedJSHeapSize || 0,
+          cpu: 0 // 简化的CPU使用率
+        }
+      }
+      return { memory: 0, cpu: 0 }
+    } catch (error) {
+      return { memory: 0, cpu: 0 }
+    }
+  }
+
+  /**
+   * 验证操作
+   */
+  private async validateOperation(operation: QueueOperation): Promise<void> {
+    // 检查必要字段
+    if (!operation.type || !operation.entity || !operation.entityId) {
+      throw new Error('Invalid operation: missing required fields')
+    }
+
+    // 检查数据大小
+    const dataSize = JSON.stringify(operation.data).length
+    if (dataSize > 1024 * 1024) { // 1MB限制
+      throw new Error('Operation data too large')
+    }
+
+    // 检查重试次数
+    if (operation.retryCount > operation.maxRetries) {
+      throw new Error('Operation retry count exceeds maximum')
+    }
+  }
+
+  /**
+   * 初始化操作历史
+   */
+  private initializeOperationHistory(operation: QueueOperation): void {
+    const history: OperationHistory = {
+      operationId: operation.id,
+      attempts: [],
+      finalStatus: operation.status,
+      totalProcessingTime: 0,
+      createdAt: operation.timestamp,
+      errors: [],
+      successRate: 0
+    }
+
+    this.operationHistory.set(operation.id, history)
+  }
+
+  /**
+   * 统一错误处理
+   */
+  private async handleError(error: Error, operation: string, operationId?: string): Promise<void> {
+    console.error(`Error in ${operation}:`, error)
+
+    // 记录错误
+    this.recentErrors.push({
+      timestamp: Date.now(),
+      error: error.message,
+      operationId: operationId || 'unknown'
+    })
+
+    // 清理旧错误记录
+    const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+    this.recentErrors = this.recentErrors.filter(e => e.timestamp > fiveMinutesAgo)
+
+    // 检查是否需要打开断路器
+    if (this.recentErrors.length >= this.errorThreshold) {
+      await this.openCircuitBreaker()
+    }
+
+    // 通知错误事件
+    if (this.listeners.onQueueError) {
+      this.listeners.onQueueError(error)
+    }
+  }
+
+  /**
+   * 批量错误处理
+   */
+  private async handleBatchError(error: Error, operation: string, operations: QueueOperation[]): Promise<void> {
+    console.error(`Error in ${operation}:`, error)
+
+    // 记录批量错误
+    operations.forEach(op => {
+      this.recentErrors.push({
+        timestamp: Date.now(),
+        error: error.message,
+        operationId: op.id
+      })
+    })
+
+    // 检查断路器
+    if (this.recentErrors.length >= this.errorThreshold) {
+      await this.openCircuitBreaker()
+    }
+
+    if (this.listeners.onQueueError) {
+      this.listeners.onQueueError(error)
+    }
+  }
+
+  /**
+   * 打开断路器
+   */
+  private async openCircuitBreaker(): Promise<void> {
+    if (!this.circuitBreakerOpen) {
+      this.circuitBreakerOpen = true
+      console.warn('Circuit breaker opened - queue processing suspended')
+
+      if (this.listeners.onCircuitBreakerChange) {
+        this.listeners.onCircuitBreakerChange(true)
+      }
+
+      // 设置定时关闭断路器
+      setTimeout(() => {
+        this.closeCircuitBreaker().catch(console.error)
+      }, this.circuitBreakerTimeout)
+    }
+  }
+
+  /**
+   * 关闭断路器
+   */
+  private async closeCircuitBreaker(): Promise<void> {
+    if (this.circuitBreakerOpen) {
+      this.circuitBreakerOpen = false
+      console.log('Circuit breaker closed - queue processing resumed')
+
+      if (this.listeners.onCircuitBreakerChange) {
+        this.listeners.onCircuitBreakerChange(false)
+      }
+
+      // 重新开始处理队列
+      this.processNextBatch()
+    }
+  }
+
+  /**
+   * 检查断路器状态
+   */
+  private async checkCircuitBreaker(): Promise<void> {
+    const recentErrors = this.recentErrors.filter(e =>
+      Date.now() - e.timestamp < 5 * 60 * 1000
+    )
+
+    if (recentErrors.length < this.errorThreshold && this.circuitBreakerOpen) {
+      await this.closeCircuitBreaker()
+    }
+  }
+
+  /**
+   * 持久化队列状态
+   */
+  private async persistQueueState(): Promise<void> {
+    try {
+      const now = Date.now()
+      if (now - this.lastPersistenceTime < this.persistenceInterval) {
+        return
+      }
+
+      // 保存队列状态到本地存储
+      const state = {
+        queueOperations: Array.from(this.queueStorage.values()),
+        operationHistory: Array.from(this.operationHistory.values()),
+        performanceMetrics: this.performanceMetrics,
+        timestamp: now
+      }
+
+      localStorage.setItem('syncQueueState', JSON.stringify(state))
+      this.lastPersistenceTime = now
+
+      // 定期清理旧的历史记录
+      await this.cleanupOldHistory()
+    } catch (error) {
+      console.error('Failed to persist queue state:', error)
+    }
+  }
+
+  /**
+   * 恢复队列状态
+   */
+  private async recoverQueueState(): Promise<void> {
+    try {
+      const savedState = localStorage.getItem('syncQueueState')
+      if (!savedState) return
+
+      const state = JSON.parse(savedState)
+
+      // 恢复队列操作
+      state.queueOperations.forEach((op: QueueOperation) => {
+        this.queueStorage.set(op.id, op)
+      })
+
+      // 恢复操作历史
+      state.operationHistory.forEach((history: OperationHistory) => {
+        this.operationHistory.set(history.operationId, history)
+      })
+
+      // 恢复性能指标
+      this.performanceMetrics = state.performanceMetrics
+
+      this.recoveryMode = true
+      console.log('Queue state recovered from persistence')
+
+      if (this.listeners.onRecoveryModeChange) {
+        this.listeners.onRecoveryModeChange(true)
+      }
+
+      // 开始恢复处理
+      setTimeout(() => {
+        this.recoveryMode = false
+        if (this.listeners.onRecoveryModeChange) {
+          this.listeners.onRecoveryModeChange(false)
+        }
+        this.processNextBatch()
+      }, 5000)
+    } catch (error) {
+      console.error('Failed to recover queue state:', error)
+    }
+  }
+
+  /**
+   * 清理旧的历史记录
+   */
+  private async cleanupOldHistory(): Promise<void> {
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+
+    for (const [operationId, history] of this.operationHistory.entries()) {
+      if (history.createdAt.getTime() < oneWeekAgo) {
+        this.operationHistory.delete(operationId)
+      }
+    }
+  }
+
+  /**
+   * 重置性能指标
+   */
+  private resetPerformanceMetrics(): void {
+    const oldMetrics = { ...this.performanceMetrics }
+    this.performanceMetrics = {
+      totalProcessed: 0,
+      totalFailed: 0,
+      averageProcessingTime: 0,
+      lastResetTime: Date.now()
+    }
+
+    if (this.listeners.onPerformanceMetricsUpdate) {
+      this.listeners.onPerformanceMetricsUpdate(this.performanceMetrics)
+    }
+  }
+
+  /**
+   * 更新性能指标
+   */
+  private updatePerformanceMetrics(processingTime: number, success: boolean): void {
+    this.performanceMetrics.totalProcessed++
+    if (!success) {
+      this.performanceMetrics.totalFailed++
+    }
+
+    // 更新平均处理时间
+    const totalOps = this.performanceMetrics.totalProcessed
+    const currentAvg = this.performanceMetrics.averageProcessingTime
+    this.performanceMetrics.averageProcessingTime =
+      (currentAvg * (totalOps - 1) + processingTime) / totalOps
+
+    if (this.listeners.onPerformanceMetricsUpdate) {
+      this.listeners.onPerformanceMetricsUpdate(this.performanceMetrics)
+    }
+  }
+
+  /**
+   * 设置网络监听器
+   */
+  private setupNetworkListeners(): void {
+    // 监听网络状态变化
+    const handleNetworkChange = async (status: any) => {
+      if (status.isOnline && !this.isProcessing && !this.circuitBreakerOpen) {
+        console.log('Network restored, processing queue')
+        this.processNextBatch()
+      }
+
+      // 根据网络状态调整队列策略
+      await this.adjustQueueForNetworkConditions(status)
+    }
+
+    // 注册网络监听器
+    if (typeof window !== 'undefined' && window.addEventListener) {
+      window.addEventListener('online', () => {
+        handleNetworkChange({ isOnline: true }).catch(console.error)
+      })
+
+      window.addEventListener('offline', () => {
+        handleNetworkChange({ isOnline: false }).catch(console.error)
+      })
+    }
+
+    // 使用NetworkManager的监听器
+    try {
+      networkManager.addListener('statusChange', handleNetworkChange)
+    } catch (error) {
+      console.warn('Failed to setup network manager listeners:', error)
+    }
+  }
+
+  /**
+   * 设置资源监控
+   */
+  private setupResourceMonitoring(): void {
+    // 内存使用监控
+    setInterval(() => {
+      this.checkResourceUsage().catch(console.error)
+    }, 30000) // 每30秒检查一次
+
+    // 监听页面可见性变化
+    if (typeof document !== 'undefined' && document.addEventListener) {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !this.isProcessing) {
+          this.processNextBatch()
+        }
+      })
+    }
+  }
+
+  /**
+   * 检查资源使用情况
+   */
+  private async checkResourceUsage(): Promise<void> {
+    try {
+      const resourceUsage = this.getCurrentResourceUsage()
+
+      // 内存使用过高警告
+      if (resourceUsage.memory > 100 * 1024 * 1024) { // 100MB
+        console.warn('High memory usage detected:', resourceUsage.memory)
+
+        // 触发内存优化
+        await this.optimizeMemoryUsage()
+      }
+
+      // 检查队列处理器状态
+      const stats = await this.getQueueStats()
+      if (stats.totalOperations > 500) {
+        console.warn('Large queue detected:', stats.totalOperations)
+
+        // 触发队列优化
+        await this.optimizeQueueProcessing()
+      }
+    } catch (error) {
+      console.error('Failed to check resource usage:', error)
+    }
+  }
+
+  /**
+   * 优化内存使用
+   */
+  private async optimizeMemoryUsage(): Promise<void> {
+    try {
+      // 清理旧的历史记录
+      await this.cleanupOldHistory()
+
+      // 清理完成的操作
+      const cleaned = await this.cleanupCompletedOperations(3600000) // 1小时前
+      if (cleaned > 0) {
+        console.log(`Cleaned up ${cleaned} completed operations for memory optimization`)
+      }
+
+      // 强制垃圾回收（如果可用）
+      if (typeof (global as any).gc === 'function') {
+        (global as any).gc()
+      }
+    } catch (error) {
+      console.error('Failed to optimize memory usage:', error)
+    }
+  }
+
+  /**
+   * 根据网络条件调整队列
+   */
+  private async adjustQueueForNetworkConditions(networkStatus: any): Promise<void> {
+    try {
+      if (!networkStatus.isOnline) {
+        // 离线时暂停高优先级以外的操作
+        console.log('Offline mode activated')
+        return
+      }
+
+      // 根据网络类型调整处理策略
+      if (networkStatus.effectiveType === 'slow-2g' || networkStatus.effectiveType === '2g') {
+        // 慢速网络：减少批量大小，增加重试延迟
+        this.batchSize = Math.max(3, Math.floor(this.batchSize * 0.5))
+        this.retryDelays = this.retryDelays.map(delay => delay * 2)
+        console.log('Adjusted queue for slow network conditions')
+      } else if (networkStatus.effectiveType === '4g' || networkStatus.effectiveType === 'wifi') {
+        // 快速网络：恢复正常设置
+        this.batchSize = 10
+        this.retryDelays = [1000, 2000, 5000, 10000, 30000, 60000, 120000]
+        console.log('Restored normal queue settings for good network conditions')
+      }
+    } catch (error) {
+      console.error('Failed to adjust queue for network conditions:', error)
     }
   }
 
@@ -1501,6 +2191,209 @@ export class SyncQueueManager {
     
     return bottlenecks
   }
+
+  // ============================================================================
+  // 增强的公共方法
+  // ============================================================================
+
+  /**
+   * 获取操作历史
+   */
+  async getOperationHistory(operationId: string): Promise<OperationHistory | undefined> {
+    return this.operationHistory.get(operationId)
+  }
+
+  /**
+   * 获取所有操作历史
+   */
+  async getAllOperationHistory(filters?: {
+    status?: SyncQueueStatus
+    entityType?: string
+    timeRange?: {
+      start: Date
+      end: Date
+    }
+    limit?: number
+  }): Promise<OperationHistory[]> {
+    let history = Array.from(this.operationHistory.values())
+
+    if (filters?.status) {
+      history = history.filter(h => h.finalStatus === filters.status)
+    }
+
+    if (filters?.entityType) {
+      // 需要从队列操作中获取实体类型信息
+      history = history.filter(h => {
+        const operation = this.queueStorage.get(h.operationId)
+        return operation?.entity === filters.entityType
+      })
+    }
+
+    if (filters?.timeRange) {
+      history = history.filter(h =>
+        h.createdAt >= filters.timeRange!.start &&
+        h.createdAt <= filters.timeRange!.end
+      )
+    }
+
+    if (filters?.limit) {
+      history = history.slice(0, filters.limit)
+    }
+
+    // 按创建时间倒序排列
+    return history.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  }
+
+  /**
+   * 获取性能指标
+   */
+  async getPerformanceMetrics(): Promise<typeof this.performanceMetrics> {
+    return { ...this.performanceMetrics }
+  }
+
+  /**
+   * 获取队列健康状态
+   */
+  async getQueueHealth(): Promise<{
+    status: 'healthy' | 'warning' | 'critical'
+    issues: string[]
+    recommendations: string[]
+    circuitBreaker: boolean
+    recoveryMode: boolean
+    networkStatus: any
+    resourceUsage: {
+      memory: number
+      cpu: number
+    }
+  }> {
+    const stats = await this.getQueueStats()
+    const networkStatus = await networkManager.getNetworkStatus()
+    const resourceUsage = this.getCurrentResourceUsage()
+
+    const issues: string[] = []
+    const recommendations: string[] = []
+    let status: 'healthy' | 'warning' | 'critical' = 'healthy'
+
+    // 检查队列积压
+    if (stats.totalOperations > 1000) {
+      status = 'critical'
+      issues.push('Queue backlog too large')
+      recommendations.push('Consider increasing processing capacity')
+    } else if (stats.totalOperations > 500) {
+      status = 'warning'
+      issues.push('Queue backlog growing')
+      recommendations.push('Monitor queue growth')
+    }
+
+    // 检查失败率
+    const failureRate = stats.byStatus[SyncQueueStatus.FAILED] / Math.max(1, stats.totalOperations)
+    if (failureRate > 0.3) {
+      status = 'critical'
+      issues.push('High failure rate detected')
+      recommendations.push('Review error handling and retry logic')
+    } else if (failureRate > 0.1) {
+      status = 'warning'
+      issues.push('Elevated failure rate')
+      recommendations.push('Monitor error patterns')
+    }
+
+    // 检查断路器状态
+    if (this.circuitBreakerOpen) {
+      status = 'critical'
+      issues.push('Circuit breaker is open')
+      recommendations.push('Wait for circuit breaker to reset')
+    }
+
+    // 检查网络状态
+    if (!networkStatus.isOnline) {
+      status = 'warning'
+      issues.push('Network is offline')
+      recommendations.push('Queue operations will be processed when network is restored')
+    }
+
+    // 检查资源使用
+    if (resourceUsage.memory > 150 * 1024 * 1024) { // 150MB
+      status = status === 'critical' ? 'critical' : 'warning'
+      issues.push('High memory usage')
+      recommendations.push('Consider memory optimization')
+    }
+
+    return {
+      status,
+      issues,
+      recommendations,
+      circuitBreaker: this.circuitBreakerOpen,
+      recoveryMode: this.recoveryMode,
+      networkStatus,
+      resourceUsage
+    }
+  }
+
+  /**
+   * 手动触发队列优化
+   */
+  async triggerOptimization(): Promise<void> {
+    await this.optimizeQueueProcessing()
+    await this.optimizeMemoryUsage()
+    console.log('Queue optimization completed')
+  }
+
+  /**
+   * 重置队列状态
+   */
+  async resetQueue(options?: {
+    clearHistory?: boolean
+    clearCompleted?: boolean
+    resetMetrics?: boolean
+  }): Promise<void> {
+    try {
+      if (options?.clearCompleted) {
+        const cleared = await this.cleanupCompletedOperations(0)
+        console.log(`Cleared ${cleared} completed operations`)
+      }
+
+      if (options?.clearHistory) {
+        this.operationHistory.clear()
+        console.log('Cleared operation history')
+      }
+
+      if (options?.resetMetrics) {
+        this.resetPerformanceMetrics()
+        console.log('Reset performance metrics')
+      }
+
+      // 重置断路器
+      if (this.circuitBreakerOpen) {
+        await this.closeCircuitBreaker()
+      }
+
+      console.log('Queue reset completed')
+    } catch (error) {
+      console.error('Failed to reset queue:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 紧急停止队列处理
+   */
+  emergencyStop(): void {
+    this.isProcessing = true
+    if (this.processingInterval) {
+      clearInterval(this.processingInterval)
+      this.processingInterval = undefined
+    }
+    console.warn('Queue processing emergency stopped')
+  }
+
+  /**
+   * 恢复队列处理
+   */
+  resumeProcessing(): void {
+    this.isProcessing = false
+    this.startQueueProcessor()
+    console.log('Queue processing resumed')
+  }
 }
 
 // ============================================================================
@@ -1513,13 +2406,23 @@ export const syncQueueManager = new SyncQueueManager()
 // 便利方法导出
 // ============================================================================
 
-export const enqueueSyncOperation = (operation: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>) => 
+export const enqueueSyncOperation = (operation: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>) =>
   syncQueueManager.enqueueOperation(operation)
 
-export const enqueueSyncBatch = (operations: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>[]) => 
+export const enqueueSyncBatch = (operations: Omit<QueueOperation, 'id' | 'status' | 'timestamp'>[]) =>
   syncQueueManager.enqueueBatch(operations)
 
 export const getSyncQueueStats = () => syncQueueManager.getQueueStats()
 export const getSyncOperations = (filters?: any) => syncQueueManager.getOperations(filters)
 export const cleanupSyncOperations = (olderThan?: number) => syncQueueManager.cleanupCompletedOperations(olderThan)
 export const retryFailedSyncOperations = () => syncQueueManager.retryFailedOperations()
+
+// 新增的便利方法
+export const getSyncOperationHistory = (operationId: string) => syncQueueManager.getOperationHistory(operationId)
+export const getAllSyncOperationHistory = (filters?: any) => syncQueueManager.getAllOperationHistory(filters)
+export const getSyncPerformanceMetrics = () => syncQueueManager.getPerformanceMetrics()
+export const getSyncQueueHealth = () => syncQueueManager.getQueueHealth()
+export const triggerSyncOptimization = () => syncQueueManager.triggerOptimization()
+export const resetSyncQueue = (options?: any) => syncQueueManager.resetQueue(options)
+export const emergencyStopSyncQueue = () => syncQueueManager.emergencyStop()
+export const resumeSyncQueue = () => syncQueueManager.resumeProcessing()

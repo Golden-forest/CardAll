@@ -1,22 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabaseClient } from './supabase-client'
 
-// Supabase配置
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key'
+// 导出增强的 Supabase 客户端以保持向后兼容性
+export const supabase = getSupabaseClient().getClient()
 
-// 创建Supabase客户端
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  },
-  realtime: {
-    params: {
-      eventsPerSecond: 10
-    }
-  }
-})
+// 导出增强功能
+export { getSupabaseClient } from './supabase-client'
+export type { ConnectionStatus } from './supabase-client'
+export { isSupabaseError, getSupabaseErrorMessage } from './supabase-client'
 
 // 数据库类型定义
 export interface Database {

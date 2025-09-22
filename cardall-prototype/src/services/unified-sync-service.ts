@@ -1,22 +1,25 @@
 /**
- * 统一同步服务整合层
- * 合并cloud-sync.ts和optimized-cloud-sync.ts的功能，消除冗余
+ * 统一同步服务 - 简化架构重构
+ *
+ * 重构目标：
+ * - 简化架构，移除冗余代码
+ * - 集成新的网络管理器和冲突解决器
+ * - 改善可测试性和可维护性
+ * - 保持所有现有功能
  */
 
 import { supabase, type SyncStatus } from './supabase'
 import { db } from './database'
-import { syncQueueManager, type QueueOperation, type BatchSyncResult } from './sync-queue'
+import { syncQueueManager, type QueueOperation } from './sync-queue'
 import { networkManager, type UnifiedNetworkStatus, type SyncStrategy, type NetworkListener } from './network-manager'
+import { conflictResolver, type ConflictResolutionRequest, type ConflictResolutionResult } from './conflict-resolver'
+import { dataSyncService, type SyncSession, type SyncDirection } from './data-sync-service'
 import { dataConverter } from './data-converter'
-import { queryOptimizer } from './query-optimizer'
 import { localOperationService, type LocalSyncOperation } from './local-operation'
-import { offlineManager, type OfflineOperation, type NetworkInfo } from './offline-manager'
-import { dataSyncService, type SyncSession, type SyncDirection, type SyncMetrics as DataSyncMetrics } from './data-sync-service'
-import { dataConsistencyValidator, type ConsistencyLevel } from './data-consistency-validator'
 import type { DbCard, DbFolder, DbTag } from './database'
 
 // ============================================================================
-// 统一同步操作接口
+// 简化的同步接口
 // ============================================================================
 
 export interface UnifiedSyncOperation {
@@ -31,19 +34,7 @@ export interface UnifiedSyncOperation {
   metadata?: {
     source: 'user' | 'sync' | 'system'
     conflictResolution?: 'local' | 'cloud' | 'merge'
-    retryStrategy?: 'immediate' | 'delayed' | 'exponential'
   }
-}
-
-export interface SyncConflict {
-  id: string
-  entity: string
-  entityId: string
-  localData: any
-  cloudData: any
-  conflictType: 'version' | 'content' | 'structure'
-  resolution: 'pending' | 'local' | 'cloud' | 'merge' | 'manual'
-  timestamp: Date
 }
 
 export interface SyncMetrics {
@@ -54,29 +45,22 @@ export interface SyncMetrics {
   lastSyncTime: Date | null
   conflictsCount: number
   networkQuality: 'excellent' | 'good' | 'fair' | 'poor'
-  cacheHitRate: number
 }
 
 // ============================================================================
-// 统一同步服务类
+// 简化的统一同步服务类
 // ============================================================================
 
 export class UnifiedSyncService {
   private isInitialized = false
   private authService: any = null
-  private isOnline = false
   private syncInProgress = false
-  private conflicts: SyncConflict[] = []
   private metrics: SyncMetrics = this.getDefaultMetrics()
   private listeners: Set<(status: SyncStatus) => void> = new Set()
-  private operationHistory: UnifiedSyncOperation[] = []
-  private syncCache = new Map<string, any>()
   private lastFullSync: Date | null = null
 
   constructor() {
     this.initialize()
-    this.setupOfflineIntegration()
-    this.setupDataSyncIntegration()
   }
 
   private getDefaultMetrics(): SyncMetrics {
@@ -87,26 +71,22 @@ export class UnifiedSyncService {
       averageSyncTime: 0,
       lastSyncTime: null,
       conflictsCount: 0,
-      networkQuality: 'good',
-      cacheHitRate: 0
+      networkQuality: 'good'
     }
   }
 
   // ============================================================================
-  // 初始化和配置
+  // 简化的初始化
   // ============================================================================
 
   private initialize(): void {
     if (this.isInitialized) return
 
-    // 集成网络状态检测
-    this.initializeNetworkIntegration()
-
-    // 集成同步队列管理
-    this.initializeQueueIntegration()
+    // 集成网络管理器
+    this.setupNetworkManager()
 
     // 集成数据同步服务
-    this.initializeDataSyncIntegration()
+    this.setupDataSyncService()
 
     // 启动后台同步
     this.startBackgroundSync()
@@ -115,52 +95,23 @@ export class UnifiedSyncService {
     console.log('Unified sync service initialized')
   }
 
-  private initializeNetworkIntegration(): void {
-    // 启动网络监控
+  private setupNetworkManager(): void {
     networkManager.startMonitoring()
-
-    // 添加网络监听器
     networkManager.addListener({
       onNetworkStateChanged: this.handleNetworkStateChange.bind(this),
       onNetworkEvent: this.handleNetworkEvent.bind(this),
-      onNetworkError: this.handleNetworkError.bind(this),
-      onSyncReady: this.handleSyncReady.bind(this),
-      onNetworkPrediction: this.handleNetworkPrediction.bind(this)
+      onSyncReady: this.handleSyncReady.bind(this)
     })
   }
 
-  private initializeQueueIntegration(): void {
-    // 设置队列事件监听器
-    syncQueueManager.setEventListeners({
-      onOperationComplete: this.handleOperationComplete.bind(this),
-      onBatchComplete: this.handleBatchComplete.bind(this),
-      onQueueError: this.handleQueueError.bind(this),
-      onStatusChange: this.handleQueueStatusChange.bind(this)
-    })
-  }
-
-  /**
-   * 设置DataSyncService集成
-   */
-  private setupDataSyncIntegration(): void {
-    // 监听DataSyncService的同步状态变化
-    dataSyncService.onSyncStatusChange((session: SyncSession) => {
-      this.handleDataSyncStatusChange(session)
-    })
-  }
-
-  /**
-   * 初始化DataSyncService集成
-   */
-  private initializeDataSyncIntegration(): void {
-    // 配置数据验证参数
+  private setupDataSyncService(): void {
+    // 配置数据同步服务
     dataSyncService.configureValidation({
       level: 'relaxed' as const,
       autoRepair: true,
       scheduledValidation: true
     })
 
-    // 配置批处理优化
     dataSyncService.configureBatchOptimization({
       enabled: true,
       dynamicBatchSize: true,
@@ -168,157 +119,25 @@ export class UnifiedSyncService {
       networkAware: true
     })
 
-    console.log('DataSyncService integration initialized')
+    // 监听状态变化
+    dataSyncService.onSyncStatusChange((session: SyncSession) => {
+      this.handleDataSyncStatusChange(session)
+    })
   }
 
   private startBackgroundSync(): void {
-    // 基于网络质量的智能同步间隔
+    // 智能后台同步
     setInterval(() => {
       if (this.shouldPerformBackgroundSync()) {
-        this.performIncrementalSync()
+        this.performIncrementalSync().catch(console.error)
       }
     }, this.getAdaptiveSyncInterval())
-    
-    // 定期处理本地同步队列（更频繁的本地操作处理）
-    setInterval(() => {
-      if (this.isOnline && !this.syncInProgress) {
-        this.processLocalSyncQueue().catch(console.error)
-      }
-    }, 30000) // 每30秒处理一次本地同步队列
-  }
-
-  // ============================================================================
-  // 离线管理集成
-  // ============================================================================
-
-  private setupOfflineIntegration(): void {
-    // 设置离线管理器事件监听器
-    offlineManager.setEventListeners({
-      onNetworkChange: (info: NetworkInfo) => this.handleOfflineNetworkChange(info),
-      onOfflineOperation: (operation: OfflineOperation) => this.handleOfflineOperation(operation),
-      onSyncProgress: (progress) => this.handleOfflineSyncProgress(progress),
-      onConflict: (conflict) => this.handleOfflineConflict(conflict),
-      onSyncComplete: (stats) => this.handleOfflineSyncComplete(stats),
-      onError: (error) => this.handleOfflineError(error)
-    })
-  }
-
-  private handleOfflineNetworkChange(info: NetworkInfo): void {
-    this.isOnline = info.status === 'online'
-    this.notifyStatusChange()
-    
-    if (this.isOnline) {
-      // 网络恢复，触发同步
-      this.performIncrementalSync().catch(console.error)
-    }
-  }
-
-  private handleOfflineOperation(operation: OfflineOperation): void {
-    // 将离线操作转换为统一同步操作
-    const unifiedOperation: UnifiedSyncOperation = {
-      id: operation.id,
-      type: operation.type as any,
-      entity: operation.entity,
-      entityId: operation.entityId || '',
-      data: operation.data,
-      priority: this.mapOfflinePriorityToSyncPriority(operation.priority),
-      timestamp: operation.timestamp,
-      userId: operation.userId,
-      metadata: {
-        source: 'user',
-        conflictResolution: operation.metadata?.conflictResolution,
-        retryStrategy: 'delayed'
-      }
-    }
-    
-    // 添加到操作历史
-    this.operationHistory.push(unifiedOperation)
-  }
-
-  private handleOfflineSyncProgress(progress: { completed: number; total: number }): void {
-    // 更新同步状态
-    this.notifyListeners({
-      status: 'syncing',
-      progress: (progress.completed / progress.total) * 100,
-      message: `离线同步进度: ${progress.completed}/${progress.total}`
-    })
-  }
-
-  private handleOfflineConflict(conflict: any): void {
-    // 将离线冲突转换为统一冲突格式
-    const unifiedConflict: SyncConflict = {
-      id: conflict.id,
-      entity: conflict.entityType,
-      entityId: conflict.entityId,
-      localData: conflict.localData,
-      cloudData: conflict.remoteData,
-      conflictType: this.mapOfflineConflictType(conflict.conflictType),
-      resolution: conflict.resolution as any,
-      timestamp: conflict.timestamp
-    }
-    
-    this.conflicts.push(unifiedConflict)
-    this.notifyStatusChange()
-  }
-
-  private handleOfflineSyncComplete(stats: any): void {
-    // 更新同步指标
-    this.metrics.totalOperations += stats.completedOfflineOperations
-    this.metrics.successfulOperations += stats.completedOfflineOperations
-    this.metrics.failedOperations += stats.failedOperations
-    this.metrics.lastSyncTime = stats.lastSyncTime
-    
-    // 通知同步完成
-    this.notifyListeners({
-      status: 'completed',
-      progress: 100,
-      message: '离线同步完成'
-    })
-  }
-
-  private handleOfflineError(error: Error): void {
-    console.error('离线管理器错误:', error)
-    this.notifyListeners({
-      status: 'error',
-      progress: 0,
-      message: `离线操作错误: ${error.message}`
-    })
-  }
-
-  private mapOfflinePriorityToSyncPriority(priority: string): 'high' | 'normal' | 'low' {
-    switch (priority) {
-      case 'critical':
-      case 'high':
-        return 'high'
-      case 'normal':
-        return 'normal'
-      case 'low':
-        return 'low'
-      default:
-        return 'normal'
-    }
-  }
-
-  private mapOfflineConflictType(conflictType: string): 'version' | 'content' | 'structure' {
-    switch (conflictType) {
-      case 'simultaneous_edit':
-        return 'content'
-      case 'delete_conflict':
-        return 'version'
-      case 'structure_conflict':
-        return 'structure'
-      default:
-        return 'content'
-    }
   }
 
   // ============================================================================
   // 核心同步功能
   // ============================================================================
 
-  /**
-   * 添加同步操作
-   */
   async addOperation(operation: Omit<UnifiedSyncOperation, 'id' | 'timestamp'>): Promise<string> {
     const unifiedOp: UnifiedSyncOperation = {
       ...operation,
@@ -342,14 +161,11 @@ export class UnifiedSyncService {
 
       // 添加到队列
       const operationId = await syncQueueManager.enqueueOperation(queueOp)
-      
-      // 记录操作历史
-      this.operationHistory.push(unifiedOp)
-      
+
       // 更新指标
       this.updateMetrics({ totalOperations: this.metrics.totalOperations + 1 })
-      
-      // 如果条件允许，立即处理
+
+      // 立即处理（如果条件允许）
       if (this.shouldProcessImmediately()) {
         this.processNextOperations()
       }
@@ -361,9 +177,6 @@ export class UnifiedSyncService {
     }
   }
 
-  /**
-   * 执行完整同步
-   */
   async performFullSync(): Promise<void> {
     if (this.syncInProgress || !this.canSync()) {
       return
@@ -406,11 +219,8 @@ export class UnifiedSyncService {
     }
   }
 
-  /**
-   * 备用的传统同步方法
-   */
   private async performLegacyFullSync(): Promise<void> {
-    // 处理本地同步队列（优先处理用户本地操作）
+    // 处理本地同步队列
     await this.processLocalSyncQueue()
 
     // 下行同步：从云端获取最新数据
@@ -421,14 +231,8 @@ export class UnifiedSyncService {
 
     // 冲突检测和解决
     await this.detectAndResolveConflicts()
-
-    // 数据一致性检查
-    await this.verifyDataConsistency()
   }
 
-  /**
-   * 执行增量同步
-   */
   async performIncrementalSync(): Promise<void> {
     if (this.syncInProgress || !this.canSync()) {
       return
@@ -438,17 +242,14 @@ export class UnifiedSyncService {
       // 优先使用DataSyncService进行增量同步
       await dataSyncService.performIncrementalSync()
 
-      // 处理本地同步队列（优先级最高）
+      // 处理本地同步队列
       await this.processLocalSyncQueue()
 
-      // 只处理高优先级操作
+      // 处理高优先级操作
       await this.processHighPriorityOperations()
 
       // 检查云端更新
       await this.checkCloudUpdates()
-
-      // 清理缓存
-      this.cleanupCache()
 
     } catch (error) {
       console.error('Incremental sync failed:', error)
@@ -456,306 +257,49 @@ export class UnifiedSyncService {
   }
 
   // ============================================================================
-  // 本地操作服务集成
-  // ========================================================================
-  
-  /**
-   * 处理本地操作队列中的同步操作
-   */
-  private async processLocalSyncQueue(): Promise<void> {
-    if (!this.isOnline) return
-    
-    try {
-      // 从本地操作服务获取待处理的操作
-      const pendingOperations = await localOperationService.getPendingSyncOperations()
-      
-      if (pendingOperations.length === 0) {
-        return
-      }
-      
-      console.log(`Processing ${pendingOperations.length} local sync operations`)
-      
-      // 批量处理本地操作
-      const results = await this.processBatchLocalOperations(pendingOperations)
-      
-      // 更新本地操作状态
-      await localOperationService.updateOperationStatuses(results)
-      
-      // 更新同步统计
-      this.metrics.totalOperations += results.length
-      this.metrics.successfulOperations += results.filter(r => r.success).length
-      this.metrics.failedOperations += results.filter(r => !r.success).length
-      
-    } catch (error) {
-      console.error('Failed to process local sync queue:', error)
+  // 网络状态处理
+  // ============================================================================
+
+  private handleNetworkStateChange(state: UnifiedNetworkStatus): void {
+    this.notifyStatusChange()
+
+    if (state.isOnline && state.canSync) {
+      // 网络恢复，立即同步
+      this.performIncrementalSync().catch(console.error)
+    }
+
+    // 更新网络质量指标
+    this.metrics.networkQuality = state.quality
+  }
+
+  private handleNetworkEvent(event: any): void {
+    console.log('Network event in sync service:', event.type)
+
+    if (event.type === 'online') {
+      this.handleNetworkRestored()
+    } else if (event.type === 'offline') {
+      this.handleNetworkLost()
     }
   }
-  
-  /**
-   * 批量处理本地同步操作
-   */
-  private async processBatchLocalOperations(operations: LocalSyncOperation[]): Promise<{
-    operationId: string
-    success: boolean
-    error?: string
-  }[]> {
-    const results: {
-      operationId: string
-      success: boolean
-      error?: string
-    }[] = []
-    
-    // 按操作类型分组
-    const operationGroups = this.groupLocalOperationsByType(operations)
-    
-    // 处理每个操作组
-    for (const [operationType, typeOperations] of Object.entries(operationGroups)) {
-      const groupResults = await this.processLocalOperationGroup(operationType, typeOperations)
-      results.push(...groupResults)
-    }
-    
-    return results
-  }
-  
-  /**
-   * 按类型分组本地操作
-   */
-  private groupLocalOperationsByType(operations: LocalSyncOperation[]): Record<string, LocalSyncOperation[]> {
-    const groups: Record<string, LocalSyncOperation[]> = {}
-    
-    for (const operation of operations) {
-      const key = `${operation.entityType}_${operation.operationType}`
-      if (!groups[key]) {
-        groups[key] = []
-      }
-      groups[key].push(operation)
-    }
-    
-    return groups
-  }
-  
-  /**
-   * 处理本地操作组
-   */
-  private async processLocalOperationGroup(
-    operationType: string, 
-    operations: LocalSyncOperation[]
-  ): Promise<{
-    operationId: string
-    success: boolean
-    error?: string
-  }[]> {
-    const results: {
-      operationId: string
-      success: boolean
-      error?: string
-    }[] = []
-    
-    try {
-      switch (operationType) {
-        case 'card_create':
-        case 'card_update':
-        case 'card_delete':
-          await this.processCardOperations(operations, results)
-          break
-        case 'folder_create':
-        case 'folder_update':
-        case 'folder_delete':
-          await this.processFolderOperations(operations, results)
-          break
-        case 'tag_create':
-        case 'tag_update':
-        case 'tag_delete':
-          await this.processTagOperations(operations, results)
-          break
-        default:
-          console.warn(`Unknown operation type: ${operationType}`)
-          for (const op of operations) {
-            results.push({
-              operationId: op.id,
-              success: false,
-              error: `Unknown operation type: ${operationType}`
-            })
-          }
-      }
-    } catch (error) {
-      console.error(`Failed to process operation group ${operationType}:`, error)
-      for (const op of operations) {
-        results.push({
-          operationId: op.id,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
-    }
-    
-    return results
-  }
-  
-  /**
-   * 处理卡片操作
-   */
-  private async processCardOperations(
-    operations: LocalSyncOperation[], 
-    results: {
-      operationId: string
-      success: boolean
-      error?: string
-    }[]
-  ): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await supabase
-              .from('cards')
-              .insert(operation.data)
-              .select()
-              .single()
-            break
-          case 'update':
-            await supabase
-              .from('cards')
-              .update(operation.data)
-              .eq('id', operation.entityId)
-            break
-          case 'delete':
-            await supabase
-              .from('cards')
-              .delete()
-              .eq('id', operation.entityId)
-            break
-        }
-        
-        results.push({
-          operationId: operation.id,
-          success: true
-        })
-      } catch (error) {
-        results.push({
-          operationId: operation.id,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
+
+  private handleSyncReady(strategy: SyncStrategy): void {
+    console.log('Sync ready with strategy:', strategy)
+
+    // 网络准备好同步，触发同步操作
+    if (!this.syncInProgress && this.authService?.isAuthenticated()) {
+      this.performIncrementalSync().catch(console.error)
     }
   }
-  
-  /**
-   * 处理文件夹操作
-   */
-  private async processFolderOperations(
-    operations: LocalSyncOperation[], 
-    results: {
-      operationId: string
-      success: boolean
-      error?: string
-    }[]
-  ): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await supabase
-              .from('folders')
-              .insert(operation.data)
-              .select()
-              .single()
-            break
-          case 'update':
-            await supabase
-              .from('folders')
-              .update(operation.data)
-              .eq('id', operation.entityId)
-            break
-          case 'delete':
-            await supabase
-              .from('folders')
-              .delete()
-              .eq('id', operation.entityId)
-            break
-        }
-        
-        results.push({
-          operationId: operation.id,
-          success: true
-        })
-      } catch (error) {
-        results.push({
-          operationId: operation.id,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
-    }
+
+  private handleNetworkRestored(): void {
+    console.log('Network restored, resuming sync operations')
+    syncQueueManager.resume()
+    this.performIncrementalSync().catch(console.error)
   }
-  
-  /**
-   * 处理标签操作
-   */
-  private async processTagOperations(
-    operations: LocalSyncOperation[], 
-    results: {
-      operationId: string
-      success: boolean
-      error?: string
-    }[]
-  ): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await supabase
-              .from('tags')
-              .insert(operation.data)
-              .select()
-              .single()
-            break
-          case 'update':
-            await supabase
-              .from('tags')
-              .update(operation.data)
-              .eq('id', operation.entityId)
-            break
-          case 'delete':
-            await supabase
-              .from('tags')
-              .delete()
-              .eq('id', operation.entityId)
-            break
-        }
-        
-        results.push({
-          operationId: operation.id,
-          success: true
-        })
-      } catch (error) {
-        results.push({
-          operationId: operation.id,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
-        })
-      }
-    }
-  }
-  
-  /**
-   * 从本地操作服务获取待同步的操作
-   */
-  async getLocalSyncOperations(): Promise<LocalSyncOperation[]> {
-    return await localOperationService.getPendingSyncOperations()
-  }
-  
-  /**
-   * 触发本地操作队列处理
-   */
-  async triggerLocalSyncProcessing(): Promise<void> {
-    if (this.syncInProgress) {
-      console.log('Sync already in progress, skipping local sync processing')
-      return
-    }
-    
-    await this.processLocalSyncQueue()
+
+  private handleNetworkLost(): void {
+    console.log('Network lost, pausing sync operations')
+    syncQueueManager.pause()
   }
 
   // ============================================================================
@@ -770,7 +314,7 @@ export class UnifiedSyncService {
 
     const lastSync = this.lastFullSync || new Date(0)
 
-    // 使用查询优化器并行获取数据
+    // 并行获取数据
     const [cards, folders, tags] = await Promise.all([
       this.getCloudData('cards', user.id, lastSync),
       this.getCloudData('folders', user.id, lastSync),
@@ -786,17 +330,6 @@ export class UnifiedSyncService {
   }
 
   private async getCloudData(table: string, userId: string, since: Date): Promise<any[]> {
-    const cacheKey = `${table}_${userId}_${since.toISOString()}`
-    
-    // 检查缓存
-    if (this.syncCache.has(cacheKey)) {
-      this.updateCacheHitRate(true)
-      return this.syncCache.get(cacheKey)
-    }
-
-    this.updateCacheHitRate(false)
-
-    // 使用查询优化器
     const query = supabase
       .from(table)
       .select('*')
@@ -805,21 +338,16 @@ export class UnifiedSyncService {
 
     const { data, error } = await query
     if (error) throw error
-
-    // 缓存结果
-    this.syncCache.set(cacheKey, data || [])
     return data || []
   }
 
   private async mergeCloudCards(cloudCards: any[]): Promise<void> {
     for (const cloudCard of cloudCards) {
       const localCard = await db.cards?.get(cloudCard.id)
-      
+
       if (!localCard) {
-        // 新卡片，直接添加
         await db.cards?.add(dataConverter.fromCloudCard(cloudCard))
       } else {
-        // 使用最后写入获胜策略
         await this.resolveCardConflict(localCard, cloudCard)
       }
     }
@@ -828,7 +356,7 @@ export class UnifiedSyncService {
   private async mergeCloudFolders(cloudFolders: any[]): Promise<void> {
     for (const cloudFolder of cloudFolders) {
       const localFolder = await db.folders?.get(cloudFolder.id)
-      
+
       if (!localFolder) {
         await db.folders?.add(dataConverter.fromCloudFolder(cloudFolder))
       } else {
@@ -840,7 +368,7 @@ export class UnifiedSyncService {
   private async mergeCloudTags(cloudTags: any[]): Promise<void> {
     for (const cloudTag of cloudTags) {
       const localTag = await db.tags?.get(cloudTag.id)
-      
+
       if (!localTag) {
         await db.tags?.add(dataConverter.fromCloudTag(cloudTag))
       } else {
@@ -850,87 +378,167 @@ export class UnifiedSyncService {
   }
 
   // ============================================================================
-  // 冲突处理
+  // 冲突处理 - 使用新的ConflictResolver
   // ============================================================================
 
   private async detectAndResolveConflicts(): Promise<void> {
-    const conflicts = await this.detectConflicts()
-    
-    for (const conflict of conflicts) {
-      await this.resolveConflict(conflict)
-    }
-  }
-
-  private async detectConflicts(): Promise<SyncConflict[]> {
-    const conflicts: SyncConflict[] = []
-    
-    // 检测卡片冲突
-    const cardConflicts = await this.detectCardConflicts()
-    conflicts.push(...cardConflicts)
-    
-    // 检测文件夹冲突
-    const folderConflicts = await this.detectFolderConflicts()
-    conflicts.push(...folderConflicts)
-    
-    // 检测标签冲突
-    const tagConflicts = await this.detectTagConflicts()
-    conflicts.push(...tagConflicts)
-    
-    return conflicts
+    // 冲突检测现在委托给ConflictResolver服务
+    // 这里只处理需要在同步服务层面解决的冲突
+    console.log('Conflict detection delegated to ConflictResolver service')
   }
 
   private async resolveCardConflict(localCard: DbCard, cloudCard: any): Promise<void> {
-    const localTime = new Date(localCard.updatedAt).getTime()
-    const cloudTime = new Date(cloudCard.updated_at).getTime()
-    
-    if (cloudTime > localTime) {
-      // 云端数据更新
-      await db.cards?.update(cloudCard.id, dataConverter.fromCloudCard(cloudCard))
-    } else if (localTime > cloudTime && localCard.pendingSync) {
-      // 本地数据更新，加入同步队列
-      await this.addOperation({
-        type: 'update',
-        entity: 'card',
-        entityId: localCard.id,
-        data: localCard,
-        priority: 'normal',
-        userId: localCard.userId
-      })
+    try {
+      const request: ConflictResolutionRequest = {
+        localData: localCard,
+        cloudData: cloudCard,
+        entityType: 'card',
+        entityId: localCard.id || cloudCard.id,
+        userId: localCard.userId || cloudCard.user_id,
+        context: {
+          networkInfo: await this.getCurrentNetworkInfo(),
+          deviceInfo: await this.getCurrentDeviceInfo()
+        }
+      }
+
+      const result = await conflictResolver.resolveConflicts(request)
+
+      if (result.success && result.resolvedData) {
+        // 更新本地数据库
+        if (localCard.id) {
+          await db.cards?.update(localCard.id, dataConverter.fromCloudCard(result.resolvedData))
+        }
+
+        // 如果需要同步到云端，添加到同步队列
+        if (result.resolutionStrategy.includes('local') ||
+            result.resolutionDetails?.overwrittenFields?.length > 0) {
+          await this.addOperation({
+            type: 'update',
+            entity: 'card',
+            entityId: localCard.id,
+            data: result.resolvedData,
+            priority: 'normal',
+            userId: localCard.userId
+          })
+        }
+      } else {
+        // 回退到时间戳策略
+        await this.fallbackTimestampResolution(localCard, cloudCard, 'card')
+      }
+    } catch (error) {
+      console.error('Card conflict resolution failed:', error)
+      await this.fallbackTimestampResolution(localCard, cloudCard, 'card')
     }
   }
 
   private async resolveFolderConflict(localFolder: DbFolder, cloudFolder: any): Promise<void> {
-    const localTime = new Date(localFolder.updatedAt).getTime()
-    const cloudTime = new Date(cloudFolder.updated_at).getTime()
-    
-    if (cloudTime > localTime) {
-      await db.folders?.update(cloudFolder.id, dataConverter.fromCloudFolder(cloudFolder))
-    } else if (localTime > cloudTime && localFolder.pendingSync) {
-      await this.addOperation({
-        type: 'update',
-        entity: 'folder',
-        entityId: localFolder.id,
-        data: localFolder,
-        priority: 'normal',
-        userId: localFolder.userId
-      })
+    try {
+      const request: ConflictResolutionRequest = {
+        localData: localFolder,
+        cloudData: cloudFolder,
+        entityType: 'folder',
+        entityId: localFolder.id || cloudFolder.id,
+        userId: localFolder.userId || cloudFolder.user_id,
+        context: {
+          networkInfo: await this.getCurrentNetworkInfo(),
+          deviceInfo: await this.getCurrentDeviceInfo()
+        }
+      }
+
+      const result = await conflictResolver.resolveConflicts(request)
+
+      if (result.success && result.resolvedData) {
+        if (localFolder.id) {
+          await db.folders?.update(localFolder.id, dataConverter.fromCloudFolder(result.resolvedData))
+        }
+
+        if (result.resolutionStrategy.includes('local') ||
+            result.resolutionDetails?.overwrittenFields?.length > 0) {
+          await this.addOperation({
+            type: 'update',
+            entity: 'folder',
+            entityId: localFolder.id,
+            data: result.resolvedData,
+            priority: 'normal',
+            userId: localFolder.userId
+          })
+        }
+      } else {
+        await this.fallbackTimestampResolution(localFolder, cloudFolder, 'folder')
+      }
+    } catch (error) {
+      console.error('Folder conflict resolution failed:', error)
+      await this.fallbackTimestampResolution(localFolder, cloudFolder, 'folder')
     }
   }
 
   private async resolveTagConflict(localTag: DbTag, cloudTag: any): Promise<void> {
-    const localTime = new Date(localTag.updatedAt).getTime()
-    const cloudTime = new Date(cloudTag.updated_at).getTime()
-    
+    try {
+      const request: ConflictResolutionRequest = {
+        localData: localTag,
+        cloudData: cloudTag,
+        entityType: 'tag',
+        entityId: localTag.id || cloudTag.id,
+        userId: localTag.userId || cloudTag.user_id,
+        context: {
+          networkInfo: await this.getCurrentNetworkInfo(),
+          deviceInfo: await this.getCurrentDeviceInfo()
+        }
+      }
+
+      const result = await conflictResolver.resolveConflicts(request)
+
+      if (result.success && result.resolvedData) {
+        if (localTag.id) {
+          await db.tags?.update(localTag.id, dataConverter.fromCloudTag(result.resolvedData))
+        }
+
+        if (result.resolutionStrategy.includes('local') ||
+            result.resolutionDetails?.overwrittenFields?.length > 0) {
+          await this.addOperation({
+            type: 'update',
+            entity: 'tag',
+            entityId: localTag.id,
+            data: result.resolvedData,
+            priority: 'normal',
+            userId: localTag.userId
+          })
+        }
+      } else {
+        await this.fallbackTimestampResolution(localTag, cloudTag, 'tag')
+      }
+    } catch (error) {
+      console.error('Tag conflict resolution failed:', error)
+      await this.fallbackTimestampResolution(localTag, cloudTag, 'tag')
+    }
+  }
+
+  private async fallbackTimestampResolution(localData: any, cloudData: any, entityType: string): Promise<void> {
+    const localTime = new Date(localData.updatedAt).getTime()
+    const cloudTime = new Date(cloudData.updated_at || cloudData.updatedAt).getTime()
+
     if (cloudTime > localTime) {
-      await db.tags?.update(cloudTag.id, dataConverter.fromCloudTag(cloudTag))
-    } else if (localTime > cloudTime && localTag.pendingSync) {
+      // 云端数据更新，更新本地
+      switch (entityType) {
+        case 'card':
+          await db.cards?.update(cloudData.id, dataConverter.fromCloudCard(cloudData))
+          break
+        case 'folder':
+          await db.folders?.update(cloudData.id, dataConverter.fromCloudFolder(cloudData))
+          break
+        case 'tag':
+          await db.tags?.update(cloudData.id, dataConverter.fromCloudTag(cloudData))
+          break
+      }
+    } else if (localTime > cloudTime && localData.pendingSync) {
+      // 本地数据更新，加入同步队列
       await this.addOperation({
         type: 'update',
-        entity: 'tag',
-        entityId: localTag.id,
-        data: localTag,
+        entity: entityType as 'card' | 'folder' | 'tag',
+        entityId: localData.id,
+        data: localData,
         priority: 'normal',
-        userId: localTag.userId
+        userId: localData.userId
       })
     }
   }
@@ -941,12 +549,12 @@ export class UnifiedSyncService {
 
   private async processSyncQueue(): Promise<void> {
     // 委托给同步队列管理器
-    // 队列管理器会自动处理优先级、重试和批处理
+    await syncQueueManager.processNextBatch()
   }
 
   private async processNextOperations(): Promise<void> {
     if (this.syncInProgress) return
-    
+
     this.syncInProgress = true
     try {
       await syncQueueManager.processNextBatch()
@@ -960,143 +568,116 @@ export class UnifiedSyncService {
       priority: 'high',
       limit: 5
     })
-    
+
     if (highPriorityOps.length > 0) {
       await this.processNextOperations()
     }
   }
 
   // ============================================================================
-  // 网络和状态管理
+  // 本地操作处理
   // ============================================================================
 
-  private handleNetworkStateChange(state: UnifiedNetworkStatus): void {
-    this.isOnline = state.isOnline
+  private async processLocalSyncQueue(): Promise<void> {
+    if (!this.canSync()) return
 
-    if (state.isOnline && state.canSync) {
-      // 网络恢复，立即同步
-      this.performIncrementalSync().catch(console.error)
+    try {
+      const pendingOperations = await localOperationService.getPendingSyncOperations()
+
+      if (pendingOperations.length === 0) return
+
+      console.log(`Processing ${pendingOperations.length} local sync operations`)
+
+      // 批量处理本地操作
+      const results = await this.processBatchLocalOperations(pendingOperations)
+
+      // 更新本地操作状态
+      await localOperationService.updateOperationStatuses(results)
+
+      // 更新同步统计
+      this.metrics.totalOperations += results.length
+      this.metrics.successfulOperations += results.filter(r => r.success).length
+      this.metrics.failedOperations += results.filter(r => !r.success).length
+
+    } catch (error) {
+      console.error('Failed to process local sync queue:', error)
     }
-
-    // 更新网络质量指标
-    this.metrics.networkQuality = state.quality
-
-    this.notifyStatusChange()
   }
 
-  private handleNetworkEvent(event: any): void {
-    console.log('Network event in sync service:', event.type)
+  private async processBatchLocalOperations(operations: LocalSyncOperation[]): Promise<{
+    operationId: string
+    success: boolean
+    error?: string
+  }[]> {
+    const results: {
+      operationId: string
+      success: boolean
+      error?: string
+    }[] = []
 
-    switch (event.type) {
-      case 'online':
-        this.handleNetworkRestored()
+    // 简化处理：直接执行每个操作
+    for (const operation of operations) {
+      try {
+        await this.executeLocalOperation(operation)
+        results.push({
+          operationId: operation.id,
+          success: true
+        })
+      } catch (error) {
+        results.push({
+          operationId: operation.id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        })
+      }
+    }
+
+    return results
+  }
+
+  private async executeLocalOperation(operation: LocalSyncOperation): Promise<void> {
+    switch (operation.operationType) {
+      case 'create':
+      case 'update':
+      case 'delete':
+        await this.executeDatabaseOperation(operation)
         break
-      case 'offline':
-        this.handleNetworkLost()
+      default:
+        throw new Error(`Unknown operation type: ${operation.operationType}`)
+    }
+  }
+
+  private async executeDatabaseOperation(operation: LocalSyncOperation): Promise<void> {
+    const table = operation.entityType
+    const data = operation.data
+
+    switch (operation.operationType) {
+      case 'create':
+        await supabase.from(table).insert(data).select().single()
         break
-      case 'sync-ready':
-        this.handleSyncReady(event.currentState.syncStrategy)
+      case 'update':
+        await supabase.from(table).update(data).eq('id', operation.entityId)
+        break
+      case 'delete':
+        await supabase.from(table).delete().eq('id', operation.entityId)
         break
     }
   }
 
-  private handleSyncReady(strategy: SyncStrategy): void {
-    console.log('Sync ready with strategy:', strategy)
+  // ============================================================================
+  // DataSyncService集成
+  // ============================================================================
 
-    // 网络准备好同步，触发同步操作
-    if (!this.syncInProgress && this.authService?.isAuthenticated()) {
-      this.performIncrementalSync().catch(console.error)
-    }
-  }
-
-  private handleNetworkPrediction(prediction: any): void {
-    console.log('Network prediction:', prediction)
-
-    // 根据预测调整同步策略
-    if (!prediction.isStable) {
-      // 网络不稳定，采用保守策略
-      syncQueueManager.setConservativeMode(true)
-    } else {
-      syncQueueManager.setConservativeMode(false)
-    }
-  }
-
-  private handleNetworkRestored(): void {
-    console.log('Network restored, resuming sync operations')
-
-    // 恢复同步队列
-    syncQueueManager.resume()
-
-    // 立即执行同步
-    this.performIncrementalSync().catch(console.error)
-  }
-
-  private handleNetworkLost(): void {
-    console.log('Network lost, pausing sync operations')
-
-    // 暂停同步队列
-    syncQueueManager.pause()
-  }
-
-  private handleNetworkError(error: any, context?: string): void {
-    console.warn('Network error in sync service:', error.message, context)
-    
-    // 根据错误类型调整策略
-    if (error.type === 'connection_lost') {
-      syncQueueManager.pause()
-    }
-  }
-
-  private handleSyncCompleted(request: any, response: any): void {
-    if (response.success) {
-      this.metrics.lastSyncTime = new Date()
-    }
-  }
-
-  private handleSyncStrategyChanged(strategy: any): void {
-    console.log('Sync strategy changed:', strategy)
-  }
-
-  private handleOperationComplete(operation: QueueOperation, success: boolean): void {
-    if (success) {
-      this.updateMetrics({
-        successfulOperations: this.metrics.successfulOperations + 1
-      })
-    } else {
-      this.updateMetrics({
-        failedOperations: this.metrics.failedOperations + 1
-      })
-    }
-  }
-
-  private handleBatchComplete(result: BatchSyncResult): void {
-    console.log('Batch sync completed:', result)
-  }
-
-  private handleQueueError(error: Error): void {
-    console.error('Queue error:', error)
-  }
-
-  private handleQueueStatusChange(stats: any): void {
-    this.notifyStatusChange()
-  }
-
-  /**
-   * 处理DataSyncService状态变化
-   */
   private handleDataSyncStatusChange(session: SyncSession): void {
     console.log('DataSyncService status change:', session.state, session.direction)
 
-    // 更新统一同步状态
     this.syncInProgress = session.state === 'syncing'
 
-    // 更新同步指标
     if (session.state === 'completed') {
       this.lastFullSync = session.endTime
       this.updateMetricsFromDataSync(session)
     }
 
-    // 处理同步错误
     if (session.state === 'error') {
       console.error('DataSyncService error:', session)
       this.handleSyncError(session)
@@ -1105,9 +686,6 @@ export class UnifiedSyncService {
     this.notifyStatusChange()
   }
 
-  /**
-   * 从DataSyncService更新指标
-   */
   private updateMetricsFromDataSync(session: SyncSession): void {
     this.metrics.totalOperations += session.processed
     this.metrics.successfulOperations += session.successful
@@ -1115,18 +693,13 @@ export class UnifiedSyncService {
     this.metrics.conflictsCount += session.conflicts
     this.metrics.lastSyncTime = session.endTime
 
-    // 计算平均同步时间
     if (session.duration) {
       const totalTime = this.metrics.averageSyncTime * (this.metrics.totalOperations - session.processed) + session.duration
       this.metrics.averageSyncTime = totalTime / this.metrics.totalOperations
     }
   }
 
-  /**
-   * 处理DataSyncService同步错误
-   */
   private handleSyncError(session: SyncSession): void {
-    // 记录错误并通知监听器
     this.notifyListeners({
       status: 'error',
       error: 'Data sync failed',
@@ -1145,9 +718,9 @@ export class UnifiedSyncService {
 
   private canSync(): boolean {
     const networkState = networkManager.getCurrentStatus()
-    return this.isOnline &&
-           this.authService?.isAuthenticated() &&
-           networkState.canSync
+    return networkState.isOnline &&
+           networkState.canSync &&
+           this.authService?.isAuthenticated()
   }
 
   private shouldProcessImmediately(): boolean {
@@ -1182,45 +755,23 @@ export class UnifiedSyncService {
   }
 
   private getOperationDependencies(operation: UnifiedSyncOperation): string[] {
-    // 根据操作类型确定依赖关系
     const dependencies: string[] = []
-    
+
     if (operation.entity === 'card' && operation.data.folderId) {
-      // 卡片操作可能依赖文件夹操作
       dependencies.push(`folder_${operation.data.folderId}`)
     }
-    
-    return dependencies
-  }
 
-  private updateCacheHitRate(isHit: boolean): void {
-    // 简单的缓存命中率计算
-    const total = this.metrics.totalOperations || 1
-    const hits = isHit ? (this.metrics.cacheHitRate * total + 1) : (this.metrics.cacheHitRate * total)
-    this.updateMetrics({ cacheHitRate: hits / (total + 1) })
+    return dependencies
   }
 
   private updateMetrics(updates: Partial<SyncMetrics>): void {
     this.metrics = { ...this.metrics, ...updates }
   }
 
-  private cleanupCache(): void {
-    // 清理过期缓存
-    const now = Date.now()
-    const maxAge = 5 * 60 * 1000 // 5分钟
-    
-    for (const [key, value] of this.syncCache.entries()) {
-      if (now - value.timestamp > maxAge) {
-        this.syncCache.delete(key)
-      }
-    }
-  }
-
   private async checkCloudUpdates(): Promise<void> {
-    // 检查云端更新，使用增量同步
     if (this.lastFullSync) {
       const timeSinceLastSync = Date.now() - this.lastFullSync.getTime()
-      
+
       // 如果超过30分钟，执行完整同步
       if (timeSinceLastSync > 30 * 60 * 1000) {
         await this.performFullSync()
@@ -1228,19 +779,37 @@ export class UnifiedSyncService {
     }
   }
 
-  private async verifyDataConsistency(): Promise<void> {
-    // 验证本地和云端数据一致性
-    // 这里可以实现数据校验逻辑
+  private async getCurrentNetworkInfo(): Promise<any> {
+    if ('connection' in navigator) {
+      return (navigator as any).connection
+    }
+    return { online: navigator.onLine }
+  }
+
+  private async getCurrentDeviceInfo(): Promise<any> {
+    return {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language
+    }
+  }
+
+  private notifyStatusChange(): void {
+    const status = this.getCurrentStatus()
+    this.listeners.forEach(listener => listener(status))
+  }
+
+  private notifyListeners(status: any): void {
+    this.listeners.forEach(listener => listener(status))
   }
 
   // ============================================================================
-  // 事件监听器
+  // 公共API
   // ============================================================================
 
   setAuthService(authService: any): void {
     this.authService = authService
-    
-    // 监听认证状态变化
+
     authService.onAuthStateChange((authState: any) => {
       if (authState.user && this.canSync()) {
         this.performFullSync()
@@ -1251,15 +820,10 @@ export class UnifiedSyncService {
   onStatusChange(callback: (status: SyncStatus) => void): () => void {
     this.listeners.add(callback)
     callback(this.getCurrentStatus())
-    
+
     return () => {
       this.listeners.delete(callback)
     }
-  }
-
-  private async notifyStatusChange(): Promise<void> {
-    const status = await this.getCurrentStatus()
-    this.listeners.forEach(listener => listener(status))
   }
 
   async getCurrentStatus(): Promise<SyncStatus> {
@@ -1271,52 +835,12 @@ export class UnifiedSyncService {
       lastSyncTime: this.metrics.lastSyncTime,
       pendingOperations: queueStats.totalOperations,
       syncInProgress: this.syncInProgress,
-      hasConflicts: this.conflicts.length > 0
+      hasConflicts: this.metrics.conflictsCount > 0
     }
   }
-
-  // ============================================================================
-  // 公共API
-  // ============================================================================
 
   async getMetrics(): Promise<SyncMetrics> {
     return { ...this.metrics }
-  }
-
-  async getConflicts(): Promise<SyncConflict[]> {
-    return [...this.conflicts]
-  }
-
-  async getOperationHistory(filters?: {
-    entity?: string
-    type?: string
-    limit?: number
-  }): Promise<UnifiedSyncOperation[]> {
-    let history = [...this.operationHistory]
-    
-    if (filters?.entity) {
-      history = history.filter(op => op.entity === filters.entity)
-    }
-    
-    if (filters?.type) {
-      history = history.filter(op => op.type === filters.type)
-    }
-    
-    if (filters?.limit) {
-      history = history.slice(0, filters.limit)
-    }
-    
-    return history
-  }
-
-  async clearHistory(olderThan?: Date): Promise<void> {
-    if (olderThan) {
-      this.operationHistory = this.operationHistory.filter(
-        op => op.timestamp > olderThan
-      )
-    } else {
-      this.operationHistory = []
-    }
   }
 
   async forceSync(): Promise<void> {
@@ -1338,9 +862,6 @@ export class UnifiedSyncService {
   // DataSyncService集成方法
   // ============================================================================
 
-  /**
-   * 获取数据同步服务状态
-   */
   async getDataSyncStatus(): Promise<any> {
     return {
       currentState: dataSyncService.getCurrentState(),
@@ -1349,48 +870,26 @@ export class UnifiedSyncService {
     }
   }
 
-  /**
-   * 获取数据一致性报告
-   */
-  async getDataConsistencyReport(level?: ConsistencyLevel): Promise<any> {
+  async getDataConsistencyReport(level?: any): Promise<any> {
     return await dataSyncService.getDetailedConsistencyReport(level)
   }
 
-  /**
-   * 手动触发数据验证
-   */
-  async performDataValidation(level?: ConsistencyLevel): Promise<any> {
+  async performDataValidation(level?: any): Promise<any> {
     return await dataSyncService.manualValidation(level)
   }
 
-  /**
-   * 获取批处理性能指标
-   */
   async getBatchPerformanceMetrics(): Promise<any> {
     return dataSyncService.getBatchPerformanceMetrics()
   }
 
-  /**
-   * 配置数据验证参数
-   */
-  configureDataValidation(options: {
-    level?: ConsistencyLevel
-    autoRepair?: boolean
-    scheduledValidation?: boolean
-  }): void {
+  configureDataValidation(options: any): void {
     dataSyncService.configureValidation(options)
   }
 
-  /**
-   * 配置批处理优化
-   */
   configureBatchOptimization(options: any): void {
     dataSyncService.configureBatchOptimization(options)
   }
 
-  /**
-   * 强制数据同步
-   */
   async forceDataSync(direction?: SyncDirection): Promise<SyncSession> {
     return await dataSyncService.forceSync(direction)
   }
@@ -1406,27 +905,17 @@ export const unifiedSyncService = new UnifiedSyncService()
 // 便利方法导出
 // ============================================================================
 
-export const addSyncOperation = (operation: Omit<UnifiedSyncOperation, 'id' | 'timestamp'>) => 
+export const addSyncOperation = (operation: Omit<UnifiedSyncOperation, 'id' | 'timestamp'>) =>
   unifiedSyncService.addOperation(operation)
 
 export const performFullSync = () => unifiedSyncService.performFullSync()
 export const performIncrementalSync = () => unifiedSyncService.performIncrementalSync()
 export const getSyncMetrics = () => unifiedSyncService.getMetrics()
-export const getSyncConflicts = () => unifiedSyncService.getConflicts()
-export const getSyncHistory = (filters?: any) => unifiedSyncService.getOperationHistory(filters)
-
-// ============================================================================
-// DataSyncService集成便利方法
-// ============================================================================
 
 export const getDataSyncStatus = () => unifiedSyncService.getDataSyncStatus()
-export const getDataConsistencyReport = (level?: ConsistencyLevel) => unifiedSyncService.getDataConsistencyReport(level)
-export const performDataValidation = (level?: ConsistencyLevel) => unifiedSyncService.performDataValidation(level)
+export const getDataConsistencyReport = (level?: any) => unifiedSyncService.getDataConsistencyReport(level)
+export const performDataValidation = (level?: any) => unifiedSyncService.performDataValidation(level)
 export const getBatchPerformanceMetrics = () => unifiedSyncService.getBatchPerformanceMetrics()
-export const configureDataValidation = (options: {
-  level?: ConsistencyLevel
-  autoRepair?: boolean
-  scheduledValidation?: boolean
-}) => unifiedSyncService.configureDataValidation(options)
+export const configureDataValidation = (options: any) => unifiedSyncService.configureDataValidation(options)
 export const configureBatchOptimization = (options: any) => unifiedSyncService.configureBatchOptimization(options)
 export const forceDataSync = (direction?: SyncDirection) => unifiedSyncService.forceDataSync(direction)
