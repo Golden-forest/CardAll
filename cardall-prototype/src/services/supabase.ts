@@ -87,6 +87,14 @@ export interface Database {
           updated_at: string
           sync_version: number
           is_deleted: boolean
+          color: string
+          icon: string
+          card_ids: string[]
+          full_path: string
+          depth: number
+          description: string
+          order_index: number
+          is_expanded: boolean
         }
         Insert: {
           id?: string
@@ -97,6 +105,14 @@ export interface Database {
           updated_at?: string
           sync_version?: number
           is_deleted?: boolean
+          color?: string
+          icon?: string
+          card_ids?: string[]
+          full_path?: string
+          depth?: number
+          description?: string
+          order_index?: number
+          is_expanded?: boolean
         }
         Update: {
           id?: string
@@ -106,6 +122,14 @@ export interface Database {
           updated_at?: string
           sync_version?: number
           is_deleted?: boolean
+          color?: string
+          icon?: string
+          card_ids?: string[]
+          full_path?: string
+          depth?: number
+          description?: string
+          order_index?: number
+          is_expanded?: boolean
         }
       }
       tags: {

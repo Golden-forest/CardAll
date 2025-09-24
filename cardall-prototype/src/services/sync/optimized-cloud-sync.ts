@@ -206,18 +206,14 @@ export class OptimizedCloudSyncService {
    */
   private startAdaptiveSync(): void {
     this.stopAdaptiveSync()
-    
-    const networkState = networkStateDetector.getCurrentState()
-    const syncInterval = this.getSyncInterval(networkState.quality)
-    
-    this.syncInterval = setInterval(async () => {
-      const currentState = networkStateDetector.getCurrentState()
-      if (currentState.canSync && this.authService?.isAuthenticated()) {
-        await this.performOptimizedSync()
-      }
-    }, syncInterval)
-    
-    console.log(`🔄 自适应同步已启动，间隔: ${syncInterval / 1000}秒`)
+
+    // 禁用自适应同步以避免与data-sync-service.ts冲突
+    console.log('🚫 optimized-cloud-sync.ts 自适应同步已禁用，使用 data-sync-service.ts 进行同步')
+
+    // 不启动定时器，避免多个服务冲突
+    this.syncInterval = null
+
+    console.log('⚠️ 自适应同步已禁用，防止服务冲突')
   }
   
   /**

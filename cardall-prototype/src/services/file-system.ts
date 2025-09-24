@@ -47,6 +47,7 @@ class FileSystemService {
   async requestDirectoryAccess(): Promise<boolean> {
     if (!this.isSupported) {
       console.warn('File System Access API not supported, using fallback storage')
+      this.saveStorageStrategy('indexeddb')
       return false
     }
 
@@ -55,17 +56,43 @@ class FileSystemService {
         mode: 'readwrite',
         startIn: 'documents'
       })
-      
+
       // 创建必要的子目录
       await this.ensureDirectoryStructure()
+      this.saveStorageStrategy('filesystem')
       return true
     } catch (error) {
       if (error.name === 'AbortError') {
-        console.log('User cancelled directory selection')
+        console.log('User cancelled directory selection, using fallback storage')
       } else {
         console.error('Failed to access directory:', error)
       }
+      this.saveStorageStrategy('indexeddb')
       return false
+    }
+  }
+
+  // 保存存储策略到数据库
+  private async saveStorageStrategy(strategy: 'filesystem' | 'indexeddb'): Promise<void> {
+    try {
+      await db.settings.put({
+        key: 'storageStrategy',
+        value: strategy,
+        updatedAt: new Date(),
+        scope: 'global'
+      })
+    } catch (error) {
+      console.error('Failed to save storage strategy:', error)
+    }
+  }
+
+  // 获取当前存储策略
+  async getStorageStrategy(): Promise<'filesystem' | 'indexeddb'> {
+    try {
+      const setting = await db.settings.get('storageStrategy')
+      return setting?.value || 'indexeddb'
+    } catch {
+      return 'indexeddb'
     }
   }
 

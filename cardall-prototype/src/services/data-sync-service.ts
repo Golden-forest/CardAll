@@ -192,25 +192,48 @@ export class DataSyncService {
   }
 
   private startBackgroundSync(): void {
+    // 清理现有的定时器（如果有）
+    this.syncIntervals.forEach((interval, key) => {
+      clearInterval(interval)
+      console.log(`🧹 清理现有定时器: ${key}`)
+    })
+    this.syncIntervals.clear()
+
     // 基于网络状态的智能同步间隔
     const adaptiveInterval = this.getAdaptiveSyncInterval()
+    console.log(`🔄 启动主要后台同步服务，间隔: ${adaptiveInterval / 1000}秒`)
 
-    // 主同步循环
-    setInterval(() => {
+    // 主同步循环 - 这是唯一的核心同步定时器
+    const mainSyncInterval = setInterval(() => {
       if (this.shouldPerformBackgroundSync()) {
-        this.performIncrementalSync().catch(console.error)
+        console.log('🔄 执行后台增量同步...')
+        this.performIncrementalSync().catch(error => {
+          console.error('❌ 后台同步失败:', error)
+        })
       }
     }, adaptiveInterval)
 
-    // 数据一致性检查（每小时）
-    setInterval(() => {
-      this.checkDataConsistency().catch(console.error)
-    }, 60 * 60 * 1000)
+    this.syncIntervals.set('mainSync', mainSyncInterval)
 
-    // 清理过期的同步会话（每天）
-    setInterval(() => {
+    // 数据一致性检查（每30分钟，调整为更合理）
+    const consistencyCheckInterval = setInterval(() => {
+      console.log('🔍 执行数据一致性检查...')
+      this.checkDataConsistency().catch(error => {
+        console.error('❌ 数据一致性检查失败:', error)
+      })
+    }, 30 * 60 * 1000)
+
+    this.syncIntervals.set('consistencyCheck', consistencyCheckInterval)
+
+    // 清理过期的同步会话（每6小时）
+    const cleanupInterval = setInterval(() => {
+      console.log('🧹 清理过期同步会话...')
       this.cleanupExpiredSessions()
-    }, 24 * 60 * 60 * 1000)
+    }, 6 * 60 * 60 * 1000)
+
+    this.syncIntervals.set('cleanup', cleanupInterval)
+
+    console.log('✅ DataSyncService 后台同步已启动，这是唯一的同步服务')
   }
 
   private startHealthCheck(): void {
@@ -1368,13 +1391,20 @@ export class DataSyncService {
   /**
    * 获取本地变更
    */
-  private async getLocalChanges(): Promise<DbCard[]> {
+  private async getLocalChanges(): Promise<Array<DbCard | DbFolder>> {
     // 获取待同步的本地卡片
     const pendingCards = await db.cards
       .filter(card => card.pendingSync)
       .toArray()
 
-    return pendingCards
+    // 获取待同步的本地文件夹
+    const pendingFolders = await db.folders
+      .filter(folder => folder.pendingSync)
+      .toArray()
+
+    console.log(`🔍 Found ${pendingCards.length} cards and ${pendingFolders.length} folders pending sync`)
+
+    return [...pendingCards, ...pendingFolders]
   }
 
   /**
@@ -1518,15 +1548,17 @@ export class DataSyncService {
    * 获取自适应同步间隔
    */
   private getAdaptiveSyncInterval(): number {
-    // 根据网络状态和同步历史动态调整
+    // 根据网络状态和同步历史动态调整 - 使用更积极的同步策略
     const reliability = this.metrics.reliability
 
-    if (reliability < 0.8) {
-      return 10 * 60 * 1000 // 可靠性低，10分钟
+    if (reliability < 0.5) {
+      return 3 * 60 * 1000 // 可靠性很低，3分钟
+    } else if (reliability < 0.8) {
+      return 2 * 60 * 1000 // 可靠性较低，2分钟
     } else if (reliability < 0.95) {
-      return 5 * 60 * 1000 // 中等可靠性，5分钟
+      return 1 * 60 * 1000 // 中等可靠性，1分钟
     } else {
-      return 2 * 60 * 1000 // 高可靠性，2分钟
+      return 30 * 1000 // 高可靠性，30秒
     }
   }
 

@@ -28,9 +28,13 @@ export interface DbCard extends Omit<Card, 'id'>, SyncableEntity {
 // 扩展的数据库文件夹实体
 export interface DbFolder extends Omit<Folder, 'id'>, SyncableEntity {
   id?: string
+  // 保持向后兼容的字段
+  cardIds: string[] // 文件夹包含的卡片ID列表
   // 新增字段用于优化查询
   fullPath?: string // 完整路径用于快速查找
   depth?: number // 文件夹深度
+  description?: string // 文件夹描述
+  order?: number // 文件夹排序
 }
 
 // 扩展的数据库标签实体
@@ -150,7 +154,7 @@ class CardAllUnifiedDatabase extends Dexie {
       this.version(3).stores({
         // 核心实体表 - 优化的索引设计
         cards: '++id, userId, folderId, createdAt, updatedAt, syncVersion, pendingSync, [userId+folderId], searchVector',
-        folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth',
+        folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth, cardIds',
         tags: '++id, userId, name, createdAt, syncVersion, pendingSync, [userId+name]',
         images: '++id, cardId, userId, createdAt, updatedAt, syncVersion, pendingSync, storageMode, [cardId+userId]',
 

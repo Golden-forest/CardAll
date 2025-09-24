@@ -62,6 +62,10 @@ export interface Folder {
   isExpanded?: boolean
   createdAt: Date
   updatedAt: Date
+  // 同步相关字段（可选，保持向后兼容）
+  syncVersion?: number
+  pendingSync?: boolean
+  userId?: string
 }
 
 export interface Tag {

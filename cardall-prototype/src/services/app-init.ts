@@ -116,23 +116,31 @@ class AppInitializationService {
       this.updateStatus({
         step: 'filesystem',
         progress: 60,
-        message: '请求文件系统访问权限...',
+        message: '配置文件系统访问权限...',
         isComplete: false,
         hasError: false
       })
 
       if (fileSystemService.isFileSystemAccessSupported()) {
         try {
-          result.fileSystemAccess = await fileSystemService.requestDirectoryAccess()
-          if (!result.fileSystemAccess) {
-            console.warn('用户未授予文件系统访问权限，将使用降级存储')
+          // 检查之前的存储策略
+          const savedStrategy = await fileSystemService.getStorageStrategy()
+
+          if (savedStrategy === 'filesystem') {
+            result.fileSystemAccess = await fileSystemService.requestDirectoryAccess()
+            if (!result.fileSystemAccess) {
+              console.warn('文件系统访问权限未获得，将使用IndexedDB存储')
+            }
+          } else {
+            console.info('使用已配置的IndexedDB存储策略')
+            result.fileSystemAccess = false
           }
         } catch (error) {
           console.warn('文件系统访问请求失败，使用降级存储:', error)
           result.fileSystemAccess = false
         }
       } else {
-        console.info('浏览器不支持File System Access API，使用降级存储')
+        console.info('浏览器不支持File System Access API，使用IndexedDB存储')
         result.fileSystemAccess = false
       }
 

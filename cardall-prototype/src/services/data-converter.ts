@@ -114,7 +114,7 @@ export class DataConverter {
   static toDbFolder(folder: Partial<Folder>, userId?: string): DbFolder {
     const now = new Date()
     const effectiveUserId = userId || this.getCurrentUserId()
-    
+
     return {
       id: folder.id || crypto.randomUUID(),
       name: folder.name || '',
@@ -124,6 +124,7 @@ export class DataConverter {
       icon: folder.icon || 'folder',
       order: folder.order || 0,
       isExpanded: folder.isExpanded ?? true,
+      cardIds: folder.cardIds || [],
       createdAt: folder.createdAt || now,
       userId: effectiveUserId,
       syncVersion: folder.syncVersion || 1,
@@ -137,19 +138,20 @@ export class DataConverter {
 
   // 数据库文件夹 → 前端文件夹
   static fromDbFolder(dbFolder: DbFolder): Folder {
-    const { 
-      userId, 
-      syncVersion, 
-      lastSyncAt, 
-      pendingSync, 
+    const {
+      userId,
+      syncVersion,
+      lastSyncAt,
+      pendingSync,
       fullPath,
       depth,
-      ...folder 
+      ...folder
     } = dbFolder
 
     return {
       ...folder,
       id: folder.id || '',
+      cardIds: folder.cardIds || [],
       createdAt: new Date(folder.createdAt),
       updatedAt: new Date(folder.updatedAt)
     }
@@ -385,8 +387,8 @@ export class DataConverter {
       description: cloudFolder.description || '',
       color: cloudFolder.color || '#6366f1',
       icon: cloudFolder.icon || 'folder',
-      order: cloudFolder.order || 0,
-      isExpanded: true,
+      order: cloudFolder.order_index || 0,
+      isExpanded: cloudFolder.is_expanded ?? true,
       cardIds: cloudFolder.card_ids || [],
       userId: cloudFolder.user_id,
       syncVersion: cloudFolder.sync_version || 1,
@@ -448,17 +450,18 @@ export class DataConverter {
       id: dbFolder.id,
       name: dbFolder.name,
       parent_id: dbFolder.parentId,
-      description: dbFolder.description,
+      description: dbFolder.description || '',
       color: dbFolder.color,
       icon: dbFolder.icon,
-      order: dbFolder.order,
-      card_ids: dbFolder.cardIds,
+      order_index: dbFolder.order || 0,
+      card_ids: dbFolder.cardIds || [],
       user_id: dbFolder.userId,
       sync_version: dbFolder.syncVersion,
       updated_at: dbFolder.updatedAt.toISOString(),
       created_at: dbFolder.createdAt.toISOString(),
-      full_path: dbFolder.fullPath,
-      depth: dbFolder.depth
+      full_path: dbFolder.fullPath || dbFolder.name,
+      depth: dbFolder.depth || 0,
+      is_expanded: dbFolder.isExpanded ?? true
     }
   }
 

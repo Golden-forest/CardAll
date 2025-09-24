@@ -2211,25 +2211,20 @@ export class EnhancedOfflineManager {
   private startPeriodicSync(): void {
     if (this.syncTimer) {
       clearInterval(this.syncTimer)
+      this.syncTimer = null
     }
 
-    this.syncTimer = setInterval(async () => {
-      if (navigator.onLine && !this.isOffline) {
-        const stats = await this.getEnhancedOfflineStats()
-        if (stats.pendingOperations > 0) {
-          this.handleNetworkRecovery().catch(console.error)
-        }
-      }
-    }, this.config.syncInterval)
+    // 禁用定期同步以避免与data-sync-service.ts冲突
+    console.log('🚫 enhanced-offline-manager.ts 定期同步已禁用，使用 data-sync-service.ts 进行同步')
+
+    // 不启动定时器，避免多个服务冲突
   }
 
   private startPredictionUpdates(): void {
-    // 定期更新预测模型
-    setInterval(async () => {
-      if (this.config.predictionEnabled) {
-        await this.updatePredictionModels()
-      }
-    }, 300000) // 每5分钟更新一次
+    // 禁用预测模型更新以减少资源消耗
+    console.log('🚫 enhanced-offline-manager.ts 预测模型更新已禁用，减少资源消耗')
+
+    // 不启动定时器，避免不必要的资源消耗
   }
 
   private async updatePredictionModels(): Promise<void> {

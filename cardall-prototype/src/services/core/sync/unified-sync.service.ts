@@ -1070,21 +1070,17 @@ export class UnifiedSyncService {
   }
 
   private startAutoSync(): void {
+    // 禁用自动同步以避免与data-sync-service.ts冲突
+    console.log('🚫 unified-sync.service.ts 自动同步已禁用，使用 data-sync-service.ts 进行同步')
+
+    // 清理现有的定时器（如果有）
     if (this.syncInterval) {
       clearInterval(this.syncInterval)
+      this.syncInterval = null
     }
 
-    this.syncInterval = window.setInterval(async () => {
-      try {
-        if (!this.isSyncing && this.shouldAutoSync()) {
-          await this.sync({ type: 'incremental' })
-        }
-      } catch (error) {
-        this.log('Auto sync error:', error)
-      }
-    }, this.config.syncInterval)
-
-    this.log('Auto sync started')
+    // 不启动自动同步，避免多个服务冲突
+    this.log('Auto sync disabled to prevent conflicts with data-sync-service.ts')
   }
 
   private shouldAutoSync(): boolean {

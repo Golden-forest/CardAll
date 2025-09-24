@@ -41,8 +41,11 @@ export default defineConfig({
     },
   },
   server: {
-    host: true,
-    port: 5173
+    host: '0.0.0.0',  // 监听所有网络接口
+    port: 5173,
+    strictPort: false,  // 如果端口被占用，自动切换端口
+    open: false,       // 不自动打开浏览器
+    cors: true        // 允许跨域访问
   },
   build: {
     target: 'esnext',

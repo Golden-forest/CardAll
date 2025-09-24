@@ -1318,15 +1318,17 @@ export class OfflineManager {
   }
 
   private startPeriodicSync(): void {
-    // 定期检查同步状态
-    this.syncTimer = setInterval(async () => {
-      if (navigator.onLine) {
-        const stats = await this.getOfflineStats()
-        if (stats.pendingOperations > 0) {
-          await this.handleNetworkRecovery()
-        }
-      }
-    }, 30 * 1000) // 每30秒检查一次
+    // 禁用定期同步以避免与data-sync-service.ts冲突
+    console.log('🚫 offline-manager.ts 定期同步已禁用，使用 data-sync-service.ts 进行同步')
+
+    // 清理现有的定时器（如果有）
+    if (this.syncTimer) {
+      clearInterval(this.syncTimer)
+      this.syncTimer = null
+    }
+
+    // 不启动定期同步，避免多个服务冲突
+    console.log('⚠️ 离线管理器定期同步已禁用，防止服务冲突')
   }
 
   /**
