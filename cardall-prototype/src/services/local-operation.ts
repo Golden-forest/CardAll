@@ -340,15 +340,21 @@ export class LocalOperationService {
       let query = db.syncQueue
         .where('status')
         .equals('pending')
-        .orderBy('priority') // 按优先级排序
-        .reverse() // 高优先级在前
+        .toArray()
+        .then(operations => operations.sort((a, b) => {
+          const priorityOrder = { critical: 4, high: 3, normal: 2, low: 1 }
+          return priorityOrder[b.priority] - priorityOrder[a.priority]
+        }))
       
+      let operations = await query
+
       // 应用优先级过滤
       if (priorityFilter && priorityFilter.length > 0) {
-        query = query.filter(op => priorityFilter.includes(op.priority))
+        operations = operations.filter(op => priorityFilter.includes(op.priority))
       }
-      
-      const operations = await query.limit(limit).toArray()
+
+      // 限制数量
+      operations = operations.slice(0, limit)
       
       // 检查依赖关系
       const readyOperations = await this.filterReadyOperations(operations)

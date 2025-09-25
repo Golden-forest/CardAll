@@ -1208,7 +1208,7 @@ export class DataSyncService {
     images: number
   }> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
 
       const [cards, folders, tags, images] = await Promise.all([
@@ -1412,7 +1412,7 @@ export class DataSyncService {
    */
   private async getCloudChanges(): Promise<any[]> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return []
 
       // 获取最近变更的云端数据
@@ -1529,7 +1529,7 @@ export class DataSyncService {
    */
   private async getCloudEntityCount(entity: string): Promise<number> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return 0
 
       const result = await supabase
@@ -1576,7 +1576,7 @@ export class DataSyncService {
   private shouldPerformBackgroundSync(): boolean {
     return this.currentState === SyncState.IDLE &&
            navigator.onLine &&
-           supabase.auth.user() !== null
+           (localStorage.getItem('supabase.auth.token') !== null || sessionStorage.getItem('supabase.auth.token') !== null)
   }
 
   /**

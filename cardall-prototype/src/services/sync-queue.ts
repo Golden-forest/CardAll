@@ -1003,13 +1003,13 @@ export class SyncQueueManager {
    */
   async getOperations(filters?: {
     status?: SyncQueueStatus
-    priority?: 'high' | 'normal' | 'low'
+    priority?: 'critical' | 'high' | 'normal' | 'low'
     entity?: 'card' | 'folder' | 'tag' | 'image'
     userId?: string
     limit?: number
     offset?: number
   }): Promise<QueueOperation[]> {
-    let query = db.syncQueue.toCollection()
+    let query = db.syncQueue
 
     if (filters?.status) {
       query = query.where('status').equals(filters.status as any)
@@ -1462,7 +1462,7 @@ export class SyncQueueManager {
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
 
     for (const [operationId, history] of this.operationHistory.entries()) {
-      if (history.createdAt.getTime() < oneWeekAgo) {
+      if (history.createdAt && typeof history.createdAt.getTime === 'function' && history.createdAt.getTime() < oneWeekAgo) {
         this.operationHistory.delete(operationId)
       }
     }

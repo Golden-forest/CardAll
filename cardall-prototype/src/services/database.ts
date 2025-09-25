@@ -16,13 +16,14 @@ export interface SyncableEntity {
 }
 
 // 扩展的数据库卡片实体
-export interface DbCard extends Omit<Card, 'id'>, SyncableEntity {
+export interface DbCard extends Omit<Card, 'id' | 'isFlipped'>, SyncableEntity {
   id?: string
   // 保持向后兼容的字段
   folderId?: string
   // 新增字段用于优化查询
   searchVector?: string // 全文搜索优化
   thumbnailUrl?: string // 卡片缩略图
+  // 移除isFlipped，使其成为纯UI状态，不参与持久化
 }
 
 // 扩展的数据库文件夹实体
@@ -82,7 +83,8 @@ export interface SyncOperation {
   retryCount: number
   maxRetries: number
   error?: string
-  priority: 'high' | 'normal' | 'low'
+  priority: 'critical' | 'high' | 'normal' | 'low'
+  status?: 'pending' | 'processing' | 'completed' | 'failed'
 }
 
 // 应用设置 - 统一配置管理
@@ -478,8 +480,8 @@ class CardAllUnifiedDatabase extends Dexie {
 
     try {
       console.log('检查数据库连接...')
-      // 检查数据库连接
-      await this.tables.toArray()
+      // 检查数据库连接 - 测试一个基本表
+      await this.cards.toArray()
       console.log('数据库连接正常')
 
       console.log('检查数据一致性...')

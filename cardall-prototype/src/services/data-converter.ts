@@ -361,7 +361,9 @@ export class DataConverter {
         images: cloudCard.back_content?.images || [],
         lastModified: new Date(cloudCard.updated_at)
       },
-      isFlipped: false,
+      // 注意：isFlipped 是纯本地UI状态，不参与云端同步
+      // 默认显示正面，用户主动点击才翻转查看背面
+      // isFlipped: false, // 移除硬编码，让本地状态管理
       style: cloudCard.style || {
         type: 'solid',
         backgroundColor: '#ffffff',
@@ -419,6 +421,7 @@ export class DataConverter {
   }
 
   // 数据库卡片 → 云端卡片
+  // 注意：isFlipped 是纯本地UI状态，不参与云端同步，因此在此处被忽略
   static toCloudCard(dbCard: DbCard): any {
     return {
       id: dbCard.id,

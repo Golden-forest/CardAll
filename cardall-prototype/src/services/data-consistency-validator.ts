@@ -804,7 +804,7 @@ export class DataConsistencyValidator {
     images: number
   }> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return { cards: 0, folders: 0, tags: 0, images: 0 }
 
       const [cards, folders, tags, images] = await Promise.all([
@@ -854,7 +854,7 @@ export class DataConsistencyValidator {
    */
   private async getCloudEntity(entity: string, entityId: string): Promise<any> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return null
 
       const result = await supabase
@@ -876,7 +876,7 @@ export class DataConsistencyValidator {
    */
   private async getCloudEntityCount(entity: string): Promise<number> {
     try {
-      const user = supabase.auth.user()
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) return 0
 
       const result = await supabase

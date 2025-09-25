@@ -28,14 +28,14 @@ import { CardTags } from '../tag/card-tags'
 
 interface FlipCardProps {
   card: CardType
-  onFlip: (cardId: string) => void
-  onUpdate: (cardId: string, updates: Partial<CardType>) => void
-  onCopy: (cardId: string) => void
-  onScreenshot: (cardId: string) => void
-  onShare: (cardId: string) => void
-  onDelete: (cardId: string) => void
-  onStyleChange?: (cardId: string) => void
-  onTagsChange?: (cardId: string) => void
+  onFlip: (_cardId: string) => void
+  onUpdate: (_cardId: string, _updates: Partial<CardType>) => void
+  onCopy: (_cardId: string) => void
+  onScreenshot: (_cardId: string) => void
+  onShare: (_cardId: string) => void
+  onDelete: (_cardId: string) => void
+  onStyleChange?: (_cardId: string) => void
+  onTagsChange?: (_cardId: string) => void
   onMoveToFolder?: () => void
   className?: string
   size?: 'sm' | 'md' | 'lg'
@@ -58,12 +58,12 @@ export function FlipCard({
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingField, setEditingField] = useState<'title' | 'content' | null>(null)
-  const [originalContent, setOriginalContent] = useState<CardContentType | null>(null)
   const [tempContent, setTempContent] = useState<CardContentType | null>(null)
   const [isFlipping, setIsFlipping] = useState(false)
+  const [isFlipped, setIsFlipped] = useState(false) // 组件内部翻转状态
   const cardRef = useRef<HTMLDivElement>(null)
 
-  const currentContent = card.isFlipped ? card.backContent : card.frontContent
+  const currentContent = isFlipped ? card.backContent : card.frontContent
 
   // Size variants - 确保所有尺寸都使用完整宽度
   const sizeClasses = {
@@ -160,17 +160,20 @@ export function FlipCard({
   const handleFlip = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
-    
+
     if (isFlipping) return // 防止重复点击
-    
+
     setIsFlipping(true)
+    setIsFlipped(!isFlipped) // 切换内部翻转状态
+
+    // 仍然调用onFlip以保持兼容性（如果父组件需要）
     onFlip(card.id)
-    
+
     // 动画完成后重置状态
     setTimeout(() => {
       setIsFlipping(false)
     }, 600)
-  }, [card.id, onFlip, isFlipping])
+  }, [card.id, onFlip, isFlipping, isFlipped])
 
   // Start editing
   const handleEdit = (e: React.MouseEvent) => {
@@ -184,7 +187,6 @@ export function FlipCard({
   }
 
   const startEditing = (field: 'title' | 'content') => {
-    setOriginalContent(currentContent)
     setTempContent(currentContent)
     setEditingField(field)
     setIsEditing(true)
@@ -204,7 +206,7 @@ export function FlipCard({
   // Save changes
   const handleSaveEdit = () => {
     if (tempContent) {
-      const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
+      const contentKey = isFlipped ? 'backContent' : 'frontContent'
       const updates = {
         [contentKey]: tempContent
       } as Partial<CardType>
@@ -212,7 +214,6 @@ export function FlipCard({
     }
     setIsEditing(false)
     setEditingField(null)
-    setOriginalContent(null)
     setTempContent(null)
   }
 
@@ -220,7 +221,6 @@ export function FlipCard({
   const handleCancelEdit = () => {
     setIsEditing(false)
     setEditingField(null)
-    setOriginalContent(null)
     setTempContent(null)
   }
 
@@ -264,11 +264,11 @@ export function FlipCard({
             "flip-card-inner relative transition-all duration-700 ease-in-out",
             sizeClasses[size]
           )}
-          style={{ 
+          style={{
             minHeight: 'fit-content',
             width: '100%',
             transformStyle: 'preserve-3d',
-            transform: card.isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+            transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
           }}
         >
           {/* Front Side */}
@@ -283,13 +283,13 @@ export function FlipCard({
               ...cardStyles,
               borderRadius: cardStyles.borderRadius,
               backfaceVisibility: 'hidden',
-              position: card.isFlipped ? 'absolute' : 'relative',
-              opacity: card.isFlipped ? 0 : 1
+              position: isFlipped ? 'absolute' : 'relative',
+              opacity: isFlipped ? 0 : 1
             }}
           >
             <CardSide
               content={tempContent || card.frontContent}
-              isEditing={isEditing && !card.isFlipped}
+              isEditing={isEditing && !isFlipped}
               editingField={editingField}
               onTitleChange={handleTitleChange}
               onTextChange={handleTextChange}
@@ -311,6 +311,7 @@ export function FlipCard({
               onMoveToFolder={onMoveToFolder}
               card={card}
               isFlipping={isFlipping}
+              isCurrentlyFlipped={isFlipped}
             />
           </div>
 
@@ -327,14 +328,14 @@ export function FlipCard({
               borderRadius: cardStyles.borderRadius,
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
-              position: card.isFlipped ? 'relative' : 'absolute',
-              top: card.isFlipped ? 'auto' : '0',
-              opacity: card.isFlipped ? 1 : 0
+              position: isFlipped ? 'relative' : 'absolute',
+              top: isFlipped ? 'auto' : '0',
+              opacity: isFlipped ? 1 : 0
             }}
           >
             <CardSide
               content={tempContent || card.backContent}
-              isEditing={isEditing && card.isFlipped}
+              isEditing={isEditing && isFlipped}
               editingField={editingField}
               onTitleChange={handleTitleChange}
               onTextChange={handleTextChange}
@@ -356,6 +357,7 @@ export function FlipCard({
               onMoveToFolder={onMoveToFolder}
               card={card}
               isFlipping={isFlipping}
+              isCurrentlyFlipped={isFlipped}
             />
           </div>
         </div>
@@ -429,17 +431,17 @@ interface CardSideProps {
   content: CardContentType
   isEditing: boolean
   editingField: 'title' | 'content' | null
-  onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void
-  onTempContentUpdate: (field: keyof CardContentType, value: any) => void
+  _onTitleChange: (_e: React.ChangeEvent<HTMLInputElement>) => void
+  _onTextChange: (_e: React.ChangeEvent<HTMLTextAreaElement>) => void
+  onTempContentUpdate: (_field: keyof CardContentType, _value: any) => void
   onSaveEdit: () => void
   onCancelEdit: () => void
-  onDoubleClick: (field: 'title' | 'content') => void
-  onKeyDown: (e: React.KeyboardEvent) => void
-  sideLabel: string
+  onDoubleClick: (_field: 'title' | 'content') => void
+  _onKeyDown: (_e: React.KeyboardEvent) => void
+  _sideLabel: string
   isHovered: boolean
-  onEdit: (e: React.MouseEvent) => void
-  onFlip: (e: React.MouseEvent) => void
+  onEdit: (_e: React.MouseEvent) => void
+  onFlip: (_e: React.MouseEvent) => void
   onCopy: () => void
   onScreenshot: () => void
   onShare: () => void
@@ -447,22 +449,19 @@ interface CardSideProps {
   onStyleChange?: () => void
   onTagsChange?: () => void
   onMoveToFolder?: () => void
-  card: CardType
+  _card: CardType
   isFlipping: boolean
+  isCurrentlyFlipped: boolean
 }
 
 function CardSide({
   content,
   isEditing,
   editingField,
-  onTitleChange,
-  onTextChange,
   onTempContentUpdate,
   onSaveEdit,
   onCancelEdit,
   onDoubleClick,
-  onKeyDown,
-  sideLabel,
   isHovered,
   onEdit,
   onFlip,
@@ -473,8 +472,13 @@ function CardSide({
   onStyleChange,
   onTagsChange,
   onMoveToFolder,
-  card,
-  isFlipping
+  isFlipping,
+  isCurrentlyFlipped,
+  _onTitleChange,
+  _onTextChange,
+  _onKeyDown,
+  _sideLabel,
+  _card
 }: CardSideProps) {
   return (
     <div className="flex flex-col h-full">
@@ -513,7 +517,7 @@ function CardSide({
               isFlipping && "animate-pulse"
             )}
             onClick={onFlip}
-            title={`Flip to ${card.isFlipped ? 'Front' : 'Back'}`}
+            title={`Flip to ${isCurrentlyFlipped ? 'Front' : 'Back'}`}
             disabled={isFlipping}
           >
             <Cat className={cn(
@@ -523,24 +527,16 @@ function CardSide({
           </Button>
 
           {/* More Actions */}
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <div
-                className="h-7 w-7 rounded-md hover:bg-black/10 flex items-center justify-center cursor-pointer transition-colors group"
-                onMouseEnter={(e) => {
-                  e.stopPropagation()
-                  // Programmatically trigger the dropdown
-                  const event = new MouseEvent('click', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true,
-                  })
-                  e.currentTarget.dispatchEvent(event)
-                }}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 rounded-md hover:bg-black/10 transition-all duration-200"
                 onClick={(e) => e.stopPropagation()}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" />
-              </div>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={onEdit}>

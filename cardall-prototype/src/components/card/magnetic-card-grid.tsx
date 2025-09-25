@@ -20,6 +20,7 @@ interface MagneticCardGridProps {
   cards: Card[];
   onCardUpdate: (id: string, updates: Partial<Card>) => void;
   onCardDelete: (id: string) => void;
+  onCardFlip?: (cardId: string) => void;
   layout?: 'grid' | 'list';
   cardSize?: 'sm' | 'md' | 'lg';
   enableVirtualization?: boolean;
@@ -38,6 +39,7 @@ export function MagneticCardGrid({
   cards,
   onCardUpdate,
   onCardDelete,
+  onCardFlip,
   layout = 'grid',
   cardSize = 'md',
   enableVirtualization = true,
@@ -215,7 +217,7 @@ export function MagneticCardGrid({
   }
 
   // 使用虚拟化网格或传统网格
-  const CardGrid = shouldUseVirtualization ? VirtualizedCardGrid : ({ cards, onCardUpdate, onCardDelete, layout, cardSize }: any) => (
+  const CardGrid = shouldUseVirtualization ? VirtualizedCardGrid : ({ cards, onCardUpdate, onCardDelete, onCardFlip, layout, cardSize }: any) => (
     <div className={getGridClasses()}>
       {cards.map((card: Card) => (
         <div key={card.id} data-card-id={card.id} className="break-inside-avoid">
@@ -223,6 +225,7 @@ export function MagneticCardGrid({
             card={card}
             onUpdate={onCardUpdate}
             onDelete={onCardDelete}
+            onCardFlip={onCardFlip}
             isSnapping={activeSnapZone?.cardId === card.id}
             snapDirection={activeSnapZone?.direction}
           />
@@ -245,6 +248,7 @@ export function MagneticCardGrid({
           cards={cards}
           onCardUpdate={onCardUpdate}
           onCardDelete={onCardDelete}
+          onCardFlip={onCardFlip}
           layout={layout}
           cardSize={cardSize}
           enableVirtualization={shouldUseVirtualization}

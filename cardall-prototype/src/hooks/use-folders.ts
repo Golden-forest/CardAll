@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
-import { dataSyncService } from '@/services/data-sync-service'
 import { authService } from '@/services/auth'
 import { db } from '@/services/database'
+import { triggerFolderSync } from '@/services/decoupled-sync-service'
 
 // Mock data for development
 const mockFolders: Folder[] = [
@@ -61,12 +61,22 @@ export function useFolders() {
   // Get folder tree structure
   const getFolderTree = useCallback(() => {
     const rootFolders = folders.filter(folder => !folder.parentId)
-    
+
     const buildTree = (parentFolders: Folder[]): (Folder & { children: Folder[] })[] => {
-      return parentFolders.map(folder => ({
-        ...folder,
-        children: buildTree(folders.filter(f => f.parentId === folder.id))
-      }))
+      return parentFolders.map(folder => {
+        // 确保文件夹有正确的展开状态
+        const children = buildTree(folders.filter(f => f.parentId === folder.id))
+        const hasChildren = children.length > 0
+
+        // 如果有子文件夹但展开状态未定义，默认展开
+        const isExpanded = folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
+
+        return {
+          ...folder,
+          isExpanded,
+          children
+        }
+      })
     }
 
     return buildTree(rootFolders)
@@ -154,7 +164,13 @@ export function useFolders() {
             console.log('🔄 Toggling folder expansion:', action.payload)
             const toggledFolders = prevFolders.map(folder =>
               folder.id === action.payload
-                ? { ...folder, isExpanded: !folder.isExpanded, updatedAt: new Date() }
+                ? {
+                    ...folder,
+                    isExpanded: folder.isExpanded !== undefined ? !folder.isExpanded : true,
+                    updatedAt: new Date(),
+                    syncVersion: (folder.syncVersion || 1) + 1,
+                    pendingSync: true
+                  }
                 : folder
             )
             console.log('✅ Folder toggled:', action.payload)
@@ -170,23 +186,30 @@ export function useFolders() {
       }
     })
 
-    // 触发云端同步（异步执行，不阻塞UI）
-    const triggerCloudSync = async () => {
+    // 触发解耦的云端同步（异步执行，不阻塞UI）
+    const triggerDecoupledSync = () => {
       try {
-        console.log('☁️ 触发文件夹云端同步...')
-        await dataSyncService.performIncrementalSync()
-        console.log('✅ 文件夹云端同步完成')
+        if (action.type === 'CREATE_FOLDER') {
+          console.log('☁️ 触发文件夹创建同步...')
+          triggerFolderSync('create', action.payload)
+        } else if (action.type === 'UPDATE_FOLDER') {
+          console.log('☁️ 触发文件夹更新同步...')
+          triggerFolderSync('update', { id: action.payload.id, updates: action.payload.updates })
+        } else if (action.type === 'DELETE_FOLDER') {
+          console.log('☁️ 触发文件夹删除同步...')
+          triggerFolderSync('delete', action.payload)
+        } else if (action.type === 'TOGGLE_FOLDER') {
+          console.log('☁️ 触发文件夹展开状态同步...')
+          triggerFolderSync('toggle', { id: action.payload, isExpanded: !getFolderById(action.payload)?.isExpanded })
+        }
       } catch (error) {
-        console.error('❌ 文件夹云端同步失败:', error)
+        console.error('❌ 触发同步失败:', error)
       }
     }
 
-    // 对于需要同步的操作，延迟触发同步
-    if (action.type === 'CREATE_FOLDER' || action.type === 'UPDATE_FOLDER' || action.type === 'DELETE_FOLDER') {
-      // 使用 setTimeout 避免阻塞当前的 state 更新
-      setTimeout(triggerCloudSync, 100)
-    }
-  }, [dataSyncService])
+    // 对于所有文件夹操作，都触发解耦同步
+    setTimeout(triggerDecoupledSync, 50)
+  }, [])
 
   // Utility functions
   const getFolderById = useCallback((id: string) => {
@@ -423,14 +446,20 @@ export function useFolders() {
             console.log('📊 从 IndexedDB 查找到文件夹:', dbFolders.length)
 
             if (dbFolders.length > 0) {
-              // 确保数据格式正确，添加默认同步字段
-              foldersToLoad = dbFolders.map(folder => ({
-                ...folder,
-                cardIds: folder.cardIds || [],
-                syncVersion: folder.syncVersion || 1,
-                pendingSync: folder.pendingSync || false,
-                userId: folder.userId || 'default'
-              }))
+              // 确保数据格式正确，添加默认同步字段和展开状态
+              foldersToLoad = dbFolders.map(folder => {
+                const children = dbFolders.filter(f => f.parentId === folder.id)
+                const hasChildren = children.length > 0
+
+                return {
+                  ...folder,
+                  cardIds: folder.cardIds || [],
+                  syncVersion: folder.syncVersion || 1,
+                  pendingSync: folder.pendingSync || false,
+                  userId: folder.userId || 'default',
+                  isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
+                }
+              })
               console.log('✅ 使用 IndexedDB 中的文件夹数据')
 
               // 立即更新状态，不等待同步完成
@@ -453,7 +482,8 @@ export function useFolders() {
                 ...folder,
                 syncVersion: 1,
                 pendingSync: false,
-                userId: 'default'
+                userId: 'default',
+                isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
               }))
 
               // 保存默认数据到 IndexedDB
@@ -480,7 +510,10 @@ export function useFolders() {
 
               if (backupFolders && backupFolders.length > 0) {
                 console.log('💾 从localStorage备份恢复文件夹数据:', backupFolders.length)
-                foldersToLoad = backupFolders
+                foldersToLoad = backupFolders.map(folder => ({
+                  ...folder,
+                  isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
+                }))
                 setFolders(foldersToLoad)
               } else {
                 // 只有在完全没有数据时才使用默认数据
@@ -488,7 +521,8 @@ export function useFolders() {
                   ...folder,
                   syncVersion: 1,
                   pendingSync: false,
-                  userId: 'default'
+                  userId: 'default',
+                  isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
                 }))
                 console.log('🚨 使用默认文件夹数据作为应急方案')
                 setFolders(foldersToLoad)
@@ -500,7 +534,8 @@ export function useFolders() {
                 ...folder,
                 syncVersion: 1,
                 pendingSync: false,
-                userId: 'default'
+                userId: 'default',
+                isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
               }))
               setFolders(foldersToLoad)
             }
@@ -510,39 +545,22 @@ export function useFolders() {
         setIsInitialized(true)
         console.log('🎉 文件夹数据加载完成，共', foldersToLoad.length, '个文件夹')
 
-        // 在后台进行云端同步和数据验证，不阻塞UI
+        // 在后台进行数据验证，不阻塞UI
         setTimeout(async () => {
           try {
-            // 触发云端同步（如果用户已登录）
-            if (authService.isAuthenticated()) {
-              console.log('☁️ 开始后台云端同步...')
-              await dataSyncService.performIncrementalSync()
-              console.log('✅ 后台云端同步完成')
-
-              // 同步完成后重新加载数据
-              const updatedDbFolders = await db.folders.toArray()
-              if (updatedDbFolders.length > 0) {
-                const updatedFolders = updatedDbFolders.map(folder => ({
-                  ...folder,
-                  cardIds: folder.cardIds || [],
-                  syncVersion: folder.syncVersion || 1,
-                  pendingSync: folder.pendingSync || false,
-                  userId: folder.userId || 'default'
-                }))
-                setFolders(updatedFolders)
-                console.log('🔄 同步后更新文件夹数据:', updatedFolders.length)
-              }
-            }
-
             // 验证数据一致性
             const isConsistent = await checkDataConsistency()
             if (!isConsistent) {
               console.warn('⚠️ 数据一致性检查失败，尝试修复...')
               await forceDataRepair()
             }
-          } catch (syncError) {
-            console.error('❌ 后台同步失败:', syncError)
-            // 同步失败不影响已加载的数据显示
+
+            // 解耦的同步服务会在后台自动处理同步
+            // 不需要在这里手动触发同步
+            console.log('📁 文件夹数据加载完成，解耦同步服务将自动处理云端同步')
+          } catch (error) {
+            console.error('❌ 后台数据处理失败:', error)
+            // 处理失败不影响已加载的数据显示
           }
         }, 1000)
 
@@ -584,14 +602,20 @@ export function useFolders() {
           return
         }
 
-        // 确保所有文件夹都有必要的同步字段
-        const normalizedFolders = folders.map(folder => ({
-          ...folder,
-          syncVersion: folder.syncVersion || 1,
-          pendingSync: folder.pendingSync || false,
-          userId: folder.userId || 'default',
-          updatedAt: new Date() // 确保更新时间正确
-        }))
+        // 确保所有文件夹都有必要的同步字段和展开状态
+        const normalizedFolders = folders.map(folder => {
+          const children = folders.filter(f => f.parentId === folder.id)
+          const hasChildren = children.length > 0
+
+          return {
+            ...folder,
+            syncVersion: folder.syncVersion || 1,
+            pendingSync: folder.pendingSync || false,
+            userId: folder.userId || 'default',
+            isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false),
+            updatedAt: new Date() // 确保更新时间正确
+          }
+        })
 
         // 使用事务确保数据一致性
         await db.transaction('rw', db.folders, async () => {
@@ -660,13 +684,19 @@ export function useFolders() {
         console.warn('🔄 尝试重新保存文件夹数据...')
         try {
           // 规范化数据后重新保存
-          const normalizedFolders = folders.map(folder => ({
-            ...folder,
-            syncVersion: folder.syncVersion || 1,
-            pendingSync: folder.pendingSync || false,
-            userId: folder.userId || 'default',
-            updatedAt: new Date()
-          }))
+          const normalizedFolders = folders.map(folder => {
+            const children = folders.filter(f => f.parentId === folder.id)
+            const hasChildren = children.length > 0
+
+            return {
+              ...folder,
+              syncVersion: folder.syncVersion || 1,
+              pendingSync: folder.pendingSync || false,
+              userId: folder.userId || 'default',
+              isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false),
+              updatedAt: new Date()
+            }
+          })
 
           // 先检查是否有现有数据，避免清空
           const existingFolders = await db.folders.toArray()

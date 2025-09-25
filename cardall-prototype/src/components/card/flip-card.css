@@ -30,6 +30,28 @@
   pointer-events: none;
 }
 
+/* 确保当前可见的卡片面能够接收点击事件 */
+.flip-card-face[style*="opacity: 1"] {
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* 确保不可见的卡片面不阻挡事件 */
+.flip-card-face[style*="opacity: 0"] {
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 确保卡片面内的按钮可以正常接收点击事件 */
+.flip-card-face button,
+.flip-card-face .btn,
+.flip-card-face [role="button"],
+.flip-card-face [data-slot="button"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20;
+}
+
 /* 优化移动端体验 */
 @media (max-width: 768px) {
   .flip-card-inner {

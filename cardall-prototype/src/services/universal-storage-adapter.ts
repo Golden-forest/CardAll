@@ -1882,7 +1882,8 @@ export class UniversalStorageAdapter implements StorageAdapter {
       frontContent: card.frontContent,
       backContent: card.backContent,
       style: card.style,
-      isFlipped: card.isFlipped,
+      // 移除isFlipped的持久化，使其成为纯UI状态
+      // isFlipped: card.isFlipped,
       createdAt: card.createdAt,
       updatedAt: card.updatedAt,
       userId: undefined, // 将在同步时设置
@@ -1897,6 +1898,8 @@ export class UniversalStorageAdapter implements StorageAdapter {
     return {
       ...card,
       id: card.id || '',
+      // 确保从数据库加载时isFlipped为false，使其成为纯UI状态
+      isFlipped: false,
       createdAt: new Date(card.createdAt),
       updatedAt: new Date(card.updatedAt)
     }

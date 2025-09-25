@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻转按钮调试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .debug-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .test-card {
+            width: 300px;
+            height: 200px;
+            margin: 20px auto;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            border-radius: 8px;
+        }
+
+        .test-card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            flex-direction: column;
+        }
+
+        .front {
+            background: #e3f2fd;
+            z-index: 2;
+        }
+
+        .back {
+            background: #f3e5f5;
+            transform: rotateY(180deg);
+        }
+
+        .flip-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .flip-button:hover {
+            background: #1976d2;
+            transform: scale(1.1);
+        }
+
+        .dropdown-button {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            width: 30px;
+            height: 30px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .dropdown-button:hover {
+            background: #444;
+        }
+
+        .test-cases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .test-case {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .test-case h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .console-output {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .console-line {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+
+        .console-line.info {
+            color: #4fc3f7;
+        }
+
+        .console-line.success {
+            color: #81c784;
+        }
+
+        .console-line.error {
+            color: #e57373;
+        }
+
+        .pointer-events-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fff3e0;
+            border-radius: 4px;
+        }
+
+        .pointer-events-controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pointer-events-controls button:hover {
+            background: #f57c00;
+        }
+
+        /* 测试不同CSS规则 */
+        .test-case-1 .card-face {
+            /* 基础情况 - 无额外规则 */
+        }
+
+        .test-case-2 .card-face[style*="opacity: 1"] {
+            pointer-events: auto !important;
+            z-index: 10 !important;
+        }
+
+        .test-case-2 .card-face[style*="opacity: 0"] {
+            pointer-events: none !important;
+            z-index: 1 !important;
+        }
+
+        .test-case-3 .card-face[style*="opacity: 1"] {
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        .test-case-3 .card-face[style*="opacity: 0"] {
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .test-case-3 .card-face button {
+            pointer-events: auto !important;
+            position: relative;
+            z-index: 20;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .status-working {
+            background: #4caf50;
+        }
+
+        .status-broken {
+            background: #f44336;
+        }
+
+        .status-unknown {
+            background: #9e9e9e;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>翻转按钮调试页面</h1>
+        <p>此页面用于测试和调试翻转按钮的点击事件处理问题</p>
+
+        <div class="test-cases">
+            <div class="test-case test-case-1">
+                <h3>测试案例 1: 基础功能
+                    <span class="status-indicator status-unknown" id="status-1"></span>
+                </h3>
+                <p>基础的翻转按钮功能，没有额外的CSS规则</p>
+                <div class="test-card" id="card1">
+                    <div class="card-face front">
+                        <h2>正面</h2>
+                        <button class="flip-button" onclick="flipCard('card1')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                    <div class="card-face back">
+                        <h2>背面</h2>
+                        <button class="flip-button" onclick="flipCard('card1')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-case test-case-2">
+                <h3>测试案例 2: 问题的CSS规则
+                    <span class="status-indicator status-unknown" id="status-2"></span>
+                </h3>
+                <p>使用有问题的CSS规则（!important）</p>
+                <div class="test-card" id="card2">
+                    <div class="card-face front">
+                        <h2>正面</h2>
+                        <button class="flip-button" onclick="flipCard('card2')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                    <div class="card-face back">
+                        <h2>背面</h2>
+                        <button class="flip-button" onclick="flipCard('card2')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-case test-case-3">
+                <h3>测试案例 3: 修复的CSS规则
+                    <span class="status-indicator status-unknown" id="status-3"></span>
+                </h3>
+                <p>使用修复后的CSS规则（移除!important，添加按钮优先级）</p>
+                <div class="test-card" id="card3">
+                    <div class="card-face front">
+                        <h2>正面</h2>
+                        <button class="flip-button" onclick="flipCard('card3')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                    <div class="card-face back">
+                        <h2>背面</h2>
+                        <button class="flip-button" onclick="flipCard('card3')">🔄</button>
+                        <button class="dropdown-button">⋮</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pointer-events-controls">
+            <h3>动态CSS规则测试</h3>
+            <p>您可以动态切换不同的CSS规则来测试效果</p>
+            <button onclick="toggleImportantRules()">切换 !important 规则</button>
+            <button onclick="toggleButtonRules()">切换按钮特定规则</button>
+            <button onclick="resetTest()">重置测试</button>
+        </div>
+
+        <div class="console-output" id="console">
+            <div class="console-line info">控制台输出 - 点击按钮测试功能...</div>
+        </div>
+    </div>
+
+    <script>
+        let cardStates = {
+            card1: false,
+            card2: false,
+            card3: false
+        };
+
+        let testResults = {
+            card1: false,
+            card2: false,
+            card3: false
+        };
+
+        function flipCard(cardId) {
+            const card = document.getElementById(cardId);
+            const isFlipped = cardStates[cardId];
+
+            // 切换翻转状态
+            cardStates[cardId] = !isFlipped;
+            card.classList.toggle('flipped');
+
+            // 标记测试结果
+            testResults[cardId] = true;
+            updateStatus(cardId, true);
+
+            // 记录到控制台
+            logToConsole(`翻转按钮工作正常: ${cardId}`, 'success');
+            console.log(`翻转按钮点击: ${cardId}`, {
+                cardId,
+                isFlipped: cardStates[cardId],
+                timestamp: new Date().toISOString(),
+                cardClasses: card.className
+            });
+        }
+
+        function logToConsole(message, type = 'info') {
+            const console = document.getElementById('console');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            console.appendChild(line);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function updateStatus(cardId, isWorking) {
+            const statusElement = document.getElementById(`status-${cardId.slice(-1)}`);
+            statusElement.className = `status-indicator ${isWorking ? 'status-working' : 'status-broken'}`;
+        }
+
+        function toggleImportantRules() {
+            const faces = document.querySelectorAll('.test-case-2 .card-face');
+            faces.forEach(face => {
+                const currentPointerEvents = face.style.pointerEvents;
+                if (currentPointerEvents === 'none') {
+                    face.style.pointerEvents = 'auto';
+                    face.style.zIndex = '10';
+                } else {
+                    face.style.pointerEvents = 'none';
+                    face.style.zIndex = '1';
+                }
+            });
+            logToConsole('切换了 !important 规则', 'info');
+        }
+
+        function toggleButtonRules() {
+            const buttons = document.querySelectorAll('.test-case-3 .flip-button');
+            buttons.forEach(button => {
+                const currentPointerEvents = button.style.pointerEvents;
+                if (currentPointerEvents === 'none') {
+                    button.style.pointerEvents = 'auto';
+                    button.style.zIndex = '20';
+                } else {
+                    button.style.pointerEvents = 'none';
+                    button.style.zIndex = 'auto';
+                }
+            });
+            logToConsole('切换了按钮特定规则', 'info');
+        }
+
+        function resetTest() {
+            // 重置所有卡片状态
+            Object.keys(cardStates).forEach(cardId => {
+                cardStates[cardId] = false;
+                testResults[cardId] = false;
+                const card = document.getElementById(cardId);
+                card.classList.remove('flipped');
+                updateStatus(cardId, false);
+            });
+
+            // 清空控制台
+            document.getElementById('console').innerHTML = '<div class="console-line info">控制台输出 - 测试已重置...</div>';
+
+            logToConsole('测试已重置', 'info');
+        }
+
+        // 添加事件监听器来调试
+        document.addEventListener('DOMContentLoaded', function() {
+            logToConsole('页面加载完成，开始测试...', 'info');
+
+            // 为所有按钮添加事件监听器
+            const buttons = document.querySelectorAll('.flip-button, .dropdown-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    console.log('按钮点击事件:', {
+                        type: e.type,
+                        target: e.target,
+                        currentTarget: e.currentTarget,
+                        buttonClass: e.target.className,
+                        parentClass: e.target.parentElement.className
+                    });
+                });
+
+                button.addEventListener('mousedown', function(e) {
+                    console.log('按钮鼠标按下:', e.target);
+                });
+
+                button.addEventListener('mouseup', function(e) {
+                    console.log('按钮鼠标释放:', e.target);
+                });
+            });
+        });
+
+        // 自动测试功能
+        setTimeout(() => {
+            logToConsole('开始自动测试...', 'info');
+
+            // 模拟点击所有翻转按钮
+            setTimeout(() => {
+                document.querySelector('#card1 .flip-button').click();
+            }, 1000);
+
+            setTimeout(() => {
+                document.querySelector('#card2 .flip-button').click();
+            }, 2000);
+
+            setTimeout(() => {
+                document.querySelector('#card3 .flip-button').click();
+            }, 3000);
+
+            setTimeout(() => {
+                logToConsole('自动测试完成', 'success');
+            }, 4000);
+        }, 2000);
+    </script>
+</body>
+</html>

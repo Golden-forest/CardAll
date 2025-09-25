@@ -1342,12 +1342,8 @@ export function useCards() {
         case 'DELETE_CARD':
           return prevCards.filter(card => card.id !== action.payload)
 
-        case 'FLIP_CARD':
-          return prevCards.map(card =>
-            card.id === action.payload
-              ? { ...card, isFlipped: !card.isFlipped, updatedAt: new Date() }
-              : card
-          )
+        // 注意：翻转状态是纯本地UI状态，不参与同步
+        // FLIP_CARD action 已移除，简化状态管理
 
         case 'SELECT_CARD':
           setSelectedCardIds(prev => 
@@ -1406,6 +1402,15 @@ export function useCards() {
     })
     return Array.from(tagSet).sort()
   }, [cards])
+
+  // 简化的翻转函数 - 纯本地UI状态管理，不参与同步
+  const flipCard = useCallback((cardId: string) => {
+    // 不再修改cards状态，避免触发自动保存
+    // 翻转状态现在由use-card-flip-state.ts管理
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Flip request for card ID: ${cardId} - delegated to UI state manager`)
+    }
+  }, []) // 无依赖项，避免重新创建
 
   // Update tags across all cards (for rename/delete operations)
   const updateTagsInAllCards = useCallback((oldTagName: string, newTagName?: string) => {
@@ -1469,7 +1474,12 @@ export function useCards() {
         const savedCards = await universalStorageAdapter.getCards()
 
         if (savedCards.length > 0) {
-          setCards(savedCards)
+          // 重置所有卡片的翻转状态，确保不参与持久化
+          const resetCards = savedCards.map(card => ({
+            ...card,
+            isFlipped: false
+          }))
+          setCards(resetCards)
           console.log(`成功加载 ${savedCards.length} 张卡片 (使用 ${universalStorageAdapter.getStorageMode()} 存储模式)`)
         } else {
           // 没有数据时尝试从localStorage加载数据（兼容性）
@@ -1477,10 +1487,15 @@ export function useCards() {
             console.log('尝试从localStorage加载数据...')
             const localStorageCards = DataConverterAdapter.loadFromLocalStorage()
             if (localStorageCards.length > 0) {
-              setCards(localStorageCards)
+              // 重置所有卡片的翻转状态，确保不参与持久化
+              const resetCards = localStorageCards.map(card => ({
+                ...card,
+                isFlipped: false
+              }))
+              setCards(resetCards)
               console.log(`从localStorage加载 ${localStorageCards.length} 张卡片`)
               // 自动迁移到UniversalStorageAdapter
-              await universalStorageAdapter.saveCards(localStorageCards)
+              await universalStorageAdapter.saveCards(resetCards)
               console.log('数据已迁移到UniversalStorageAdapter')
             } else {
               console.log('没有找到数据，使用空数组')
@@ -1529,14 +1544,20 @@ export function useCards() {
           }
         }
 
+        // 保存前重置所有卡片的翻转状态，确保不参与持久化
+        const cardsForSave = cards.map(card => ({
+          ...card,
+          isFlipped: false
+        }))
+
         // 优先使用UniversalStorageAdapter进行保存，添加重试机制
         let saveAttempts = 0
         const maxSaveAttempts = 2
 
         while (saveAttempts < maxSaveAttempts) {
           try {
-            await universalStorageAdapter.saveCards(cards)
-            console.log(`自动保存成功：${cards.length} 张卡片 (使用 ${universalStorageAdapter.getStorageMode()} 存储模式)`)
+            await universalStorageAdapter.saveCards(cardsForSave)
+            console.log(`自动保存成功：${cardsForSave.length} 张卡片 (使用 ${universalStorageAdapter.getStorageMode()} 存储模式)`)
             break
           } catch (saveError) {
             saveAttempts++
@@ -1554,7 +1575,7 @@ export function useCards() {
         // 尝试回退到DataConverterAdapter
         try {
           console.log('尝试回退到DataConverterAdapter...')
-          DataConverterAdapter.saveToLocalStorage(cards)
+          DataConverterAdapter.saveToLocalStorage(cardsForSave)
           console.log('回退保存成功')
         } catch (fallbackError) {
           console.error('回退保存也失败:', fallbackError)
@@ -1933,6 +1954,7 @@ export function useCards() {
     setViewSettings,
     selectedCardIds,
     dispatch,
+    flipCard, // 添加优化的flipCard函数
     getCardById,
     getSelectedCards,
     getAllTags,

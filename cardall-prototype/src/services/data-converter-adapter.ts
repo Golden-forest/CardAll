@@ -155,9 +155,10 @@ export class DataConverterAdapter {
       }
     }
 
-    if (typeof card.isFlipped === 'boolean') {
-      sanitized.isFlipped = card.isFlipped
-    }
+    // 移除isFlipped的持久化，使其成为纯UI状态
+    // if (typeof card.isFlipped === 'boolean') {
+    //   sanitized.isFlipped = card.isFlipped
+    // }
 
     if (card.createdAt) {
       sanitized.createdAt = this.ensureDate(card.createdAt)

@@ -34,42 +34,38 @@ export function EnhancedFlipCard({
   const { openTagPanel } = useTagPanel()
   const { openFolderPanel } = useFolderPanel()
 
-  const handleStyleChange = (cardId: string, newStyle: any) => {
-    onUpdate(cardId, { 
-      style: newStyle,
-      updatedAt: new Date()
-    })
-  }
-
   const handleStyleChangeClick = () => {
     openStylePanel({
       targetCardId: card.id,
       currentStyle: card.style,
-      onStyleApply: (newStyle) => handleStyleChange(card.id, newStyle),
+      onStyleApply: (newStyle) => {
+        onUpdate(card.id, {
+          style: newStyle,
+          updatedAt: new Date()
+        })
+      },
       onPanelClose: () => {} // Add empty callback for panel close
     })
   }
 
-  const handleTagsChange = (cardId: string, newTags: string[]) => {
+  const handleTagsChangeClick = () => {
+    // 注意：这里暂时使用card.isFlipped，因为EnhancedFlipCard无法直接访问FlipCard的内部状态
     const currentContent = card.isFlipped ? card.backContent : card.frontContent
     const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
-    
-    onUpdate(cardId, {
-      [contentKey]: {
-        ...currentContent,
-        tags: newTags,
-        lastModified: new Date()
-      },
-      updatedAt: new Date()
-    })
-  }
 
-  const handleTagsChangeClick = () => {
-    const currentContent = card.isFlipped ? card.backContent : card.frontContent
     openTagPanel({
       targetCardId: card.id,
       currentTags: currentContent.tags,
-      onTagsApply: (newTags) => handleTagsChange(card.id, newTags),
+      onTagsApply: (newTags) => {
+        onUpdate(card.id, {
+          [contentKey]: {
+            ...currentContent,
+            tags: newTags,
+            lastModified: new Date()
+          },
+          updatedAt: new Date()
+        })
+      },
       onPanelClose: () => {}
     })
   }

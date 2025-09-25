@@ -63,13 +63,14 @@ export function Dashboard({ className }: DashboardProps) {
   })
   const { openModal } = useAuthModal()
 
-  const { 
-    cards, 
-    filter, 
-    setFilter, 
-    viewSettings, 
-    setViewSettings, 
+  const {
+    cards,
+    filter,
+    setFilter,
+    viewSettings,
+    setViewSettings,
     dispatch: cardDispatch,
+    flipCard,
     getAllTags,
     updateTagsInAllCards,
     getCardsWithTag
@@ -171,7 +172,13 @@ export function Dashboard({ className }: DashboardProps) {
   })
 
   const handleCardFlip = (cardId: string) => {
-    cardDispatch({ type: 'FLIP_CARD', payload: cardId })
+    // 使用优化的flipCard函数替代直接dispatch
+    if (flipCard) {
+      flipCard(cardId)
+    } else {
+      // 降级到dispatch模式（向后兼容）
+      cardDispatch({ type: 'FLIP_CARD', payload: cardId })
+    }
   }
 
   const handleCardUpdate = (cardId: string, updates: any) => {

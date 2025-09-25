@@ -9,6 +9,7 @@ interface DraggableCardProps {
   card: CardType
   onUpdate: (id: string, updates: Partial<CardType>) => void
   onDelete: (id: string) => void
+  onCardFlip?: (cardId: string) => void
   isSnapping?: boolean
   snapDirection?: 'top' | 'bottom' | 'left' | 'right'
   className?: string
@@ -20,6 +21,7 @@ export function DraggableCard({
   card,
   onUpdate,
   onDelete,
+  onCardFlip,
   isSnapping = false,
   snapDirection,
   className,
@@ -206,7 +208,14 @@ export function DraggableCard({
         {isVisible ? (
           <EnhancedFlipCard
             card={card}
-            onFlip={(cardId) => onUpdate(cardId, { isFlipped: !card.isFlipped })}
+            onFlip={(cardId) => {
+              // 优先使用onCardFlip回调，如果没有则降级到onUpdate
+              if (onCardFlip) {
+                onCardFlip(cardId)
+              } else {
+                onUpdate(cardId, { isFlipped: !card.isFlipped })
+              }
+            }}
             onUpdate={onUpdate}
           onCopy={(cardId) => {
             // Copy card content to clipboard

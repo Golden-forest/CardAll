@@ -190,13 +190,22 @@ export function ResponsiveNavigation({
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             CardAll
           </h1>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <Search className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
         
         {user ? (
@@ -220,21 +229,7 @@ export function ResponsiveNavigation({
         )}
       </div>
 
-      {/* Search section */}
-      <div className="p-4 border-b border-border">
-        <form onSubmit={handleSearch} className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            ref={searchInputRef}
-            type="text"
-            placeholder="搜索卡片..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-          />
-        </form>
-      </div>
-
+  
       {/* Navigation items */}
       <nav className="flex-1 p-4 space-y-1">
         {navItems
@@ -300,6 +295,46 @@ export function ResponsiveNavigation({
         >
           <Plus className="w-5 h-5" />
         </Button>
+      </div>
+    </div>
+  )
+
+  // Desktop search dialog
+  const DesktopSearchDialog = () => (
+    <div
+      className={cn(
+        'fixed inset-0 z-50 bg-background/95 backdrop-blur hidden md:block',
+        isSearchOpen ? 'block' : 'hidden'
+      )}
+    >
+      <div className="flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md bg-background border border-border rounded-lg shadow-lg">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">搜索卡片</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSearchOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="p-4">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="搜索卡片..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -416,19 +451,22 @@ export function ResponsiveNavigation({
     <div className={cn('relative', className)}>
       {/* Desktop sidebar */}
       <DesktopSidebar />
-      
+
       {/* Mobile top navigation */}
       <MobileTopNav />
-      
+
+      {/* Desktop search dialog */}
+      <DesktopSearchDialog />
+
       {/* Mobile search overlay */}
       <MobileSearchOverlay />
-      
+
       {/* Mobile menu overlay */}
       <MobileMenuOverlay />
-      
+
       {/* Mobile bottom navigation */}
       <MobileBottomNav />
-      
+
       {/* Spacer for mobile bottom nav */}
       <div className="h-16 md:hidden" />
     </div>
