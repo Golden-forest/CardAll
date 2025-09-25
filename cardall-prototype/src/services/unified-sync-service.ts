@@ -919,3 +919,48 @@ export const getBatchPerformanceMetrics = () => unifiedSyncService.getBatchPerfo
 export const configureDataValidation = (options: any) => unifiedSyncService.configureDataValidation(options)
 export const configureBatchOptimization = (options: any) => unifiedSyncService.configureBatchOptimization(options)
 export const forceDataSync = (direction?: SyncDirection) => unifiedSyncService.forceDataSync(direction)
+
+// ============================================================================
+// 文件夹同步便捷方法 (替代 decoupled-sync-service.ts)
+// ============================================================================
+
+export const triggerFolderSync = (action: 'create' | 'update' | 'delete' | 'toggle', data: any) => {
+  switch (action) {
+    case 'create':
+      return addSyncOperation({
+        type: 'create',
+        entity: 'folder',
+        entityId: data.id,
+        data: data,
+        priority: 'normal',
+        metadata: { source: 'user' }
+      })
+    case 'update':
+      return addSyncOperation({
+        type: 'update',
+        entity: 'folder',
+        entityId: data.id,
+        data: { ...data.updates, id: data.id },
+        priority: 'normal',
+        metadata: { source: 'user' }
+      })
+    case 'delete':
+      return addSyncOperation({
+        type: 'delete',
+        entity: 'folder',
+        entityId: data.id,
+        data: data,
+        priority: 'high',
+        metadata: { source: 'user' }
+      })
+    case 'toggle':
+      return addSyncOperation({
+        type: 'update',
+        entity: 'folder',
+        entityId: data.id,
+        data: { id: data.id, isExpanded: data.isExpanded },
+        priority: 'low',
+        metadata: { source: 'user' }
+      })
+  }
+}

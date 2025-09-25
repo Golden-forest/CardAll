@@ -3,7 +3,7 @@ import { Folder, FolderAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
 import { authService } from '@/services/auth'
 import { db } from '@/services/database'
-import { triggerFolderSync } from '@/services/decoupled-sync-service'
+import { triggerFolderSync } from '@/services/unified-sync-service'
 
 // Mock data for development
 const mockFolders: Folder[] = [
