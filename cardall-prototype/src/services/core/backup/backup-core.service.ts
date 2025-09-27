@@ -3,9 +3,9 @@
  * 提供核心备份、恢复和配置管理功能
  */
 
-import { db, DbCard, DbFolder, DbTag, DbImage, AppSettings } from '../database-unified'
-import { fileSystemService } from '../file-system'
-import { DataValidatorService, BackupMetadata } from '../data-validator'
+import { db, DbCard, DbFolder, DbTag, DbImage, AppSettings } from '../../database-unified'
+import { fileSystemService } from '../../file-system'
+import { DataValidatorService, BackupMetadata } from '../../data-validator'
 import { SecureStorage } from '../../utils/secure-storage'
 
 // ============================================================================

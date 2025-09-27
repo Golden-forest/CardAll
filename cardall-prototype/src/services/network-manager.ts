@@ -244,8 +244,8 @@ export interface NetworkListener {
 
 export const DEFAULT_NETWORK_MANAGER_CONFIG: NetworkManagerConfig = {
   checkInterval: 5000, // 5秒基础检测
-  qualityCheckInterval: 30000, // 30秒质量检测
-  healthCheckInterval: 60000, // 1分钟健康检查
+  qualityCheckInterval: 60000, // 60秒质量检测 (优化: 减少频率)
+  healthCheckInterval: 120000, // 2分钟健康检查 (优化: 减少频率)
 
   qualityThresholds: {
     excellent: { rtt: 100, downlink: 10 },    // <100ms, >10Mbps
@@ -257,12 +257,16 @@ export const DEFAULT_NETWORK_MANAGER_CONFIG: NetworkManagerConfig = {
   healthCheck: {
     enabled: true,
     endpoints: [
+      // 国际端点
       'https://www.google.com',
       'https://www.cloudflare.com',
-      'https://www.github.com'
+      'https://www.github.com',
+      // 国内端点 (提高在中国大陆的连接性)
+      'https://www.baidu.com',
+      'https://www.qq.com'
     ],
-    timeout: 5000,
-    successThreshold: 2
+    timeout: 3000, // 优化: 减少超时时间
+    successThreshold: 2 // 需要2个端点成功才认为网络正常
   },
 
   eventFilter: {
@@ -811,7 +815,10 @@ export class NetworkManager {
     }
 
     try {
-      const promises = this.config.healthCheck.endpoints.map(endpoint =>
+      // 智能选择端点 (基于地理位置和连接类型)
+      const selectedEndpoints = this.selectHealthCheckEndpoints()
+
+      const promises = selectedEndpoints.map(endpoint =>
         this.pingEndpoint(endpoint, this.config.healthCheck.timeout)
       )
 
@@ -820,7 +827,11 @@ export class NetworkManager {
         result.status === 'fulfilled' && result.value
       ).length
 
-      return successCount >= this.config.healthCheck.successThreshold
+      // 动态调整成功阈值 (基于端点数量)
+      const dynamicThreshold = Math.ceil(selectedEndpoints.length * 0.4) // 40%成功率
+      const finalThreshold = Math.max(1, Math.min(dynamicThreshold, this.config.healthCheck.successThreshold))
+
+      return successCount >= finalThreshold
 
     } catch (error) {
       console.warn('Health check failed:', error)
@@ -828,25 +839,82 @@ export class NetworkManager {
     }
   }
 
+  /**
+   * 智能选择健康检查端点
+   */
+  private selectHealthCheckEndpoints(): string[] {
+    const allEndpoints = this.config.healthCheck.endpoints
+    const connectionType = this.currentStatus.connectionType
+
+    // 根据连接类型和网络环境选择端点
+    if (connectionType === 'cellular') {
+      // 移动网络优先选择轻量级端点
+      return [
+        'https://www.baidu.com',
+        'https://www.google.com'
+      ]
+    }
+
+    // 检测是否在中国大陆 (基于语言或时区)
+    const language = navigator.language || 'en'
+    const isChinaRegion = language.startsWith('zh')
+
+    if (isChinaRegion) {
+      // 中国大陆优先使用国内端点
+      return [
+        'https://www.baidu.com',
+        'https://www.qq.com',
+        'https://www.google.com'
+      ]
+    }
+
+    // 默认使用所有端点
+    return allEndpoints.slice(0, 3) // 最多使用3个端点
+  }
+
   private async pingEndpoint(endpoint: string, timeout: number): Promise<boolean> {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-      const response = await fetch(`${endpoint}/favicon.ico`, {
-        method: 'HEAD',
+      // 智能选择检测方式
+      const isGoogleEndpoint = endpoint.includes('google.com')
+      const isChinaEndpoint = endpoint.includes('baidu.com') || endpoint.includes('qq.com')
+
+      let url: string
+      if (isGoogleEndpoint) {
+        // Google端点使用专门的检测API
+        url = 'https://www.googleapis.com/generate_204'
+      } else if (isChinaEndpoint) {
+        // 中国端点使用轻量级检测
+        url = `${endpoint}/favicon.ico`
+      } else {
+        // 其他端点使用标准检测
+        url = `${endpoint}/favicon.ico`
+      }
+
+      const response = await fetch(url, {
+        method: isGoogleEndpoint ? 'GET' : 'HEAD',
         signal: controller.signal,
         mode: 'no-cors',
         headers: {
           'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+          'Pragma': 'no-cache',
+          'User-Agent': 'CardAll-Network-Check/1.0'
         }
       })
 
       clearTimeout(timeoutId)
+
+      // 对于Google的204响应，检查状态码
+      if (isGoogleEndpoint) {
+        return response.status === 204
+      }
+
       return true
 
     } catch (error) {
+      // 网络错误，返回false
       return false
     }
   }
@@ -1622,15 +1690,60 @@ export class NetworkManager {
   private recordError(type: string, error: any): void {
     this.stats.errorCount++
 
+    // 智能错误分类
+    let errorType: NetworkErrorType = 'network_slow'
+    let severity: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+    let message = `Network error: ${type}`
+
+    // 根据错误类型进行详细分类
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        errorType = 'timeout'
+        severity = 'high'
+        message = 'Network timeout detected'
+      } else if (error.message.includes('fetch') || error.message.includes('network')) {
+        errorType = 'connection_lost'
+        severity = 'critical'
+        message = 'Network connection lost'
+      } else if (error.message.includes(' CORS ') || error.message.includes('cross-origin')) {
+        errorType = 'server_error'
+        severity = 'low'
+        message = 'CORS error detected (may be temporary)'
+      } else if (error.message.includes('429') || error.message.includes('rate limit')) {
+        errorType = 'rate_limited'
+        severity = 'medium'
+        message = 'Rate limit exceeded'
+      }
+    }
+
+    // 根据上下文进一步调整
+    if (type === 'health_check_failed') {
+      errorType = 'health_check_failed'
+      severity = 'high'
+    } else if (type === 'quality_check_failed') {
+      errorType = 'network_slow'
+      severity = 'medium'
+    }
+
     const networkError: NetworkError = {
-      type: 'network_slow',
-      message: `Network error: ${type}`,
+      type: errorType,
+      message,
       timestamp: new Date(),
-      severity: 'medium',
-      details: error instanceof Error ? error.message : String(error)
+      severity,
+      details: {
+        originalType: type,
+        originalError: error instanceof Error ? error.message : String(error),
+        networkStatus: this.getCurrentStatus()
+      }
     }
 
     this.stats.lastError = networkError
+
+    // 根据错误严重性采取不同措施
+    if (severity === 'critical' || severity === 'high') {
+      // 高严重性错误，触发断路器
+      this.recordFailure('health-check', networkError)
+    }
 
     // 通知错误监听器
     this.listeners.forEach(listener => {
@@ -1641,6 +1754,14 @@ export class NetworkManager {
       } catch (err) {
         console.error('Error in network error listener:', err)
       }
+    })
+
+    // 记录详细的错误日志
+    console.error(`Network Error [${errorType}]:`, {
+      message,
+      severity,
+      details: networkError.details,
+      timestamp: networkError.timestamp
     })
   }
 
@@ -1718,6 +1839,9 @@ export class NetworkManager {
       // 执行更深入的质量检查
       const qualityInfo = await this.assessNetworkQuality()
 
+      // 自适应质量检测频率
+      this.adaptQualityCheckFrequency(qualityInfo)
+
       // 如果质量有显著变化，更新状态
       const qualityChange = Math.abs(qualityInfo.score - this.currentStatus.qualityScore)
       if (qualityChange >= this.config.eventFilter.minQualityChange) {
@@ -1727,6 +1851,46 @@ export class NetworkManager {
     } catch (error) {
       console.warn('Quality check failed:', error)
       this.recordError('quality_check_failed', error)
+    }
+  }
+
+  /**
+   * 自适应质量检测频率
+   */
+  private adaptQualityCheckFrequency(qualityInfo: { score: number }): void {
+    const currentQuality = qualityInfo.score
+
+    // 根据网络质量调整检测频率
+    let newInterval: number
+
+    if (currentQuality >= 0.8) {
+      // 优秀网络，降低检测频率
+      newInterval = 120000 // 2分钟
+    } else if (currentQuality >= 0.6) {
+      // 良好网络，标准检测频率
+      newInterval = 60000 // 1分钟
+    } else if (currentQuality >= 0.4) {
+      // 一般网络，提高检测频率
+      newInterval = 30000 // 30秒
+    } else {
+      // 较差网络，高频检测
+      newInterval = 15000 // 15秒
+    }
+
+    // 如果频率变化显著，重新设置定时器
+    if (Math.abs(newInterval - this.config.qualityCheckInterval) > 10000) {
+      this.config.qualityCheckInterval = newInterval
+
+      if (this.isMonitoring && this.qualityTimer) {
+        clearInterval(this.qualityTimer)
+        this.qualityTimer = setInterval(async () => {
+          if (this.isMonitoring) {
+            await this.performQualityCheck()
+          }
+        }, this.config.qualityCheckInterval)
+
+        console.log(`Quality check interval adapted to ${newInterval}ms based on network quality`)
+      }
     }
   }
 
@@ -1886,6 +2050,65 @@ export class NetworkManager {
 
     console.log('NetworkManager destroyed')
   }
+
+  // ============================================================================
+  // 向后兼容方法
+  // ============================================================================
+
+  /**
+   * 向后兼容方法 - 获取当前状态
+   * @deprecated 使用 getCurrentStatus() 替代
+   */
+  getCurrentState(): UnifiedNetworkStatus {
+    console.warn('getCurrentState() is deprecated, use getCurrentStatus() instead')
+    return this.getCurrentStatus()
+  }
+
+  /**
+   * 向后兼容方法 - 获取网络质量
+   * @deprecated 使用 getCurrentStatus().quality 替代
+   */
+  getNetworkQuality(): NetworkQuality {
+    console.warn('getNetworkQuality() is deprecated, use getCurrentStatus().quality instead')
+    return this.getCurrentStatus().quality
+  }
+
+  /**
+   * 向后兼容方法 - 获取连接质量评分
+   * @deprecated 使用 getCurrentStatus().qualityScore 替代
+   */
+  getConnectionQuality(): number {
+    console.warn('getConnectionQuality() is deprecated, use getCurrentStatus().qualityScore instead')
+    return this.getCurrentStatus().qualityScore
+  }
+
+  /**
+   * 向后兼容方法 - 检查是否适合同步
+   * @deprecated 使用 getCurrentStatus().canSync 替代
+   */
+  isSuitableForSync(operationSize: number = 1024 * 1024): boolean {
+    console.warn('isSuitableForSync() is deprecated, use getCurrentStatus().canSync instead')
+    return this.getCurrentStatus().canSync
+  }
+
+  /**
+   * 向后兼容方法 - 获取网络诊断信息
+   * @deprecated 使用 getStats() 和 getCurrentStatus() 替代
+   */
+  getDiagnostics(): {
+    status: UnifiedNetworkStatus
+    features: NetworkFeatures
+    quality: number
+    recommendations: string[]
+  } {
+    console.warn('getDiagnostics() is deprecated, use getStats() and getCurrentStatus() instead')
+    return {
+      status: this.getCurrentStatus(),
+      features: this.currentStatus.features,
+      quality: this.currentStatus.qualityScore,
+      recommendations: this.currentStatus.recommendations
+    }
+  }
 }
 
 // ============================================================================
@@ -1919,6 +2142,43 @@ export const startNetworkMonitoring = (): void =>
 
 export const stopNetworkMonitoring = (): void =>
   networkManager.stopMonitoring()
+
+// ============================================================================
+// 向后兼容便捷方法
+// ============================================================================
+
+/**
+ * 向后兼容方法 - 获取连接质量评分
+ * @deprecated 使用 getNetworkQuality() 替代
+ */
+export const getConnectionQuality = (): number => {
+  console.warn('getConnectionQuality() is deprecated, use getNetworkQuality() instead')
+  return networkManager.getCurrentStatus().qualityScore
+}
+
+/**
+ * 向后兼容方法 - 检查是否适合同步
+ * @deprecated 使用 canSync() 替代
+ */
+export const isSuitableForSync = (operationSize?: number): boolean => {
+  console.warn('isSuitableForSync() is deprecated, use canSync() instead')
+  return networkManager.getCurrentStatus().canSync
+}
+
+/**
+ * 向后兼容方法 - 获取网络诊断信息
+ * @deprecated 使用 getNetworkStatus() 替代
+ */
+export const getDiagnostics = () => {
+  console.warn('getDiagnostics() is deprecated, use getNetworkStatus() instead')
+  const status = networkManager.getCurrentStatus()
+  return {
+    status,
+    features: status.features,
+    quality: status.qualityScore,
+    recommendations: status.recommendations
+  }
+}
 
 // 向后兼容的接口
 export const initializeNetworkManager = (config?: Partial<NetworkManagerConfig>): NetworkManager => {

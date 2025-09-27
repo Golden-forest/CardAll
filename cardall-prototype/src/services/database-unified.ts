@@ -66,6 +66,35 @@ export interface DbImage {
   pendingSync: boolean
 }
 
+// 同步元数据表接口
+export interface SyncMetadata {
+  id?: string
+  entityType: 'card' | 'folder' | 'tag' | 'image'
+  entityId: string
+  userId?: string
+  syncVersion: number
+  cloudVersion: number
+  lastSyncAt?: Date
+  conflictStatus: 'none' | 'pending' | 'resolved' | 'failed'
+  createdAt?: Date
+  updatedAt?: Date
+}
+
+// 冲突记录表接口
+export interface ConflictRecord {
+  id?: string
+  entityType: 'card' | 'folder' | 'tag' | 'image'
+  entityId: string
+  userId?: string
+  conflictType: 'version' | 'structure' | 'content' | 'timestamp'
+  localData: any
+  cloudData: any
+  timestamp: Date
+  resolution: 'cloud' | 'local' | 'merge' | 'manual' | 'pending'
+  resolvedAt?: Date
+  resolvedBy?: string
+}
+
 // 同步操作队列 - 统一同步逻辑
 export interface SyncOperation {
   id?: string
@@ -180,6 +209,57 @@ export interface OfflineBackupStrategy {
   }
 }
 
+// 错误隔离和系统管理表类型
+export interface SyncErrorEntry {
+  id?: string
+  type: string
+  severity: string
+  status: string
+  message: string
+  details: any
+  timestamp: Date
+  operation?: any
+  stack?: string
+  retryCount: number
+  maxRetries: number
+  affectedEntities: string[]
+  isolationLevel: string
+}
+
+export interface IsolatedErrorEntry {
+  id?: string
+  operationId: string
+  operationType: string
+  entityType: string
+  error: string
+  timestamp: Date
+  isolationLevel: string
+}
+
+export interface BackupEntry {
+  id?: string
+  name: string
+  description: string
+  data: Blob
+  compression: string
+  encrypted: boolean
+  checksum: string
+  timestamp: Date
+  size: number
+  version: string
+  tags?: string[]
+}
+
+export interface HiddenTagEntry {
+  id?: string
+  userId: string
+  tagId: string
+  name: string
+  color: string
+  hiddenAt: Date
+  reason?: string
+}
+
 // ============================================================================
 // 统一数据库类
 // ============================================================================
@@ -206,25 +286,45 @@ class CardAllUnifiedDatabase extends Dexie {
     size: number
   }>
 
+  // 同步元数据表
+  syncMetadata!: Table<SyncMetadata>
+  conflictRecords!: Table<ConflictRecord>
+
+  // 错误隔离和系统管理表
+  syncErrors!: Table<SyncErrorEntry>
+  isolatedErrors!: Table<IsolatedErrorEntry>
+  backups!: Table<BackupEntry>
+  hiddenTags!: Table<HiddenTagEntry>
+
   constructor() {
     super('CardAllUnifiedDatabase')
     
-    // 版本 4: 添加离线数据持久化功能
-    this.version(4).stores({
+    // 版本 5: 添加错误隔离和系统管理表
+    this.version(5).stores({
       // 核心实体表 - 优化的索引设计
       cards: '++id, userId, folderId, createdAt, updatedAt, syncVersion, pendingSync, [userId+folderId], searchVector',
       folders: '++id, userId, parentId, createdAt, updatedAt, syncVersion, pendingSync, [userId+parentId], fullPath, depth',
       tags: '++id, userId, name, createdAt, syncVersion, pendingSync, [userId+name]',
       images: '++id, cardId, userId, createdAt, updatedAt, syncVersion, pendingSync, storageMode, [cardId+userId]',
-      
+
       // 同步和设置表
       syncQueue: '++id, type, entity, entityId, userId, timestamp, retryCount, priority, [userId+priority]',
       settings: '++id, key, updatedAt, scope, [key+scope]',
       sessions: '++id, userId, deviceId, lastActivity, isActive, [userId+deviceId]',
-      
+
       // 离线数据持久化表
       offlineSnapshots: '++id, timestamp, userId, version, dataHash, dataSize, [userId+timestamp]',
-      offlineBackups: '++id, snapshotId, createdAt, compression, encrypted, size, [snapshotId+createdAt]'
+      offlineBackups: '++id, snapshotId, createdAt, compression, encrypted, size, [snapshotId+createdAt]',
+
+      // 同步元数据表
+      syncMetadata: '++id, entityType, entityId, userId, syncVersion, cloudVersion, lastSyncAt, conflictStatus, [entityType+entityId], [userId+syncVersion]',
+      conflictRecords: '++id, entityType, entityId, userId, conflictType, localData, cloudData, timestamp, resolution, [entityType+entityId], [userId+conflictType]',
+
+      // 错误隔离和系统管理表
+      syncErrors: '++id, type, severity, status, timestamp, [type+severity], [timestamp+status]',
+      isolatedErrors: '++id, operationId, operationType, entityType, timestamp, [operationType+entityType]',
+      backups: '++id, timestamp, version, compression, encrypted, size, [timestamp+version]',
+      hiddenTags: '++id, userId, tagId, hiddenAt, [userId+tagId], [userId+hiddenAt]'
     })
 
     // 数据库升级逻辑 - 支持从旧版本迁移

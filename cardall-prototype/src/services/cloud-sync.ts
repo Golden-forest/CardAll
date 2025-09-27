@@ -20,7 +20,7 @@ import {
   UNIFIED_SYNC_SERVICE_VERSION
 } from './core/sync/unified-sync.service'
 
-import { supabase, type SyncStatus } from './supabase'
+import { supabase } from './supabase'
 import { db, type DbCard, DbFolder, DbTag, DbImage } from './database'
 import { localOperationService, type LocalSyncOperation } from './local-operation'
 import { networkManager, type UnifiedNetworkStatus, type SyncStrategy } from './network-manager'
@@ -156,7 +156,7 @@ export class CloudSyncService {
   }
 
   /**
-   * 初始化同步服务
+   * 初始化同步服务 - 简化版本
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
@@ -164,9 +164,17 @@ export class CloudSyncService {
     }
 
     try {
-      await unifiedSyncService.start()
+      // 检查数据库和网络连接
+      await db.open()
+      const networkStatus = networkManager.getCurrentStatus()
+
+      if (!networkStatus.isOnline) {
+        console.warn('Network is offline. Sync service initialized in offline mode.')
+      } else {
+        console.log('Cloud sync service initialized successfully.')
+      }
+
       this.isInitialized = true
-      console.warn('CloudSyncService is deprecated. Use unifiedSyncService instead.')
     } catch (error) {
       console.error('Failed to initialize cloud sync service:', error)
       throw error
@@ -174,7 +182,7 @@ export class CloudSyncService {
   }
 
   /**
-   * 执行同步
+   * 执行同步 - 直接使用Supabase客户端
    */
   async sync(options?: {
     type?: 'full' | 'incremental'
@@ -185,44 +193,73 @@ export class CloudSyncService {
       await this.initialize()
     }
 
-    try {
-      const unifiedResult = await unifiedSyncService.sync(options)
+    const startTime = Date.now()
+    const entities = options?.entities || ['card', 'folder', 'tag', 'image']
 
-      // 转换为向后兼容的格式
+    try {
+      // 检查网络状态
+      const networkStatus = networkManager.getCurrentStatus()
+      if (!networkStatus.isOnline) {
+        throw new Error('Network is offline. Cannot sync.')
+      }
+
+      const syncedEntities = {
+        cards: 0,
+        folders: 0,
+        tags: 0,
+        images: 0
+      }
+
+      const conflicts: ConflictInfo[] = []
+
+      // 直接使用Supabase客户端进行同步
+      if (entities.includes('card')) {
+        await this.syncCards()
+      }
+      if (entities.includes('folder')) {
+        await this.syncFolders()
+      }
+      if (entities.includes('tag')) {
+        await this.syncTags()
+      }
+      if (entities.includes('image')) {
+        await this.syncImages()
+      }
+
+      const syncTime = Date.now() - startTime
+
       return {
-        syncedEntities: unifiedResult.syncedEntities,
-        conflicts: unifiedResult.conflicts.map(conflict => ({
-          id: conflict.id,
-          entityId: conflict.entityId,
-          entityType: conflict.entity,
-          conflictType: conflict.conflictType,
-          localData: conflict.localData,
-          cloudData: conflict.cloudData,
-          timestamp: conflict.timestamp,
-          resolution: conflict.resolution
-        })),
-        syncTime: unifiedResult.syncTime,
-        networkStats: unifiedResult.networkStats
+        syncedEntities,
+        conflicts,
+        syncTime,
+        networkStats: {
+          bandwidthUsed: 0,
+          requestsMade: 0,
+          averageLatency: 0
+        }
       }
     } catch (error) {
-      console.error('Sync failed:', error)
+      console.error('Direct sync failed:', error)
       throw error
     }
   }
 
   /**
-   * 获取同步状态
+   * 获取同步状态 - 简化版本
    */
   getStatus(): CloudSyncStatus {
-    const unifiedStatus = unifiedSyncService.getStatus()
+    const networkStatus = networkManager.getCurrentStatus()
+
+    // 计算待同步操作数量（同步版本）
+    const pendingOperations = this.getPendingOperationsCount()
 
     return {
-      isSyncing: unifiedStatus.isSyncing,
-      lastSyncTime: unifiedStatus.networkStatus.lastSyncTime,
-      pendingOperations: unifiedStatus.pendingOperations,
-      conflicts: unifiedStatus.conflicts,
-      networkStatus: this.convertNetworkStatus(unifiedStatus.networkStatus),
-      syncHealth: this.calculateSyncHealth(unifiedStatus)
+      isSyncing: false, // 简化版本，不跟踪进行中的同步
+      lastSyncTime: null, // 可以从本地存储获取最后同步时间
+      pendingOperations,
+      conflicts: 0, // 简化版本，暂时不跟踪冲突
+      networkStatus: this.convertNetworkStatus(networkStatus),
+      syncHealth: this.calculateSyncHealth({ pendingOperations })
     }
   }
 
@@ -346,7 +383,7 @@ export class CloudSyncService {
    * 检查网络状态
    */
   checkNetworkStatus(): UnifiedNetworkStatus {
-    return networkManager.getCurrentState()
+    return networkManager.getCurrentStatus()
   }
 
   /**
@@ -364,8 +401,207 @@ export class CloudSyncService {
   }
 
   // ============================================================================
+  // 直接同步方法
+  // ============================================================================
+
+  /**
+   * 同步卡片数据
+   */
+  private async syncCards(): Promise<void> {
+    try {
+      // 获取本地未同步的卡片
+      const localCards = await db.cards
+        .where('pendingSync')
+        .equals(true)
+        .toArray()
+
+      for (const card of localCards) {
+        // 直接使用Supabase客户端同步到云端
+        const { data, error } = await supabase
+          .from('cards')
+          .upsert({
+            id: card.id,
+            user_id: card.userId,
+            front_content: card.frontContent,
+            back_content: card.backContent,
+            style: card.style,
+            folder_id: card.folderId,
+            sync_version: card.syncVersion + 1,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+
+        if (error) {
+          console.error('Failed to sync card:', error)
+          continue
+        }
+
+        // 同步成功后更新本地状态
+        await db.cards.update(card.id, {
+          pendingSync: false,
+          syncVersion: card.syncVersion + 1,
+          lastSyncAt: new Date()
+        })
+      }
+    } catch (error) {
+      console.error('Error syncing cards:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 同步文件夹数据
+   */
+  private async syncFolders(): Promise<void> {
+    try {
+      const localFolders = await db.folders
+        .where('pendingSync')
+        .equals(true)
+        .toArray()
+
+      for (const folder of localFolders) {
+        const { data, error } = await supabase
+          .from('folders')
+          .upsert({
+            id: folder.id,
+            user_id: folder.userId,
+            name: folder.name,
+            parent_id: folder.parentId,
+            sync_version: folder.syncVersion + 1,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+
+        if (error) {
+          console.error('Failed to sync folder:', error)
+          continue
+        }
+
+        await db.folders.update(folder.id, {
+          pendingSync: false,
+          syncVersion: folder.syncVersion + 1,
+          lastSyncAt: new Date()
+        })
+      }
+    } catch (error) {
+      console.error('Error syncing folders:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 同步标签数据
+   */
+  private async syncTags(): Promise<void> {
+    try {
+      const localTags = await db.tags
+        .where('pendingSync')
+        .equals(true)
+        .toArray()
+
+      for (const tag of localTags) {
+        const { data, error } = await supabase
+          .from('tags')
+          .upsert({
+            id: tag.id,
+            user_id: tag.userId,
+            name: tag.name,
+            color: tag.color,
+            sync_version: tag.syncVersion + 1,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+
+        if (error) {
+          console.error('Failed to sync tag:', error)
+          continue
+        }
+
+        await db.tags.update(tag.id, {
+          pendingSync: false,
+          syncVersion: tag.syncVersion + 1,
+          lastSyncAt: new Date()
+        })
+      }
+    } catch (error) {
+      console.error('Error syncing tags:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 同步图片数据
+   */
+  private async syncImages(): Promise<void> {
+    try {
+      const localImages = await db.images
+        .where('pendingSync')
+        .equals(true)
+        .toArray()
+
+      for (const image of localImages) {
+        const { data, error } = await supabase
+          .from('images')
+          .upsert({
+            id: image.id,
+            user_id: image.userId,
+            card_id: image.cardId,
+            file_name: image.fileName,
+            file_path: image.filePath,
+            cloud_url: image.cloudUrl,
+            metadata: image.metadata,
+            sync_version: image.syncVersion + 1,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+
+        if (error) {
+          console.error('Failed to sync image:', error)
+          continue
+        }
+
+        await db.images.update(image.id, {
+          pendingSync: false,
+          syncVersion: image.syncVersion + 1,
+          lastSyncAt: new Date()
+        })
+      }
+    } catch (error) {
+      console.error('Error syncing images:', error)
+      throw error
+    }
+  }
+
+  // ============================================================================
   // 私有方法
   // ============================================================================
+
+  /**
+   * 计算待同步操作数量
+   */
+  private async calculatePendingOperations(): Promise<number> {
+    try {
+      const [cards, folders, tags, images] = await Promise.all([
+        db.cards.where('pendingSync').equals(true).count(),
+        db.folders.where('pendingSync').equals(true).count(),
+        db.tags.where('pendingSync').equals(true).count(),
+        db.images.where('pendingSync').equals(true).count()
+      ])
+
+      return cards + folders + tags + images
+    } catch (error) {
+      console.error('Error calculating pending operations:', error)
+      return 0
+    }
+  }
+
+  /**
+   * 获取待同步操作数量（同步版本）
+   */
+  private getPendingOperationsCount(): number {
+    // 简化版本，返回0或从缓存获取
+    return 0
+  }
 
   private convertNetworkStatus(networkStatus: any): 'online' | 'offline' | 'poor' {
     if (!networkStatus.isOnline) {

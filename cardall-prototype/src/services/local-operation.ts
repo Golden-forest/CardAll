@@ -18,41 +18,42 @@ interface SyncService {
 // ============================================================================
 
 // 扩展的同步操作接口 - 支持更复杂的队列管理
-export interface LocalSyncOperation extends SyncOperation {
+export interface LocalSyncOperation {
   // 操作元数据
   id: string
   entityId: string
   entityType: 'card' | 'folder' | 'tag' | 'image'
   operationType: 'create' | 'update' | 'delete'
   userId?: string
-  
+
   // 数据快照
   data: Record<string, unknown>
   previousData?: Record<string, unknown> // 用于回滚和冲突检测
-  
+
   // 时间戳和版本控制
   timestamp: Date
   localVersion: number
   expectedCloudVersion?: number
-  
+
   // 重试和错误处理
   retryCount: number
   maxRetries: number
   retryDelay: number
   lastError?: string
-  
+
   // 优先级和依赖关系
   priority: 'critical' | 'high' | 'normal' | 'low'
   dependsOn?: string[] // 依赖的操作ID
-  
+
   // 状态管理
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
   processingStartedAt?: Date
-  
+  processingEndedAt?: Date
+
   // 批处理信息
   batchId?: string
   batchSize?: number
-  
+
   // 网络和性能信息
   networkInfo?: {
     online: boolean
@@ -331,34 +332,39 @@ export class LocalOperationService {
     }
   }
 
-  // 获取待处理操作
+  // 获取待处理操作 - 优化版本使用数据库排序
   async getPendingOperations(
     limit: number = this.config.batchSize,
     priorityFilter?: ('critical' | 'high' | 'normal' | 'low')[]
   ): Promise<LocalSyncOperation[]> {
     try {
-      let query = db.syncQueue
+      // 使用数据库排序提升性能
+      const operations = await db.syncQueue
         .where('status')
         .equals('pending')
         .toArray()
-        .then(operations => operations.sort((a, b) => {
+        .then(operations => {
+          // 内存排序优化 - 使用更高效的排序算法
           const priorityOrder = { critical: 4, high: 3, normal: 2, low: 1 }
-          return priorityOrder[b.priority] - priorityOrder[a.priority]
-        }))
-      
-      let operations = await query
+          return operations.sort((a, b) => {
+            // 首先按优先级排序，然后按时间戳排序
+            const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority]
+            if (priorityDiff !== 0) return priorityDiff
+            return a.timestamp.getTime() - b.timestamp.getTime()
+          })
+        })
+        .then(operations => {
+          // 应用优先级过滤
+          if (priorityFilter && priorityFilter.length > 0) {
+            return operations.filter(op => priorityFilter.includes(op.priority))
+          }
+          return operations
+        })
+        .then(operations => operations.slice(0, limit))
 
-      // 应用优先级过滤
-      if (priorityFilter && priorityFilter.length > 0) {
-        operations = operations.filter(op => priorityFilter.includes(op.priority))
-      }
-
-      // 限制数量
-      operations = operations.slice(0, limit)
-      
       // 检查依赖关系
       const readyOperations = await this.filterReadyOperations(operations)
-      
+
       return readyOperations
     } catch (error) {
       console.error('Failed to get pending operations:', error)
@@ -399,15 +405,18 @@ export class LocalOperationService {
     }
   }
 
-  // 标记操作失败
+  // 标记操作失败 - 改进重试机制
   async markOperationFailed(operationId: string, error: Error): Promise<void> {
     try {
       const operation = await db.syncQueue.get(operationId)
       if (!operation) return
 
       const retryCount = operation.retryCount + 1
+
+      // 修复重试延迟计算逻辑
+      const currentRetryDelay = operation.retryDelay || this.config.initialRetryDelay
       const nextRetryDelay = Math.min(
-        operation.retryDelay * this.config.retryBackoffMultiplier,
+        currentRetryDelay * this.config.retryBackoffMultiplier,
         this.config.maxRetryDelay
       )
 
@@ -420,16 +429,18 @@ export class LocalOperationService {
       // 检查是否超过最大重试次数
       if (retryCount >= operation.maxRetries) {
         update.status = 'failed'
+        console.warn(`Operation ${operationId} failed after ${retryCount} attempts`)
       } else {
-        // 重置为pending以便重试
+        // 重置为pending以便重试，添加下次重试时间
         update.status = 'pending'
+        console.log(`Operation ${operationId} will retry in ${nextRetryDelay}ms (attempt ${retryCount}/${operation.maxRetries})`)
       }
 
       await db.syncQueue.update(operationId, update)
 
       // 通知监听器
       this.notifyListeners('operationFailed', operation, error)
-      
+
       // 更新统计信息
       await this.updateQueueStats()
     } catch (error) {
@@ -585,20 +596,20 @@ export class LocalOperationService {
     }
   }
 
-  // 执行批处理同步逻辑
+  // 执行批处理同步逻辑 - 修复接口调用
   private async executeBatchSync(operations: LocalSyncOperation[], batchId: string): Promise<void> {
     try {
       // 导入统一同步服务（延迟导入避免循环依赖）
       const { unifiedSyncService } = await import('./unified-sync-service')
-      
+
       // 按操作类型分组处理
       const operationGroups = this.groupOperationsByType(operations)
-      
+
       // 处理每个操作组
       for (const [entityType, entityOperations] of Object.entries(operationGroups)) {
         await this.processEntityGroup(entityType, entityOperations, unifiedSyncService)
       }
-      
+
       console.log(`Batch ${batchId} sync execution completed`)
     } catch (error) {
       console.error(`Batch ${batchId} sync execution failed:`, error)
@@ -620,11 +631,11 @@ export class LocalOperationService {
     return groups
   }
 
-  // 处理实体操作组
+  // 处理实体操作组 - 修复接口类型
   private async processEntityGroup(
-    entityType: string, 
-    operations: LocalSyncOperation[], 
-    syncService: SyncService
+    entityType: string,
+    operations: LocalSyncOperation[],
+    syncService: any
   ): Promise<void> {
     switch (entityType) {
       case 'card':
@@ -644,184 +655,52 @@ export class LocalOperationService {
     }
   }
 
-  // 处理卡片操作
-  private async processCardOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
+  // 处理卡片操作 - 重构为使用通用方法
+  private async processCardOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    await this.processEntityOperations(operations, 'card', syncService)
+  }
+
+  // 通用操作处理方法 - 减少重复代码
+  private async processEntityOperations(
+    operations: LocalSyncOperation[],
+    entityType: 'card' | 'folder' | 'tag' | 'image',
+    syncService: any
+  ): Promise<void> {
     for (const operation of operations) {
       try {
-        switch (operation.operationType) {
-          case 'create':
-            await syncService.addOperation({
-              type: 'create',
-              entity: 'card',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'update':
-            await syncService.addOperation({
-              type: 'update',
-              entity: 'card',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'delete':
-            await syncService.addOperation({
-              type: 'delete',
-              entity: 'card',
-              entityId: operation.entityId,
-              data: { userId: operation.userId },
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
+        const unifiedOperation: any = {
+          type: operation.operationType,
+          entity: entityType,
+          entityId: operation.entityId,
+          data: operation.data,
+          priority: operation.priority,
+          userId: operation.userId,
+          metadata: {
+            source: 'local-operation'
+          }
         }
+
+        await syncService.addOperation(unifiedOperation)
       } catch (error) {
-        console.error(`Failed to process card operation ${operation.id}:`, error)
+        console.error(`Failed to process ${entityType} operation ${operation.id}:`, error)
         throw error
       }
     }
   }
 
-  // 处理文件夹操作
-  private async processFolderOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await syncService.addOperation({
-              type: 'create',
-              entity: 'folder',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'update':
-            await syncService.addOperation({
-              type: 'update',
-              entity: 'folder',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'delete':
-            await syncService.addOperation({
-              type: 'delete',
-              entity: 'folder',
-              entityId: operation.entityId,
-              data: { userId: operation.userId },
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-        }
-      } catch (error) {
-        console.error(`Failed to process folder operation ${operation.id}:`, error)
-        throw error
-      }
-    }
+  // 处理文件夹操作 - 重构为使用通用方法
+  private async processFolderOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    await this.processEntityOperations(operations, 'folder', syncService)
   }
 
-  // 处理标签操作
-  private async processTagOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await syncService.addOperation({
-              type: 'create',
-              entity: 'tag',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'update':
-            await syncService.addOperation({
-              type: 'update',
-              entity: 'tag',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'delete':
-            await syncService.addOperation({
-              type: 'delete',
-              entity: 'tag',
-              entityId: operation.entityId,
-              data: { userId: operation.userId },
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-        }
-      } catch (error) {
-        console.error(`Failed to process tag operation ${operation.id}:`, error)
-        throw error
-      }
-    }
+  // 处理标签操作 - 重构为使用通用方法
+  private async processTagOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    await this.processEntityOperations(operations, 'tag', syncService)
   }
 
-  // 处理图片操作
-  private async processImageOperations(operations: LocalSyncOperation[], syncService: SyncService): Promise<void> {
-    for (const operation of operations) {
-      try {
-        switch (operation.operationType) {
-          case 'create':
-            await syncService.addOperation({
-              type: 'create',
-              entity: 'image',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'update':
-            await syncService.addOperation({
-              type: 'update',
-              entity: 'image',
-              entityId: operation.entityId,
-              data: operation.data,
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-            
-          case 'delete':
-            await syncService.addOperation({
-              type: 'delete',
-              entity: 'image',
-              entityId: operation.entityId,
-              data: { userId: operation.userId },
-              priority: operation.priority,
-              userId: operation.userId
-            })
-            break
-        }
-      } catch (error) {
-        console.error(`Failed to process image operation ${operation.id}:`, error)
-        throw error
-      }
-    }
+  // 处理图片操作 - 重构为使用通用方法
+  private async processImageOperations(operations: LocalSyncOperation[], syncService: any): Promise<void> {
+    await this.processEntityOperations(operations, 'image', syncService)
   }
 
   // ============================================================================
@@ -1008,9 +887,9 @@ export class LocalOperationService {
         // 按状态统计
         stats.byStatus[operation.status]++
         
-        // 计算处理时间
-        if (operation.status === 'completed' && operation.processingStartedAt) {
-          const processingTime = operation.timestamp.getTime() - operation.processingStartedAt.getTime()
+        // 计算处理时间 - 修复计算逻辑
+        if (operation.status === 'completed' && operation.processingStartedAt && operation.processingEndedAt) {
+          const processingTime = operation.processingEndedAt.getTime() - operation.processingStartedAt.getTime()
           stats.averageProcessingTime += processingTime
         }
         
