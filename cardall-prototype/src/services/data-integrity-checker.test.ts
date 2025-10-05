@@ -45,7 +45,8 @@ vi.mock('./database', () => ({
             updatedAt: new Date()
           }
         ]))
-      })),
+      }))
+    })),
       get: vi.fn().mockResolvedValue(null),
       put: vi.fn().mockResolvedValue(undefined),
       update: vi.fn().mockResolvedValue(undefined)

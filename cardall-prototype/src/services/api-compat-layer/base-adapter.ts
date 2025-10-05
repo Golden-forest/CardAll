@@ -7,10 +7,8 @@
 
 import {
   StatusChangeListener,
-  AuthStateChangeListener,
   ProgressListener,
   ErrorListener,
-  ConflictListener,
   AdapterConfig
 } from './types'
 import { apiVersionManager, versionCheck } from './version-manager'
@@ -30,15 +28,37 @@ export enum AdapterState {
 // 适配器选项接口
 // ============================================================================
 
-export // ============================================================================
-// 适配器事件接口
-// ============================================================================
+export interface AdapterOptions {
+  enableMetrics?: boolean
+  enableWarnings?: boolean
+  logLevel?: 'error' | 'warn' | 'info' | 'debug'
+  strictMode?: boolean
+}
 
-export // ============================================================================
+// ============================================================================
 // 适配器性能指标
 // ============================================================================
 
-export // ============================================================================
+export interface AdapterMetrics {
+  totalCalls: number
+  successfulCalls: number
+  failedCalls: number
+  averageResponseTime: number
+  lastCallTime: Date | null
+  errorRate: number
+}
+
+// ============================================================================
+// 适配器事件接口
+// ============================================================================
+
+export interface AdapterEvents {
+  stateChange?: (state: AdapterState) => void
+  performance?: (metrics: AdapterMetrics) => void
+  error?: (error: Error) => void
+}
+
+// ============================================================================
 // 基础适配器类
 // ============================================================================
 

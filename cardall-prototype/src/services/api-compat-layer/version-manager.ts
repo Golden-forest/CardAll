@@ -1,45 +1,37 @@
 // ============================================================================
-// API版本管理器
+// API版本管理器（本地版本）
 // ============================================================================
 // 创建时间：2025-09-13
-// 功能：管理API版本兼容性、弃用警告和迁移路径
+// 更新时间：2025-10-05
+// 功能：管理本地API版本兼容性和性能指标
 // ============================================================================
 
 import { ApiVersion, ApiMetrics } from './types'
 
 // ============================================================================
-// API版本信息
+// API版本信息（仅本地服务）
 // ============================================================================
 
 const API_VERSIONS: Record<string, ApiVersion> = {
-  // 同步服务版本
-  'cloud-sync-v1': {
-    version: '1.0.0',
-    deprecated: true,
-    deprecationDate: new Date('2025-01-01'),
-    removalDate: new Date('2025-06-01'),
-    replacementApi: 'unified-sync-service',
-    description: '原始云端同步服务'
-  },
-  
-  'unified-sync-v1': {
-    version: '1.0.0',
-    deprecated: false,
-    description: '统一同步服务'
-  },
-  
-  // 认证服务版本
-  'auth-v1': {
-    version: '1.0.0',
-    deprecated: false,
-    description: '认证服务'
-  },
-  
   // 数据库API版本
   'database-v1': {
     version: '1.0.0',
     deprecated: false,
-    description: '数据库操作接口'
+    description: '本地数据库操作接口'
+  },
+
+  // 存储适配器版本
+  'storage-adapter-v1': {
+    version: '1.0.0',
+    deprecated: false,
+    description: '本地存储适配器'
+  },
+
+  // 性能监控版本
+  'performance-monitor-v1': {
+    version: '1.0.0',
+    deprecated: false,
+    description: '本地性能监控服务'
   }
 }
 
@@ -49,7 +41,7 @@ const API_VERSIONS: Record<string, ApiVersion> = {
 
 class ApiMetricsCollector {
   private metrics: Map<string, ApiMetrics> = new Map()
-  
+
   recordApiCall(api: string, version: string, duration: number, error?: Error): void {
     const key = `${api}@${version}`
     const existing = this.metrics.get(key) || {
@@ -60,36 +52,36 @@ class ApiMetricsCollector {
       avgResponseTime: 0,
       lastUsed: new Date()
     }
-    
+
     existing.calls++
     existing.lastUsed = new Date()
-    
+
     if (error) {
       existing.errors++
     }
-    
+
     // 更新平均响应时间
     const totalCalls = existing.calls
     const currentAvg = existing.avgResponseTime
     existing.avgResponseTime = ((currentAvg * (totalCalls - 1)) + duration) / totalCalls
-    
+
     this.metrics.set(key, existing)
   }
-  
+
   getMetrics(api?: string, version?: string): ApiMetrics[] {
     let result = Array.from(this.metrics.values())
-    
+
     if (api) {
       result = result.filter(m => m.api === api)
     }
-    
+
     if (version) {
       result = result.filter(m => m.version === version)
     }
-    
+
     return result
   }
-  
+
   clearMetrics(): void {
     this.metrics.clear()
   }
@@ -105,7 +97,7 @@ export class ApiVersionManager {
   private warningsEnabled: boolean = true
   private strictMode: boolean = false
   private customLoggers: Map<string, (message: string) => void> = new Map()
-  
+
   constructor(config?: {
     enableWarnings?: boolean
     strictMode?: boolean
@@ -115,53 +107,53 @@ export class ApiVersionManager {
       this.strictMode = config.strictMode ?? false
     }
   }
-  
+
   /**
    * 注册自定义日志器
    */
   registerLogger(api: string, logger: (message: string) => void): void {
     this.customLoggers.set(api, logger)
   }
-  
+
   /**
    * 检查API版本
    */
   checkApiVersion(api: string, version: string, operation: string): boolean {
     const versionInfo = API_VERSIONS[`${api}@${version}`]
-    
+
     if (!versionInfo) {
       this.logWarning(`API ${api}@${version} not found for operation: ${operation}`, api)
       return !this.strictMode
     }
-    
+
     if (versionInfo.deprecated) {
       this.logDeprecationWarning(api, version, versionInfo, operation)
     }
-    
+
     return true
   }
-  
+
   /**
    * 记录API调用指标
    */
   recordApiCall(api: string, version: string, duration: number, error?: Error): void {
     metricsCollector.recordApiCall(api, version, duration, error)
   }
-  
+
   /**
    * 获取API指标
    */
   getApiMetrics(api?: string, version?: string): ApiMetrics[] {
     return metricsCollector.getMetrics(api, version)
   }
-  
+
   /**
    * 获取所有API版本信息
    */
   getApiVersions(): Record<string, ApiVersion> {
     return { ...API_VERSIONS }
   }
-  
+
   /**
    * 获取推荐的API替代方案
    */
@@ -169,80 +161,81 @@ export class ApiVersionManager {
     const versionInfo = API_VERSIONS[deprecatedApi]
     return versionInfo?.replacementApi || null
   }
-  
+
   /**
    * 检查API是否即将被移除
    */
   isApiRemovalImminent(api: string, version: string, daysThreshold: number = 30): boolean {
     const versionInfo = API_VERSIONS[`${api}@${version}`]
-    
+
     if (!versionInfo?.removalDate) {
       return false
     }
-    
+
     const now = new Date()
     const thresholdDate = new Date(now.getTime() + daysThreshold * 24 * 60 * 60 * 1000)
-    
+
     return versionInfo.removalDate < thresholdDate
   }
-  
+
   /**
-   * 生成迁移报告
+   * 生成性能报告
    */
-  generateMigrationReport(): {
-    deprecatedApis: string[]
-    imminentRemovals: string[]
-    usageStats: ApiMetrics[]
+  generatePerformanceReport(): {
+    apiUsage: ApiMetrics[]
+    totalCalls: number
+    averageResponseTime: number
+    errorRate: number
     recommendations: string[]
   } {
-    const deprecatedApis = Object.entries(API_VERSIONS)
-      .filter(([_, info]) => info.deprecated)
-      .map(([key]) => key)
-    
-    const imminentRemovals = deprecatedApis.filter(api => 
-      this.isApiRemovalImminent(api, API_VERSIONS[api].version, 30)
-    )
-    
     const usageStats = metricsCollector.getMetrics()
-    
+    const totalCalls = usageStats.reduce((sum, stat) => sum + stat.calls, 0)
+    const totalErrors = usageStats.reduce((sum, stat) => sum + stat.errors, 0)
+    const averageResponseTime = usageStats.reduce((sum, stat) => sum + stat.avgResponseTime, 0) / Math.max(usageStats.length, 1)
+    const errorRate = totalCalls > 0 ? (totalErrors / totalCalls) * 100 : 0
+
     const recommendations: string[] = []
-    
-    deprecatedApis.forEach(api => {
-      const versionInfo = API_VERSIONS[api]
-      if (versionInfo.replacementApi) {
-        const usage = usageStats.find(m => m.api === api && m.version === versionInfo.version)
-        if (usage && usage.calls > 0) {
-          recommendations.push(
-            `迁移 ${api} 到 ${versionInfo.replacementApi} - 当前使用次数: ${usage.calls}`
-          )
-        }
+
+    // 性能优化建议
+    usageStats.forEach(stat => {
+      if (stat.avgResponseTime > 100) {
+        recommendations.push(
+          `优化 ${stat.api}@${stat.version} - 平均响应时间过高: ${stat.avgResponseTime.toFixed(2)}ms`
+        )
+      }
+
+      if (stat.errors > 0 && (stat.errors / stat.calls) > 0.1) {
+        recommendations.push(
+          `检查 ${stat.api}@${stat.version} - 错误率过高: ${((stat.errors / stat.calls) * 100).toFixed(1)}%`
+        )
       }
     })
-    
+
     return {
-      deprecatedApis,
-      imminentRemovals,
-      usageStats,
+      apiUsage: usageStats,
+      totalCalls,
+      averageResponseTime,
+      errorRate,
       recommendations
     }
   }
-  
+
   /**
    * 日志警告
    */
   private logWarning(message: string, api: string): void {
     if (!this.warningsEnabled) return
-    
+
     const logger = this.customLoggers.get(api)
     const logMessage = `[API兼容层警告] ${message}`
-    
+
     if (logger) {
       logger(logMessage)
     } else {
       console.warn(logMessage)
     }
   }
-  
+
   /**
    * 记录弃用警告
    */
@@ -250,14 +243,14 @@ export class ApiVersionManager {
     const message = [
       `API ${api}@${version} 已弃用`,
       `操作: ${operation}`,
-      versionInfo.removalDate 
+      versionInfo.removalDate
         ? `将在 ${versionInfo.removalDate.toISOString().split('T')[0]} 移除`
         : '',
       versionInfo.replacementApi
         ? `推荐替代: ${versionInfo.replacementApi}`
         : ''
     ].filter(Boolean).join(' | ')
-    
+
     this.logWarning(message, api)
   }
 }
@@ -278,29 +271,30 @@ export const apiVersionManager = new ApiVersionManager()
 export function versionCheck(api: string, version: string) {
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value
-    
+
     descriptor.value = function(...args: any[]) {
       const startTime = performance.now()
       let error: Error | undefined
-      
+
       try {
         // 检查版本
         const isValid = apiVersionManager.checkApiVersion(api, version, propertyKey)
         if (!isValid) {
           throw new Error(`API版本检查失败: ${api}@${version}`)
         }
-        
+
         // 执行原方法
         return originalMethod.apply(this, args)
-      } catch (error) {
-          console.warn("操作失败:", error)
-        } finally {
+      } catch (err) {
+        error = err as Error
+        throw error
+      } finally {
         // 记录指标
         const duration = performance.now() - startTime
         apiVersionManager.recordApiCall(api, version, duration, error)
       }
     }
-    
+
     return descriptor
   }
 }

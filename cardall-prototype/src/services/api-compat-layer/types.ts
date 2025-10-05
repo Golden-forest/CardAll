@@ -2,55 +2,87 @@
 // API兼容层类型定义
 // ============================================================================
 // 创建时间：2025-09-13
-// 功能：为现有UI组件提供API兼容层类型定义
+// 更新时间：2025-10-05
+// 功能：为现有UI组件提供API兼容层类型定义（仅本地功能）
 // ============================================================================
 
 // ============================================================================
-// 同步服务类型定义
+// 本地数据库操作类型定义
 // ============================================================================
 
-export export interface { id: string; type: string; data: any } {
+export interface LocalOperation {
   id: string
   type: 'create' | 'update' | 'delete'
   table: 'cards' | 'folders' | 'tags' | 'images'
   data: any
   localId: string
   timestamp: Date
-  retryCount: number
 }
 
-export // ============================================================================
-// 认证服务类型定义
+// ============================================================================
+// 数据库适配器类型定义
 // ============================================================================
 
-export // ============================================================================
-// 数据库类型定义
+export interface DatabaseAdapterConfig {
+  enableMetrics?: boolean
+  enableWarnings?: boolean
+  logLevel?: 'error' | 'warn' | 'info' | 'debug'
+  strictMode?: boolean
+}
+
+export interface DatabaseState {
+  isConnected: boolean
+  isInitializing: boolean
+  error?: Error
+  lastSyncTime?: Date
+}
+
+// ============================================================================
+// 适配器基础类型
 // ============================================================================
 
-export export export // ============================================================================
-// API版本信息
-// ============================================================================
+export interface AdapterOptions {
+  enableMetrics?: boolean
+  enableWarnings?: boolean
+  logLevel?: 'error' | 'warn' | 'info' | 'debug'
+  strictMode?: boolean
+}
 
-export export // ============================================================================
-// 适配器配置
-// ============================================================================
+export interface AdapterConfig {
+  name: string
+  version: string
+}
 
-export // ============================================================================
+// ============================================================================
 // 事件监听器类型
 // ============================================================================
 
-export type StatusChangeListener = (status: SyncStatus) => void
-export type AuthStateChangeListener = (state: AuthState) => void
+export type StatusChangeListener = (status: DatabaseState) => void
 export type ProgressListener = (progress: number) => void
 export type ErrorListener = (error: Error) => void
-export type ConflictListener = (conflict: ConflictResolution) => void
 
 // ============================================================================
 // 通用操作接口
 // ============================================================================
 
-export export export // ============================================================================
+export interface OperationResult<T = any> {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+// ============================================================================
 // 导出所有类型
 // ============================================================================
 
-export * from './types'
+export type {
+  LocalOperation,
+  DatabaseAdapterConfig,
+  DatabaseState,
+  AdapterOptions,
+  AdapterConfig,
+  OperationResult,
+  StatusChangeListener,
+  ProgressListener,
+  ErrorListener
+}
