@@ -76,7 +76,7 @@ export class SimpleBackupService {
         images,
         settings,
         exportTime: new Date(),
-        appVersion: '5.6.5'
+        appVersion: '1.0.0-local'
       })
 
       // 计算数据大小

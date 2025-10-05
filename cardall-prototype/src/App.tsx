@@ -10,6 +10,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import './globals.css'
 
+// 导入数据导出工具（用于备份）
+import '@/utils/data-export'
+
 interface AppProps {
   initializationError?: string
 }
