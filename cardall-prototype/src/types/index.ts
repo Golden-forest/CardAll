@@ -8,5 +8,5 @@ export * from './performance'
 // 安全相关类型
 export * from './security'
 
-// 离线操作相关类型
-export * from './offline'
+// 离线操作相关类型 - 已移除云端同步功能
+// export * from './offline'

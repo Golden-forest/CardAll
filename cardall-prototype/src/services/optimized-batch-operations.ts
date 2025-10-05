@@ -9,7 +9,7 @@
  * - 性能监控和优化
  */
 
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { db, type DbCard, type DbFolder, type DbTag, type DbImage } from './database'
 import { syncMonitoringService } from './sync-monitoring'
 import { networkMonitorService, type NetworkInfo } from './network-monitor'

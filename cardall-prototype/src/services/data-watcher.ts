@@ -8,7 +8,7 @@
  */
 
 import { Dexie, type Table } from 'dexie'
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { syncEventBus, type SyncEvent } from './sync-event-bus'
 
 // ============================================================================
@@ -627,12 +627,12 @@ export class DataWatcher {
   // ============================================================================
 
   private async startSupabaseWatcher(): Promise<void> {
-    if (!this.config.sources.supabase.enabled) return
+    if (!this.config.sources.// supabase.enabled) return
 
     this.log('Starting Supabase watcher...')
 
     try {
-      if (this.config.sources.supabase.enableRealtime) {
+      if (this.config.sources.// supabase.enableRealtime) {
         await this.setupSupabaseRealtime()
       }
 
@@ -645,7 +645,7 @@ export class DataWatcher {
   private async setupSupabaseRealtime(): Promise<void> {
     try {
       // 为每个表设置实时监听
-      for (const table of this.config.sources.supabase.tablesToWatch) {
+      for (const table of this.config.sources.// supabase.tablesToWatch) {
         const channel = supabase
           .channel(`${table}_changes`)
           .on(

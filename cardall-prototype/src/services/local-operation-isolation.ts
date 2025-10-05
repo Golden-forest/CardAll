@@ -12,7 +12,7 @@ import { db, type DbCard, DbFolder, DbTag, DbImage } from './database-unified'
 import { localOperationService, type LocalSyncOperation } from './local-operation'
 import { networkManager } from './network-manager'
 import { offlineManager, type OfflineOperation } from './offline-manager'
-import { supabase } from './supabase-client'
+// Supabase integration removed-client'
 
 // ============================================================================
 // 隔离层接口定义

@@ -1,10 +1,10 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
-import { authService } from '@/services/auth'
+
 import { db } from '@/services/database'
-// import { triggerFolderSync } from '@/services/unified-sync-service' // Removed in T015 cleanup
-import { supabase } from '@/services/supabase'
+// 云端同步功能已禁用 - import { triggerFolderSync } from '@/services/unified-sync-service' // Removed in T015 cleanup
+// Supabase integration removed - using local storage only
 
 // Mock data for development
 const mockFolders: Folder[] = [
@@ -42,25 +42,17 @@ const mockFolders: Folder[] = [
 ]
 
 /**
- * 获取当前用户ID
+ * 获取当前用户ID（本地模式）
  */
 async function getCurrentUserId(): Promise<string | null> {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (user && !userError) {
-      console.log(`文件夹服务获取到当前用户ID: ${user.id}`)
-      return user.id
-    }
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (session?.user && !sessionError) {
-      console.log(`文件夹服务从会话获取到用户ID: ${session.user.id}`)
-      return session.user.id
-    }
-    console.warn('文件夹服务无法获取当前用户ID')
-    return null
+    // 认证服务已禁用，直接返回匿名用户ID
+    const anonymousUserId = localStorage.getItem('anonymousUserId') || 'anonymous'
+    console.log('文件夹服务使用匿名用户ID:', anonymousUserId)
+    return anonymousUserId
   } catch (error) {
     console.error('文件夹服务获取用户ID失败:', error)
-    return null
+    return 'anonymous'
   }
 }
 

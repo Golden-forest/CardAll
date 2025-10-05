@@ -13,7 +13,7 @@
  * - 自动修复机制
  */
 
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { db, type DbCard, type DbFolder, type DbTag } from './database'
 import { authService } from './auth'
 import { eventSystem, AppEvents } from './event-system'
@@ -1320,7 +1320,7 @@ export class DataIntegrityChecker implements IDataIntegrityChecker {
   private async getRemoteEntities(entityType: EntityType, userId: string): Promise<any[]> {
     try {
       const tableName = this.getEntityTableName(entityType)
-      const { data, error } = await supabase
+      const { data, error } = // await supabase
         .from(tableName)
         .select('*')
         .eq('user_id', userId)
@@ -1448,7 +1448,7 @@ export class DataIntegrityChecker implements IDataIntegrityChecker {
       if (!entity) return false
 
       const tableName = this.getEntityTableName(entityType)
-      const { error } = await supabase
+      const { error } = // await supabase
         .from(tableName)
         .upload(entity)
 
@@ -1490,7 +1490,7 @@ export class DataIntegrityChecker implements IDataIntegrityChecker {
   private async getRemoteEntity(entityId: string, entityType: EntityType): Promise<any> {
     try {
       const tableName = this.getEntityTableName(entityType)
-      const { data, error } = await supabase
+      const { data, error } = // await supabase
         .from(tableName)
         .select('*')
         .eq('id', entityId)

@@ -1,6 +1,6 @@
 import Dexie, { Table } from 'dexie'
 import { Card, Folder, Tag, ImageData } from '@/types/card'
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { authService } from './auth'
 
 // ============================================================================

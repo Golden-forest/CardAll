@@ -17,7 +17,7 @@ import { performance } from './perf-utils'
 import { batchOptimizer, type BatchMetrics } from './batch-optimizer'
 import { networkStateDetector } from './network-state-detector'
 import { db } from './database'
-import { supabase } from './supabase'
+// Supabase integration removed'
 
 // ============================================================================
 // 类型定义

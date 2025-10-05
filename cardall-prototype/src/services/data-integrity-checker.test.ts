@@ -6,8 +6,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { dataIntegrityChecker, IntegrityCheckType, EntityType, SeverityLevel } from './data-integrity-checker'
-import { syncOrchestrator } from './sync-orchestrator'
-import { coreSyncService } from './core-sync-service'
+// 云端同步功能已禁用
+// import { syncOrchestrator } from './sync-orchestrator'
+// import { coreSyncService } from './core-sync-service'
 
 // Mock dependencies
 vi.mock('./auth', () => ({
@@ -16,6 +17,7 @@ vi.mock('./auth', () => ({
   }
 }))
 
+// Supabase mock removed - now using local database only
 vi.mock('./supabase', () => ({
   supabase: {
     from: vi.fn(() => ({
@@ -44,7 +46,7 @@ vi.mock('./database', () => ({
             createdAt: new Date(),
             updatedAt: new Date()
           }
-        ]))
+        ])
       }))
     })),
       get: vi.fn().mockResolvedValue(null),

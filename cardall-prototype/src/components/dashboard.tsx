@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
-import { authService, type AuthState } from '@/services/auth'
-import { useAuthModal } from '@/contexts/auth-modal-context'
 import { OptimizedMasonryGrid } from './card/optimized-masonry-grid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,9 +15,7 @@ import {
   Sliders,
   ChevronLeft,
   ChevronRight,
-  User,
-  LogIn,
-  } from 'lucide-react'
+    } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -28,7 +24,6 @@ import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-util
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
 import { useToast } from '@/hooks/use-toast'
-import { UserAvatar } from '@/components/ui/user-avatar'
 import { 
   FolderContextMenu, 
   CreateFolderDialog, 
@@ -49,14 +44,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ className }: DashboardProps) {
-  // Authentication state
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    session: null,
-    loading: false,
-    error: null
-  })
-  const { openModal } = useAuthModal()
 
   const {
     cards,
@@ -108,12 +95,7 @@ export function Dashboard({ className }: DashboardProps) {
   const [showConflictPanel, setShowConflictPanel] = useState(false)
   const [showConflictDetail, setShowConflictDetail] = useState(false)
 
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange(setAuthState)
-    return unsubscribe
-  }, [])
-
+  
   // Folder management states
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
   const [showDeleteFolderDialog, setShowDeleteFolderDialog] = useState(false)
@@ -740,32 +722,7 @@ export function Dashboard({ className }: DashboardProps) {
                 <Plus className="h-6 w-6" />
                 <span className="sr-only">Add Card</span>
               </Button>
-              
-              {/* Authentication Button */}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={openModal}
-                className="flex items-center gap-2"
-              >
-                {authState.user ? (
-                  <>
-                    <UserAvatar 
-                      user={authState.user}
-                      size="sm"
-                      onClick={openModal}
-                      showHoverEffect={true}
-                    />
-                    <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm">Login</span>
-                  </>
-                )}
-              </Button>
-            </div>
+              </div>
           </div>
         </header>
 
@@ -1070,6 +1027,8 @@ export function Dashboard({ className }: DashboardProps) {
         />
         */}
 
+        {/* EnhancedConflictDetail component removed in T015 cleanup */}
+        {/*
         {selectedConflictId && (
           <EnhancedConflictDetail
             conflictId={selectedConflictId}
@@ -1079,6 +1038,7 @@ export function Dashboard({ className }: DashboardProps) {
             }}
           />
         )}
+        */}
       </div>
     </FolderPanelProvider>
   )

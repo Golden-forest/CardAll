@@ -7,7 +7,7 @@ import {
   { id: string; type: string; data: any },
   LegacySyncOperation 
 } from '@/services/database'
-import { authService } from '@/services/auth'
+
 
 // ============================================================================
 // 统一数据类型转换器
@@ -20,7 +20,6 @@ export class DataConverter {
   // 获取当前用户ID
   private static getCurrentUserId(): string | null {
     if (!this.cachedUserId) {
-      const user = authService.getCurrentUser()
       this.cachedUserId = user?.id || null
     }
     return this.cachedUserId

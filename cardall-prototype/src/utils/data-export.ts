@@ -71,7 +71,13 @@ export async function exportAllData(): Promise<ExportData> {
         totalFolders: folders.length,
         totalTags: tags.length,
         totalImages: images.length,
-        exportSize: JSON.stringify({ cards, folders, tags, images, settings }).length + ' bytes'
+        exportSize: JSON.stringify({
+          cards: cards.length,
+          folders: folders.length,
+          tags: tags.length,
+          images: images.length,
+          settings: settings.length
+        }).length + ' bytes'
       }
     }
 

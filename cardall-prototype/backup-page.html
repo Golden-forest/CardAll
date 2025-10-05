@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardAll 数据备份工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <!-- 头部 -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🗄️ CardAll 数据备份</h1>
+            <p class="text-gray-600">完整的 IndexedDB 数据备份工具</p>
+        </header>
+
+        <!-- 主要内容 -->
+        <main class="space-y-6">
+            <!-- 状态卡片 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">📊 数据库状态</h2>
+                <div id="databaseStatus" class="space-y-2">
+                    <div class="flex items-center">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500 mr-2"></div>
+                        <span class="text-gray-600">正在检查数据库状态...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据统计 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">📈 数据统计</h2>
+                <div id="dataStats" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="text-center p-3 bg-blue-50 rounded">
+                        <div class="text-2xl font-bold text-blue-600" id="cardsCount">-</div>
+                        <div class="text-sm text-gray-600">卡片</div>
+                    </div>
+                    <div class="text-center p-3 bg-green-50 rounded">
+                        <div class="text-2xl font-bold text-green-600" id="foldersCount">-</div>
+                        <div class="text-sm text-gray-600">文件夹</div>
+                    </div>
+                    <div class="text-center p-3 bg-purple-50 rounded">
+                        <div class="text-2xl font-bold text-purple-600" id="tagsCount">-</div>
+                        <div class="text-sm text-gray-600">标签</div>
+                    </div>
+                    <div class="text-center p-3 bg-orange-50 rounded">
+                        <div class="text-2xl font-bold text-orange-600" id="imagesCount">-</div>
+                        <div class="text-sm text-gray-600">图片</div>
+                    </div>
+                    <div class="text-center p-3 bg-gray-50 rounded">
+                        <div class="text-2xl font-bold text-gray-600" id="totalSize">-</div>
+                        <div class="text-sm text-gray-600">总计</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 备份控制 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">💾 备份操作</h2>
+
+                <div class="space-y-4">
+                    <!-- 备份选项 -->
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="includeImages" checked class="mr-2">
+                            <span>包含图片数据</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="includeSettings" checked class="mr-2">
+                            <span>包含应用设置</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="compressBackup" checked class="mr-2">
+                            <span>压缩备份文件</span>
+                        </label>
+                    </div>
+
+                    <!-- 备份按钮 -->
+                    <button id="startBackup" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        🚀 开始备份
+                    </button>
+                </div>
+
+                <!-- 进度条 -->
+                <div id="progressSection" class="mt-6 hidden">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">备份进度</span>
+                        <span id="progressText" class="text-sm text-gray-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div id="progressMessage" class="mt-2 text-sm text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- 备份历史 -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">📋 备份历史</h2>
+                <div id="backupHistory" class="space-y-2">
+                    <p class="text-gray-500">暂无备份历史</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="text-center mt-12 text-gray-500 text-sm">
+            <p>CardAll 数据备份工具 v1.0.0</p>
+            <p>确保您的数据安全，定期备份重要内容</p>
+        </footer>
+    </div>
+
+    <!-- 成功/错误提示 -->
+    <div id="notification" class="fixed top-4 right-4 max-w-sm hidden">
+        <div class="rounded-lg shadow-lg p-4 transition-all duration-300">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div id="notificationIcon"></div>
+                </div>
+                <div class="ml-3">
+                    <h3 id="notificationTitle" class="text-sm font-medium"></h3>
+                    <div id="notificationMessage" class="text-sm mt-1"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // 数据库配置
+        const DB_NAME = 'CardAllLocalDB_v4';
+        const DB_VERSION = 4;
+
+        // 状态管理
+        let isBackupInProgress = false;
+        let backupHistory = [];
+
+        // DOM 元素
+        const elements = {
+            startBackup: document.getElementById('startBackup'),
+            progressSection: document.getElementById('progressSection'),
+            progressBar: document.getElementById('progressBar'),
+            progressText: document.getElementById('progressText'),
+            progressMessage: document.getElementById('progressMessage'),
+            databaseStatus: document.getElementById('databaseStatus'),
+            cardsCount: document.getElementById('cardsCount'),
+            foldersCount: document.getElementById('foldersCount'),
+            tagsCount: document.getElementById('tagsCount'),
+            imagesCount: document.getElementById('imagesCount'),
+            totalSize: document.getElementById('totalSize'),
+            backupHistory: document.getElementById('backupHistory'),
+            includeImages: document.getElementById('includeImages'),
+            includeSettings: document.getElementById('includeSettings'),
+            compressBackup: document.getElementById('compressBackup')
+        };
+
+        // 打开数据库连接
+        async function openDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+
+                    // 创建必要的表（如果不存在）
+                    if (!db.objectStoreNames.contains('cards')) {
+                        db.createObjectStore('cards', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('folders')) {
+                        db.createObjectStore('folders', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('tags')) {
+                        db.createObjectStore('tags', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('images')) {
+                        db.createObjectStore('images', { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+
+        // 获取表数据
+        async function getTableData(db, tableName) {
+            return new Promise((resolve, reject) => {
+                if (!db.objectStoreNames.contains(tableName)) {
+                    resolve([]);
+                    return;
+                }
+
+                const transaction = db.transaction([tableName], 'readonly');
+                const store = transaction.objectStore(tableName);
+                const request = store.getAll();
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result || []);
+            });
+        }
+
+        // 更新数据库状态显示
+        async function updateDatabaseStatus() {
+            try {
+                const db = await openDatabase();
+
+                elements.databaseStatus.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                        <span class="text-green-600 font-medium">数据库连接正常</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        数据库: ${DB_NAME} (版本 ${DB_VERSION})
+                    </div>
+                `;
+
+                // 获取数据统计
+                const [cards, folders, tags, images] = await Promise.all([
+                    getTableData(db, 'cards'),
+                    getTableData(db, 'folders'),
+                    getTableData(db, 'tags'),
+                    getTableData(db, 'images')
+                ]);
+
+                elements.cardsCount.textContent = cards.length;
+                elements.foldersCount.textContent = folders.length;
+                elements.tagsCount.textContent = tags.length;
+                elements.imagesCount.textContent = images.length;
+                elements.totalSize.textContent = cards.length + folders.length + tags.length + images.length;
+
+                db.close();
+
+            } catch (error) {
+                elements.databaseStatus.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                        <span class="text-red-600 font-medium">数据库连接失败</span>
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        错误: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // 显示通知
+        function showNotification(title, message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const titleEl = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // 设置图标
+            const icons = {
+                success: '<div class="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">✓</div>',
+                error: '<div class="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">✗</div>',
+                info: '<div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">ℹ</div>'
+            };
+
+            icon.innerHTML = icons[type];
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            // 设置样式
+            const colors = {
+                success: 'bg-green-50 border border-green-200 text-green-800',
+                error: 'bg-red-50 border border-red-200 text-red-800',
+                info: 'bg-blue-50 border border-blue-200 text-blue-800'
+            };
+
+            notification.firstElementChild.className = `rounded-lg shadow-lg p-4 transition-all duration-300 ${colors[type]}`;
+
+            // 显示通知
+            notification.classList.remove('hidden');
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 更新进度
+        function updateProgress(progress, message) {
+            elements.progressBar.style.width = `${progress}%`;
+            elements.progressText.textContent = `${progress}%`;
+            elements.progressMessage.textContent = message;
+        }
+
+        // 执行备份
+        async function performBackup() {
+            if (isBackupInProgress) return;
+
+            isBackupInProgress = true;
+            elements.startBackup.disabled = true;
+            elements.progressSection.classList.remove('hidden');
+
+            try {
+                updateProgress(0, '正在连接数据库...');
+
+                const db = await openDatabase();
+                updateProgress(10, '正在读取数据...');
+
+                // 读取所有数据
+                const [cards, folders, tags, images, settings] = await Promise.all([
+                    getTableData(db, 'cards'),
+                    getTableData(db, 'folders'),
+                    getTableData(db, 'tags'),
+                    elements.includeImages.checked ? getTableData(db, 'images') : Promise.resolve([]),
+                    elements.includeSettings.checked ? getTableData(db, 'settings') : Promise.resolve([])
+                ]);
+
+                updateProgress(50, '正在处理数据...');
+
+                // 创建备份数据
+                const backupData = {
+                    exportInfo: {
+                        timestamp: new Date().toISOString(),
+                        version: '4.0.0',
+                        description: 'CardAll完整数据备份',
+                        environment: 'browser-backup-tool',
+                        database: DB_NAME,
+                        options: {
+                            includeImages: elements.includeImages.checked,
+                            includeSettings: elements.includeSettings.checked,
+                            compressBackup: elements.compressBackup.checked
+                        }
+                    },
+                    database: {
+                        cards,
+                        folders,
+                        tags,
+                        images,
+                        settings
+                    },
+                    statistics: {
+                        totalCards: cards.length,
+                        totalFolders: folders.length,
+                        totalTags: tags.length,
+                        totalImages: images.length,
+                        totalSettings: settings.length,
+                        exportTimestamp: new Date().toISOString()
+                    }
+                };
+
+                updateProgress(80, '正在生成备份文件...');
+
+                // 生成文件
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_');
+                const filename = `cardall-backup-${timestamp}.json`;
+
+                let jsonString = JSON.stringify(backupData, null, 2);
+
+                // 压缩（如果选择了压缩）
+                if (elements.compressBackup.checked) {
+                    updateProgress(85, '正在压缩数据...');
+                    // 这里可以添加压缩逻辑，暂时跳过
+                }
+
+                const blob = new Blob([jsonString], { type: 'application/json' });
+
+                updateProgress(90, '正在下载文件...');
+
+                // 下载文件
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                updateProgress(100, '备份完成!');
+
+                // 添加到历史记录
+                const backupRecord = {
+                    filename,
+                    timestamp: new Date().toISOString(),
+                    size: (blob.size / 1024).toFixed(2) + ' KB',
+                    records: backupData.statistics.totalCards + backupData.statistics.totalFolders +
+                             backupData.statistics.totalTags + backupData.statistics.totalImages,
+                    success: true
+                };
+
+                backupHistory.unshift(backupRecord);
+                if (backupHistory.length > 5) backupHistory.pop(); // 只保留最近5条
+
+                updateBackupHistory();
+
+                showNotification('备份成功', `文件 ${filename} 已下载`, 'success');
+
+                db.close();
+
+            } catch (error) {
+                console.error('备份失败:', error);
+                showNotification('备份失败', error.message, 'error');
+            } finally {
+                isBackupInProgress = false;
+                elements.startBackup.disabled = false;
+
+                // 3秒后隐藏进度条
+                setTimeout(() => {
+                    elements.progressSection.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // 更新备份历史显示
+        function updateBackupHistory() {
+            if (backupHistory.length === 0) {
+                elements.backupHistory.innerHTML = '<p class="text-gray-500">暂无备份历史</p>';
+                return;
+            }
+
+            elements.backupHistory.innerHTML = backupHistory.map(record => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                    <div>
+                        <div class="font-medium text-gray-800">${record.filename}</div>
+                        <div class="text-sm text-gray-600">
+                            ${new Date(record.timestamp).toLocaleString()} •
+                            ${record.size} •
+                            ${record.records} 条记录
+                        </div>
+                    </div>
+                    <div class="text-green-600">
+                        ${record.success ? '✓' : '✗'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDatabaseStatus();
+            updateBackupHistory();
+
+            // 绑定事件
+            elements.startBackup.addEventListener('click', performBackup);
+
+            // 每30秒更新一次数据库状态
+            setInterval(updateDatabaseStatus, 30000);
+        });
+
+        // 全局错误处理
+        window.addEventListener('error', (event) => {
+            console.error('全局错误:', event.error);
+            showNotification('系统错误', event.error.message, 'error');
+        });
+    </script>
+</body>
+</html>

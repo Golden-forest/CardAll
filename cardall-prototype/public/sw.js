@@ -15,8 +15,8 @@ const STATIC_ASSETS = [
 
 // Dynamic routes to cache
 const DYNAMIC_ROUTES = [
-  '/api/',
-  'https://elwnpejlwkgdacaugvvd.supabase.co/'
+  '/api/'
+  // Supabase routes removed - CardAll is now a local-only application
 ]
 
 // Install event - cache static assets

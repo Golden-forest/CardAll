@@ -82,4 +82,3 @@ export function useCardAllTags() {
   return context.tags
 }
 
-// 同步相关的hooks已移除 - 应用现在完全本地化

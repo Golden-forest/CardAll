@@ -11,7 +11,7 @@ import { AlertTriangle } from 'lucide-react'
 import './globals.css'
 
 // 导入数据导出工具（用于备份）
-import '@/utils/data-export'
+// import '@/utils/data-export' // 暂时注释掉以避免自动导出
 
 interface AppProps {
   initializationError?: string

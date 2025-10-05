@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+// Supabase integration removed - data consistency checker now uses local database only
 import { db, type DbCard, type DbFolder, type DbTag, type DbImage } from './database'
 import { syncStrategyService } from './sync-strategy'
 import { networkMonitorService } from './network-monitor'
@@ -1309,57 +1309,14 @@ export class DataConsistencyChecker {
     }
   }
 
-  // 获取远程数据
+  // 获取远程数据（本地模式 - 不再连接云端）
   private async getRemoteData(
     entityType: 'card' | 'folder' | 'tag' | 'image' | 'system',
     userId: string
   ): Promise<any[]> {
-    if (!networkMonitorService.getCurrentState().online) {
-      return []
-    }
-
-    try {
-      switch (entityType) {
-        case 'card':
-          const { data: cards } = await supabase
-            .from('cards')
-            .select('*')
-            .eq('user_id', userId)
-          return cards || []
-
-        case 'folder':
-          const { data: folders } = await supabase
-            .from('folders')
-            .select('*')
-            .eq('user_id', userId)
-          return folders || []
-
-        case 'tag':
-          const { data: tags } = await supabase
-            .from('tags')
-            .select('*')
-            .eq('user_id', userId)
-          return tags || []
-
-        case 'image':
-          const { data: images } = await supabase
-            .from('images')
-            .select('*')
-            .eq('user_id', userId)
-          return images || []
-
-        case 'system':
-          // 系统级别检查不获取远程数据
-          return []
-
-        default:
-          return []
-      }
-    } catch (error) {
-          console.warn("操作失败:", error)
-        }:`, error)
-      return []
-    }
+    // 云端同步已禁用，返回空数组
+    console.debug(`Remote data retrieval disabled for ${entityType}, using local-only mode`)
+    return []
   }
 
   // 比较数据差异

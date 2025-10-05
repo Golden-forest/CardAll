@@ -4,8 +4,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { SimpleAppInitialization } from '@/components/app-initialization-simple'
 import { SimpleDatabaseTest } from '@/components/database-test-simple'
 import { ImageTest } from '@/components/image-test'
-import { AuthModal } from '@/components/auth/auth-modal'
-import { EnhancedSyncStatus } from '@/components/sync/enhanced-sync-status'
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { PWAStatus } from '@/components/pwa/pwa-status'
 import { Button } from '@/components/ui/button'
@@ -15,8 +13,7 @@ import './globals.css'
 // 简化版本的App，用于测试基础功能
 function SimpleApp() {
   const [isInitialized, setIsInitialized] = useState(false)
-  const [currentView, setCurrentView] = useState<'home' | 'database' | 'image' | 'auth'>('home')
-  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [currentView, setCurrentView] = useState<'home' | 'database' | 'image'>('home')
 
   const handleInitialized = () => {
     setIsInitialized(true)
@@ -62,19 +59,9 @@ function SimpleApp() {
                 </Button>
               </div>
 
-              {/* 右侧状态和认证 */}
+              {/* 右侧状态 */}
               <div className="flex items-center gap-2">
                 <PWAStatus />
-                <EnhancedSyncStatus />
-                <Button
-                  onClick={() => setShowAuthModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white shadow-lg"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  账户
-                </Button>
               </div>
             </div>
 
@@ -121,14 +108,7 @@ function SimpleApp() {
           </>
         )}
       </div>
-      
-      {/* 认证模态框 */}
-      {/* 认证模态框 */}
-      <AuthModal 
-        open={showAuthModal} 
-        onOpenChange={setShowAuthModal} 
-      />
-      
+        
       {/* PWA 安装提示 */}
       <InstallPrompt />
       

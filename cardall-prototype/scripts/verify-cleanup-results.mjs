@@ -12,12 +12,29 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// 配置参数
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://elwnpejlwkgdacaugvvd.supabase.co'
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsd25wZWpsd2tnZGFjYXVndnZkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MzMzOTE1MCwiZXhwIjoyMDY4OTE1MTUwfQ.KXuqkVwJHqY0LzYwYHkO_n8i2Z8vHqJ9pN2X7f3wKkI'
+// ============================================================================
+// ⚠️  重要提醒：此脚本已禁用
+// ============================================================================
+// CardAll 现在是纯本地版本，不再使用 Supabase 云服务
+// 此云端数据验证脚本已被禁用，仅作备份参考
+// ============================================================================
 
-// 创建Supabase客户端
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+console.log('🚫 verify-cleanup-results.mjs 脚本已禁用')
+console.log('💡 CardAll 已切换为纯本地版本')
+console.log('📦 如需验证数据，请检查本地 IndexedDB 数据')
+process.exit(0)
+
+// 以下是原始代码，保留作参考
+// ============================================================================
+
+// 配置参数（已禁用）
+const SUPABASE_URL = process.env.SUPABASE_URL || 'disabled'
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || 'disabled'
+
+// Supabase客户端已禁用
+const supabase = null
+
+// ============================================================================
 
 // 日志工具
 const log = {

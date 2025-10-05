@@ -9,7 +9,7 @@
  * - 智能重试和错误恢复机制
  */
 
-import { authService } from '@/services/auth'
+
 import { networkManager } from '@/services/network-manager'
 import { db } from '@/services/database'
 
@@ -733,7 +733,6 @@ export class BackgroundTaskManager {
    */
   private async getTaskContext(): Promise<TaskContext> {
     const networkInfo = await networkManager.getNetworkStatus()
-    const currentUser = authService.getCurrentUser()
 
     return {
       networkInfo: {

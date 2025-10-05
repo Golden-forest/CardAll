@@ -1,6 +1,6 @@
 import Dexie, { Table } from 'dexie'
 import { Card, Folder, Tag, ImageData } from '@/types/card'
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { authService } from './auth'
 
 // ============================================================================
@@ -174,11 +174,11 @@ class CardAllUnifiedDatabase extends Dexie {
 
       // 备用方案1: 直接从supabase获取用户
       try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        const { data: { user }, error: userError } = await // supabase.auth.getUser()
         if (user && !userError) {
           this.cachedUserId = user.id
           this.userIdCacheExpiry = now + this.USER_ID_CACHE_TTL
-          console.log(`从supabase.getUser获取到用户ID: ${this.cachedUserId}`)
+          console.log(`从// supabase.getUser获取到用户ID: ${this.cachedUserId}`)
           return this.cachedUserId
         };
   } catch (error) {
@@ -187,7 +187,7 @@ class CardAllUnifiedDatabase extends Dexie {
 
       // 备用方案2: 从session获取
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        const { data: { session }, error: sessionError } = await // supabase.auth.getSession()
         if (session?.user && !sessionError) {
           this.cachedUserId = session.user.id
           this.userIdCacheExpiry = now + this.USER_ID_CACHE_TTL

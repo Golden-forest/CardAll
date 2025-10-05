@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Tag, TagAction, TagFilter } from '@/types/card'
 import { db, DbTag } from '@/services/database'
-import { cloudSyncService } from '@/services/cloud-sync'
-import { authService } from '@/services/auth'
+// 云端同步功能已禁用 - import { cloudSyncService } from '@/services/cloud-sync'
+
 
 // 转换数据库标签到前端标签格式
 const dbTagToTag = (dbTag: DbTag): Tag => {
@@ -20,19 +20,17 @@ const tagToDbTag = (tag: Tag, userId?: string): DbTag => {
   return {
     ...tag,
     userId: userId || undefined,
-    syncVersion: 1,
-    pendingSync: true
+    // syncVersion: 1,
+    // pendingSync: true
   }
 }
 
 // 获取当前用户ID
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  if (!user?.id) {
-    console.warn('No authenticated user found, data access may be restricted')
-    return null
-  }
-  return user.id
+  // 认证服务已禁用，返回匿名用户ID
+  const anonymousUserId = localStorage.getItem('anonymousUserId') || 'anonymous'
+  console.log('使用匿名用户ID:', anonymousUserId)
+  return anonymousUserId
 }
 
 export function useTagsDb() {
@@ -139,8 +137,8 @@ export function useTagsDb() {
             count: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           console.log('🏷️ useTagsDb: Creating new tag', newTag)
@@ -148,12 +146,13 @@ export function useTagsDb() {
           const id = await db.tags.add(newTag)
           console.log('🏷️ useTagsDb: Tag added to local DB with id', id)
           
-          await cloudSyncService.queueOperation({
-            type: 'create',
-            table: 'tags',
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
+          //   type: 'create',
+          //   table: 'tags',
             data: newTag,
             localId: tagId
-          })
+          // })
           
           console.log('🏷️ useTagsDb: Sync operation queued')
           
@@ -167,14 +166,15 @@ export function useTagsDb() {
             ...action.payload.updates,
             userId,
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           await db.tags.update(action.payload.id, updates)
-          await cloudSyncService.queueOperation({
-            type: 'update',
-            table: 'tags',
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
+          //   type: 'update',
+          //   table: 'tags',
             data: updates,
             localId: action.payload.id
           })
@@ -185,9 +185,10 @@ export function useTagsDb() {
 
         case 'DELETE_TAG': {
           await db.tags.delete(action.payload)
-          await cloudSyncService.queueOperation({
-            type: 'delete',
-            table: 'tags',
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
+          //   type: 'delete',
+          //   table: 'tags',
             data: { userId },
             localId: action.payload
           })
@@ -215,14 +216,15 @@ export function useTagsDb() {
               count: (tag.count || 0) + 1,
               userId,
               updatedAt: new Date(),
-              syncVersion: (tag.syncVersion || 0) + 1,
-              pendingSync: true
+              // syncVersion: (tag.syncVersion || 0) + 1,
+              // pendingSync: true
             }
 
             await db.tags.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
-              type: 'update',
-              table: 'tags',
+            // 云端同步功能已禁用
+            // await cloudSyncService.queueOperation({
+            //   type: 'update',
+            //   table: 'tags',
               data: updates,
               localId: action.payload
             })
@@ -239,14 +241,15 @@ export function useTagsDb() {
               count: Math.max(0, (tag.count || 0) - 1),
               userId,
               updatedAt: new Date(),
-              syncVersion: (tag.syncVersion || 0) + 1,
-              pendingSync: true
+              // syncVersion: (tag.syncVersion || 0) + 1,
+              // pendingSync: true
             }
 
             await db.tags.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
-              type: 'update',
-              table: 'tags',
+            // 云端同步功能已禁用
+            // await cloudSyncService.queueOperation({
+            //   type: 'update',
+            //   table: 'tags',
               data: updates,
               localId: action.payload
             })

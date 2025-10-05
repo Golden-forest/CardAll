@@ -14,9 +14,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.join(__dirname, '..');
 
-// Supabase配置
-const supabaseUrl = 'https://elwnpejlwkgdacaugvvd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsd25wZWpsd2tnZGFjYXVndnZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMzMzkxNTAsImV4cCI6MjA2ODkxNTE1MH0.XhVGgO2nf8uS1gC0V6jTMP0p0xN5KKV47t2rK2ncK90';
+// ============================================================================
+// ⚠️  重要提醒：此脚本已禁用
+// ============================================================================
+// CardAll 现在是纯本地版本，不再使用 Supabase 云服务
+// 此云端同步监控脚本已被禁用，仅作备份参考
+// ============================================================================
+
+console.log('🚫 sync-monitor.mjs 脚本已禁用');
+console.log('💡 CardAll 已切换为纯本地版本');
+console.log('📦 无需监控云端同步服务');
+process.exit(0);
+
+// 以下是原始代码，保留作参考
+// ============================================================================
+
+// Supabase配置（已禁用）
+const supabaseUrl = 'disabled';
+const supabaseKey = 'disabled';
+
+// ============================================================================
 
 class SyncMonitor {
   constructor() {

@@ -28,7 +28,7 @@ export class TestDataGenerator {
       created_at: new Date(Date.now() - i * 1000 * 60).toISOString(),
       updated_at: new Date(Date.now() - i * 1000 * 60).toISOString(),
       version: 1,
-      sync_status: 'synced'
+      // sync_status: 'synced' - 云端同步已禁用
     }))
   }
 
@@ -96,15 +96,16 @@ export class TestDataGenerator {
 // Mock服务配置
 export class MockServiceSetup {
   static async setupAuthMocks(page) {
-    // Mock认证API
+    // 云端认证功能已禁用 - Mock认证API返回本地用户
     await page.route('**/auth/v1/user', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          id: 'test-user-id',
-          email: 'test@example.com',
-          created_at: new Date().toISOString()
+          id: 'local-user-id',
+          email: 'local@user.local',
+          created_at: new Date().toISOString(),
+          mode: 'local-only'
         })
       })
     })
@@ -114,16 +115,17 @@ export class MockServiceSetup {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          access_token: 'mock-access-token',
-          refresh_token: 'mock-refresh-token',
-          expires_in: 3600
+          access_token: 'local-token',
+          refresh_token: 'local-refresh-token',
+          expires_in: 3600,
+          mode: 'local-only'
         })
       })
     })
   }
 
   static async setupDatabaseMocks(page) {
-    // Mock数据库API
+    // 云端数据库API已禁用 - Mock本地数据库API
     await page.route('**/rest/v1/cards**', async (route) => {
       const method = route.request().method()
 
@@ -131,15 +133,20 @@ export class MockServiceSetup {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(TestDataGenerator.generateTestCards())
+          body: JSON.stringify(TestDataGenerator.generateTestCards().map(card => ({
+            ...card,
+            storage: 'local-only',
+            sync_status: 'disabled'
+          })))
         })
       } else if (method === 'POST') {
         await route.fulfill({
           status: 201,
           contentType: 'application/json',
           body: JSON.stringify({
-            id: 'new-card-id',
-            ...JSON.parse(route.request().postData())
+            id: 'new-local-card-id',
+            ...JSON.parse(route.request().postData()),
+            storage: 'local-only'
           })
         })
       }
@@ -149,7 +156,10 @@ export class MockServiceSetup {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(TestDataGenerator.generateTestFolders())
+        body: JSON.stringify(TestDataGenerator.generateTestFolders().map(folder => ({
+          ...folder,
+          storage: 'local-only'
+        })))
       })
     })
 
@@ -157,22 +167,26 @@ export class MockServiceSetup {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(TestDataGenerator.generateTestTags())
+        body: JSON.stringify(TestDataGenerator.generateTestTags().map(tag => ({
+          ...tag,
+          storage: 'local-only'
+        })))
       })
     })
   }
 
   static async setupSyncMocks(page) {
-    // Mock同步API
+    // 云端同步功能已禁用 - Mock同步API返回禁用状态
     await page.route('**/functions/v1/sync-status', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          status: 'synced',
-          last_sync: new Date().toISOString(),
+          status: 'disabled',
+          message: 'Cloud sync is disabled',
           pending_operations: 0,
-          conflicts: []
+          conflicts: [],
+          mode: 'local-only'
         })
       })
     })
@@ -182,10 +196,11 @@ export class MockServiceSetup {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          success: true,
-          synced_cards: 10,
+          success: false,
+          message: 'Cloud sync is disabled',
+          synced_cards: 0,
           resolved_conflicts: 0,
-          errors: []
+          errors: ['Sync functionality is disabled in local mode']
         })
       })
     })

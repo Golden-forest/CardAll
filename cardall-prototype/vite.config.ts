@@ -65,22 +65,14 @@ export default defineConfig({
             '@radix-ui/react-toggle-group', '@radix-ui/react-accordion', '@radix-ui/react-aspect-ratio'
           ],
           editor: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-blockquote', '@tiptap/extension-code', '@tiptap/extension-image', '@tiptap/extension-link', '@tiptap/extension-placeholder', '@tiptap/extension-strike', '@tiptap/extension-task-item', '@tiptap/extension-task-list', 'tiptap-markdown-3'],
-          supabase: ['@supabase/supabase-js', '@supabase/auth-ui-react', '@supabase/auth-ui-shared'],
+          // supabase: 已移除 - CardAll 现在使用本地模拟版本
           database: ['dexie'],
           form: ['react-hook-form', '@hookform/resolvers'],
           charts: ['recharts'],
           icons: ['lucide-react'],
           utils: ['clsx', 'tailwind-merge', 'class-variance-authority', 'date-fns'],
           sync: [
-            './src/services/unified-sync-service.ts',
-            './src/services/network-manager.ts',
-            './src/services/conflict-resolver.ts',
-            './src/services/sync-queue.ts',
-            './src/services/data-sync-service.ts',
-            './src/services/auth.ts',
-            './src/services/database.ts',
-            './src/services/cloud-sync.ts',
-            './src/services/offline-manager.ts'
+            './src/services/database.ts'
           ]
         }
       }

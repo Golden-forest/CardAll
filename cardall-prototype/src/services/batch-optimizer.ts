@@ -16,7 +16,7 @@
 import { performance } from './perf-utils'
 import { networkStateDetector } from './network-state-detector'
 import { db } from './database'
-import { supabase } from './supabase'
+// Supabase integration removed - batch operations now use local database only
 import type { DbCard, DbFolder, DbTag, DbImage, SyncOperation } from './database'
 import type { Card, Folder, Tag } from '@/types/card'
 
@@ -820,63 +820,53 @@ export class BatchOptimizer {
     const results = []
 
     if (type === 'create') {
-      // 批量创建卡片
-      const cardsData = operations.map(op => op.data)
-      const { data, error } = await supabase
-        .from('cards')
-        .insert(cardsData)
-        .select()
+      // 批量创建卡片（仅本地模式）
+      const cardsData = operations.map(op => op.data as DbCard)
+      
+      try {
+        // 直接更新本地数据库
+        await db.cards.bulkAdd(cardsData)
 
-      if (error) {
-        throw error
+        results.push(...operations.map((operation, index) => ({
+          operation,
+          success: true,
+          data: cardsData[index]
+        })))
+      } catch (error) {
+        throw error instanceof Error ? error : new Error('批量创建卡片失败')
       }
 
-      // 同时更新本地数据库
-      await db.cards.bulkAdd(data as DbCard[])
-
-      results.push(...operations.map((operation, index) => ({
-        operation,
-        success: true,
-        data: data?.[index]
-      })))
-
     } else if (type === 'update') {
-      // 批量更新卡片
+      // 批量更新卡片（仅本地模式）
       for (const operation of operations) {
-        const { data, error } = await supabase
-          .from('cards')
-          .update(operation.data)
-          .eq('id', operation.data.id)
-          .select()
-
-        if (error) {
-          results.push({ operation, success: false, error: error.message })
-        } else {
+        try {
           // 更新本地数据库
           await db.cards.update(operation.data.id, operation.data)
-          results.push({ operation, success: true, data: data?.[0] })
+          results.push({ operation, success: true, data: operation.data })
+        } catch (error) {
+          results.push({ 
+            operation, 
+            success: false, 
+            error: error instanceof Error ? error.message : '更新卡片失败' 
+          })
         }
       }
 
     } else if (type === 'delete') {
-      // 批量删除卡片
+      // 批量删除卡片（仅本地模式）
       const cardIds = operations.map(op => op.data.id)
-      const { error } = await supabase
-        .from('cards')
-        .delete()
-        .in('id', cardIds)
+      
+      try {
+        // 删除本地数据
+        await db.cards.bulkDelete(cardIds)
 
-      if (error) {
-        throw error
+        results.push(...operations.map(operation => ({
+          operation,
+          success: true
+        })))
+      } catch (error) {
+        throw error instanceof Error ? error : new Error('批量删除卡片失败')
       }
-
-      // 同时删除本地数据
-      await db.cards.bulkDelete(cardIds)
-
-      results.push(...operations.map(operation => ({
-        operation,
-        success: true
-      })))
     }
 
     return results

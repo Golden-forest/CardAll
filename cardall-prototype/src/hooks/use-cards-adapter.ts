@@ -3,8 +3,8 @@ import { useCardsDb } from './use-cards-db'
 import { DataMigrationService } from '@/services/data-migration.service'
 import { UniversalStorageAdapter } from '@/services/universal-storage-adapter'
 import { CardAllProviderAdapter } from '@/services/cardall-provider-adapter'
-import { authService } from '@/services/auth'
-import { unifiedSyncSystem } from '@/services/sync-system-integration'
+
+// import { unifiedSyncSystem } from '@/services/sync-system-integration' // 云端同步已禁用
 import { useEffect, useState, useCallback } from 'react'
 
 /**
@@ -20,34 +20,7 @@ interface AdapterState {
   }
 }
 
-/**
- * 检查云端数据可用性
- */
-async function checkCloudDataAvailability(userId: string): Promise<boolean> {
-  try {
-    const { supabase } = await import('@/services/supabase')
 
-    // 检查云端卡片数据
-    const { data: cards, error } = await supabase
-      .from('cards')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_deleted', false)
-
-    if (error) {
-      console.debug('Cloud data check failed:', error)
-      return false
-    }
-
-    const cardCount = cards?.length || 0
-    console.debug(`Cloud data check result: ${cardCount} cards found for user ${userId}`)
-
-    return cardCount > 0
-  } catch (error) {
-    console.debug('Failed to check cloud data:', error)
-    return false
-  }
-}
 
 /**
  * 智能确定存储模式
@@ -127,30 +100,8 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
       console.debug('Failed to check localStorage data:', error)
     }
 
-    // 3. 检查用户认证状态 - 已认证用户启用云同步模式
-    const currentUser = authService.getCurrentUser()
-    if (currentUser?.id) {
-      if (indexedDbAvailable) {
-        // 对于已认证用户，检查云端数据是否存在
-        const hasCloudData = await checkCloudDataAvailability(currentUser.id)
-
-        if (hasCloudData && !hasIndexedDbData) {
-          // 云端有数据但本地没有，优先从云端同步
-          console.debug(`用户 ${currentUser.id} 云端有数据，启动云同步模式`)
-          return 'indexeddb' // 仍然使用IndexedDB，但会触发云端同步
-        } else if (hasCloudData && hasIndexedDbData) {
-          // 云端和本地都有数据，使用智能合并策略
-          console.debug(`用户 ${currentUser.id} 云端和本地都有数据，启用智能同步模式`)
-          return 'indexeddb'
-        } else {
-          // 云端无数据，使用本地存储
-          console.debug(`用户 ${currentUser.id} 使用本地存储模式`)
-          return 'indexeddb'
-        }
-      } else {
-        console.warn(`用户 ${currentUser.id} 已认证但IndexedDB不可用，用户隔离将受限`)
-      }
-    }
+    // 3. 用户认证状态检查（云端同步已禁用）
+    console.debug('云端同步功能已禁用，使用本地存储模式')
 
     // 4. 智能选择逻辑
     if (!indexedDbAvailable) {
@@ -263,12 +214,8 @@ export function useCardsAdapter() {
         // 使用智能的存储模式选择
         const finalMode = await determineStorageMode()
 
-        // 初始化云同步服务
-        const currentUser = authService.getCurrentUser()
-        if (currentUser?.id) {
-          console.log(`初始化云同步服务，用户: ${currentUser.id}`)
-          await cloudSyncService.initialize()
-        }
+        // 云端同步功能已禁用，跳过云端服务初始化
+        console.debug('云端同步功能已禁用，使用本地存储模式')
 
         setAdapterState({
           mode: finalMode,
@@ -349,20 +296,14 @@ export function useCardsAdapter() {
     }
   }, [])
 
-  // 云同步功能
+  // 云同步功能已禁用
   const performCloudSync = useCallback(async () => {
-    try {
-      const result = await cloudSyncService.performSync()
-      console.log('云同步结果:', result)
-      return result
-    } catch (error) {
-      console.error('云同步失败:', error)
-      throw error
-    }
+    console.debug('云端同步功能已禁用')
+    return { success: false, message: 'Cloud sync is disabled' }
   }, [])
 
   const getCloudSyncStatus = useCallback(() => {
-    return cloudSyncService.getSyncStatus()
+    return { enabled: false, status: 'disabled' }
   }, [])
 
   return {

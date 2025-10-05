@@ -1,7 +1,7 @@
 import { db, DbCard, DbFolder, DbTag, DbImage, AppSettings, OfflineSnapshot } from './database-unified'
 import { Card, Folder, Tag, ImageData } from '@/types/card'
 import { fileSystemService } from './file-system'
-import { supabase } from './supabase'
+// Supabase integration removed'
 
 // ============================================================================
 // 数据迁移工具 - 安全、可靠的数据迁移机制
@@ -40,12 +40,12 @@ class DataMigrationTool {
    */
   private async getCurrentUserId(): Promise<string | null> {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      const { data: { user }, error: userError } = await // supabase.auth.getUser()
       if (user && !userError) {
         console.log(`数据迁移工具获取到当前用户ID: ${user.id}`)
         return user.id
       }
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      const { data: { session }, error: sessionError } = await // supabase.auth.getSession()
       if (session?.user && !sessionError) {
         console.log(`数据迁移工具从会话获取到用户ID: ${session.user.id}`)
         return session.user.id

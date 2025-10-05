@@ -2,7 +2,7 @@
 // 调试诊断工具 - 针对Supabase项目的专门调试工具
 // ============================================================================
 
-import { supabase } from '@/services/supabase'
+// Supabase integration removed'
 import { db } from '@/services/database'
 // ============================================================================
 // 调试级别枚举

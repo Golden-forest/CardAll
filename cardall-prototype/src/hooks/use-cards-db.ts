@@ -8,7 +8,7 @@ const unifiedSyncService = {
   sync: async () => ({ success: true }),
   getStatus: () => ({ connected: true, syncing: false })
 }
-import { authService } from '@/services/auth'
+
 import { fileSystemService } from '@/services/file-system'
 import {
   dataEventPublisher,
@@ -34,20 +34,18 @@ const cardToDbCard = (card: Card, userId?: string): DbCard => {
   return {
     ...card,
     userId,
-    syncVersion: 1,
-    pendingSync: true,
+    // syncVersion: 1,
+    // pendingSync: true,
     updatedAt: new Date(card.updatedAt)
   }
 }
 
 // 获取当前用户ID
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  if (!user?.id) {
-    console.warn('No authenticated user found, data access may be restricted')
-    return null
-  }
-  return user.id
+  // 认证服务已禁用，返回匿名用户ID
+  const anonymousUserId = localStorage.getItem('anonymousUserId') || 'anonymous'
+  console.log('使用匿名用户ID:', anonymousUserId)
+  return anonymousUserId
 }
 
 export function useCardsDb() {
@@ -198,8 +196,8 @@ export function useCardsDb() {
             userId,
             createdAt: new Date(),
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           // 非阻塞数据库操作
@@ -238,8 +236,8 @@ export function useCardsDb() {
             ...action.payload.updates,
             userId,
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           // 获取当前卡片用于计算变更
@@ -379,8 +377,8 @@ export function useCardsDb() {
             userId,
             createdAt: new Date(),
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           // 非阻塞数据库操作
@@ -419,8 +417,8 @@ export function useCardsDb() {
             folderId: action.payload.folderId,
             userId,
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           // 获取当前卡片
@@ -527,8 +525,8 @@ export function useCardsDb() {
           },
           userId,
           updatedAt: new Date(),
-          syncVersion: (card.syncVersion || 0) + 1,
-          pendingSync: true
+          // syncVersion: (card.syncVersion || 0) + 1,
+          // pendingSync: true
         }
 
         // 非阻塞数据库更新
@@ -635,8 +633,8 @@ export function useCardsDb() {
         }
         card.userId = userId
         card.updatedAt = new Date()
-        card.syncVersion = (card.syncVersion || 0) + 1
-        card.pendingSync = true
+        // card.syncVersion = (card.syncVersion || 0) + 1
+        // card.pendingSync = true
       }).then(() => {
         console.log(`图片上传成功: ${cardId}`)
         loadCards().catch(error => {
@@ -656,8 +654,8 @@ export function useCardsDb() {
         },
         userId,
         updatedAt: new Date(),
-        syncVersion: (card.syncVersion || 0) + 1,
-        pendingSync: true
+        // syncVersion: (card.syncVersion || 0) + 1,
+        // pendingSync: true
       }
 
       const frontendCard = dbCardToCard(updatedCardData)

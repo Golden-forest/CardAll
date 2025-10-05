@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction, FolderFilter } from '@/types/card'
 import { db, DbFolder } from '@/services/database'
-import { cloudSyncService } from '@/services/cloud-sync'
-import { authService } from '@/services/auth'
+// 云端同步功能已禁用 - import { cloudSyncService } from '@/services/cloud-sync'
+
 
 // 转换数据库文件夹到前端文件夹格式
 const dbFolderToFolder = (dbFolder: DbFolder): Folder => {
@@ -20,20 +20,18 @@ const folderToDbFolder = (folder: Folder, userId?: string): DbFolder => {
   return {
     ...folder,
     userId,
-    syncVersion: 1,
-    pendingSync: true,
+    // syncVersion: 1,
+    // pendingSync: true,
     updatedAt: new Date(folder.updatedAt)
   }
 }
 
 // 获取当前用户ID
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  if (!user?.id) {
-    console.warn('No authenticated user found, data access may be restricted')
-    return null
-  }
-  return user.id
+  // 认证服务已禁用，返回匿名用户ID
+  const anonymousUserId = localStorage.getItem('anonymousUserId') || 'anonymous'
+  console.log('使用匿名用户ID:', anonymousUserId)
+  return anonymousUserId
 }
 
 export function useFoldersDb() {
@@ -136,8 +134,8 @@ export function useFoldersDb() {
             userId,
             createdAt: new Date(),
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           console.log('📁 useFoldersDb: Creating new folder', newFolder)
@@ -145,12 +143,13 @@ export function useFoldersDb() {
           const id = await db.folders.add(newFolder)
           console.log('📁 useFoldersDb: Folder added to local DB with id', id)
           
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
             type: 'create',
             table: 'folders',
             data: newFolder,
             localId: folderId
-          })
+          // })
           
           console.log('📁 useFoldersDb: Sync operation queued')
           
@@ -164,12 +163,13 @@ export function useFoldersDb() {
             ...action.payload.updates,
             userId,
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           await db.folders.update(action.payload.id, updates)
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
             type: 'update',
             table: 'folders',
             data: updates,
@@ -182,7 +182,8 @@ export function useFoldersDb() {
 
         case 'DELETE_FOLDER': {
           await db.folders.delete(action.payload)
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
             type: 'delete',
             table: 'folders',
             data: { userId },
@@ -212,12 +213,13 @@ export function useFoldersDb() {
               isExpanded: !folder.isExpanded,
               userId,
               updatedAt: new Date(),
-              syncVersion: (folder.syncVersion || 0) + 1,
-              pendingSync: true
+              // syncVersion: (folder.syncVersion || 0) + 1,
+              // pendingSync: true
             }
 
             await db.folders.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
+            // 云端同步功能已禁用
+            // await cloudSyncService.queueOperation({
               type: 'update',
               table: 'folders',
               data: updates,
@@ -234,12 +236,13 @@ export function useFoldersDb() {
             // 这里需要更新卡片引用，暂时简化处理
             userId,
             updatedAt: new Date(),
-            syncVersion: 1,
-            pendingSync: true
+            // syncVersion: 1,
+            // pendingSync: true
           }
 
           await db.folders.update(action.payload.folderId, updates)
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已禁用
+          // await cloudSyncService.queueOperation({
             type: 'update',
             table: 'folders',
             data: updates,

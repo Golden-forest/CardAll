@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
 import { useStorageAdapter } from '@/hooks/use-cards-adapter'
-import { authService, type AuthState } from '@/services/auth'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
 import { OptimizedMasonryGrid } from '../card/optimized-masonry-grid'
 import { DashboardHeader } from './dashboard-header'
@@ -14,13 +13,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ className }: DashboardProps) {
-  // Authentication state
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    session: null,
-    loading: false,
-    error: null
-  })
 
   // UI state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -51,12 +43,7 @@ export function Dashboard({ className }: DashboardProps) {
     isMigrating
   } = useStorageAdapter()
 
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange(setAuthState)
-    return unsubscribe
-  }, [])
-
+  
   // 计算过滤后的卡片
   const filteredCards = useMemo(() => {
     let cardsToShow = cards.allCards || []

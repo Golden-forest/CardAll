@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Tag, TagAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
-import { supabase } from '@/services/supabase'
+// Supabase integration removed - using local storage only
 
 // Mock data for development
 const mockTags: Tag[] = [
@@ -55,25 +55,24 @@ const TAG_COLORS = [
 ]
 
 /**
- * 获取当前用户ID
+ * 获取当前用户ID（本地模式）
  */
 async function getCurrentUserId(): Promise<string | null> {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (user && !userError) {
-      console.log(`标签服务获取到当前用户ID: ${user.id}`)
-      return user.id
+    // 尝试从localStorage获取用户ID
+    const userId = localStorage.getItem('currentUserId')
+    if (userId) {
+      console.log(`标签服务获取到当前用户ID: ${userId}`)
+      return userId
     }
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (session?.user && !sessionError) {
-      console.log(`标签服务从会话获取到用户ID: ${session.user.id}`)
-      return session.user.id
-    }
-    console.warn('标签服务无法获取当前用户ID')
-    return null
+    
+    // 如果没有用户ID，生成或使用匿名ID
+    const anonymousUserId = localStorage.getItem('anonymousUserId') || 'anonymous'
+    console.log('标签服务使用匿名用户ID:', anonymousUserId)
+    return anonymousUserId
   } catch (error) {
     console.error('标签服务获取用户ID失败:', error)
-    return null
+    return 'anonymous'
   }
 }
 

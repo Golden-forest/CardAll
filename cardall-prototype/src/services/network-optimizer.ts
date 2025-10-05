@@ -16,7 +16,7 @@
 
 import { performance } from './perf-utils'
 import { networkStateDetector } from './network-state-detector'
-import { supabase } from './supabase'
+// Supabase integration removed'
 import { performanceMonitor } from './performance-monitor'
 import { batchOptimizer } from './batch-optimizer'
 

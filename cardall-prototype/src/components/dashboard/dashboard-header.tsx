@@ -1,31 +1,31 @@
 import React, { useState, useMemo } from 'react'
 import { useCardAllCards } from '@/contexts/cardall-context'
-import { authService, type AuthState } from '@/services/auth'
-import { useAuthModal } from '@/contexts/auth-modal-context'
+// import { authService, type AuthState } from '@/services/auth' // 认证功能已禁用
+// import { useAuthModal } from '@/contexts/auth-modal-context' // 认证功能已禁用
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { 
   Plus, 
   Search, 
-  Settings,
-  User,
-  LogIn
+  Settings
 } from 'lucide-react'
+// import { User, LogIn } from 'lucide-react' // 认证功能已禁用
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
-import { UserAvatar } from '@/components/ui/user-avatar'
+// import { UserAvatar } from '@/components/ui/user-avatar' // 认证功能已禁用
 import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-utils'
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
 import { DataIntegrityIndicator } from '@/components/data-integrity/data-integrity-indicator'
 
 interface DashboardHeaderProps {
-  authState: AuthState
+  // authState: AuthState // 认证功能已禁用
   className?: string
 }
 
-export function DashboardHeader({ authState, className }: DashboardHeaderProps) {
-  const { openModal } = useAuthModal()
+export function DashboardHeader({ className }: DashboardHeaderProps) {
+  // const { openModal } = useAuthModal() // 认证功能已禁用
+  // authState参数已移除，使用默认值
   const { 
     cards, 
     filter, 
@@ -57,12 +57,9 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
     }
   }, [cards.allCards, getAllTags, filter.tag, getCardsWithTag])
 
-  // 处理创建卡片
+  // 处理创建卡片（无需认证）
   const handleCreateCard = async () => {
-    if (!authState.user) {
-      openModal()
-      return
-    }
+    // 认证检查已移除，直接显示创建模态框
     setShowCreateModal(true)
   }
 
@@ -180,24 +177,7 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
             新建卡片
           </Button>
 
-          {/* 用户区域 */}
-          <div className="flex items-center space-x-2 ml-4">
-            {authState.user ? (
-              <UserAvatar 
-                user={authState.user} 
-                onSignOut={() => authService.signOut()}
-              />
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openModal()}
-              >
-                <LogIn className="h-4 w-4 mr-2" />
-                登录
-              </Button>
-            )}
-          </div>
+          {/* 用户区域已移除 - 应用现在完全本地化 */}
         </div>
       </div>
 
