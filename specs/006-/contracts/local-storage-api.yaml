@@ -1,0 +1,1611 @@
+openapi: 3.0.3
+info:
+  title: CardAll Local Storage API
+  description: Local storage API for CardAll offline version
+  version: 1.0.0
+  contact:
+    name: CardAll Team
+    email: support@cardall.app
+
+paths:
+  # Card Management
+  /cards:
+    get:
+      summary: Get all cards
+      description: Retrieve a list of cards with optional filtering
+      tags:
+        - Cards
+      parameters:
+        - name: folderId
+          in: query
+          schema:
+            type: string
+          description: Filter by folder ID
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by tags
+        - name: isArchived
+          in: query
+          schema:
+            type: boolean
+          description: Filter by archive status
+        - name: isFavorite
+          in: query
+          schema:
+            type: boolean
+          description: Filter by favorite status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+          description: Maximum number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of results to skip
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Card'
+                  total:
+                    type: integer
+                  hasMore:
+                    type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new card
+      description: Create a new card with the provided data
+      tags:
+        - Cards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCardRequest'
+      responses:
+        '201':
+          description: Card created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /cards/{id}:
+    get:
+      summary: Get a specific card
+      description: Retrieve a single card by ID
+      tags:
+        - Cards
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Card ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a card
+      description: Update an existing card with new data
+      tags:
+        - Cards
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Card ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCardRequest'
+      responses:
+        '200':
+          description: Card updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Delete a card
+      description: Delete a card permanently
+      tags:
+        - Cards
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Card ID
+      responses:
+        '204':
+          description: Card deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cards/{id}/archive:
+    post:
+      summary: Archive a card
+      description: Archive a card (soft delete)
+      tags:
+        - Cards
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Card ID
+      responses:
+        '200':
+          description: Card archived successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /cards/{id}/favorite:
+    post:
+      summary: Toggle favorite status
+      description: Add or remove a card from favorites
+      tags:
+        - Cards
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Card ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isFavorite:
+                  type: boolean
+                  description: Favorite status
+      responses:
+        '200':
+          description: Favorite status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Folder Management
+  /folders:
+    get:
+      summary: Get folder tree
+      description: Retrieve the complete folder hierarchy
+      tags:
+        - Folders
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Folder'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new folder
+      description: Create a new folder in the specified location
+      tags:
+        - Folders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFolderRequest'
+      responses:
+        '201':
+          description: Folder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /folders/{id}:
+    get:
+      summary: Get a specific folder
+      description: Retrieve a single folder by ID
+      tags:
+        - Folders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Folder ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a folder
+      description: Update an existing folder
+      tags:
+        - Folders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Folder ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFolderRequest'
+      responses:
+        '200':
+          description: Folder updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Delete a folder
+      description: Delete a folder and optionally move its contents
+      tags:
+        - Folders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Folder ID
+        - name: moveContentsTo
+          in: query
+          schema:
+            type: string
+          description: Target folder ID for contents
+      responses:
+        '204':
+          description: Folder deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot delete folder with contents unless target specified
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /folders/{id}/move:
+    post:
+      summary: Move a folder
+      description: Move a folder to a new parent
+      tags:
+        - Folders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Folder ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newParentId:
+                  type: string
+                  nullable: true
+                  description: New parent folder ID (null for root)
+      responses:
+        '200':
+          description: Folder moved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Folder'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot move folder to its own descendant
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Tag Management
+  /tags:
+    get:
+      summary: Get all tags
+      description: Retrieve all tags with usage statistics
+      tags:
+        - Tags
+      parameters:
+        - name: includeUnused
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include tags with no usage
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [name, usageCount, lastUsedAt, createdAt]
+            default: 'usageCount'
+          description: Sort field
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: 'desc'
+          description: Sort order
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create a new tag
+      description: Create a new tag
+      tags:
+        - Tags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: Tag created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Tag name already exists
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tags/{id}:
+    get:
+      summary: Get a specific tag
+      description: Retrieve a single tag by ID
+      tags:
+        - Tags
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag ID
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a tag
+      description: Update an existing tag
+      tags:
+        - Tags
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagRequest'
+      responses:
+        '200':
+          description: Tag updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Tag name already exists
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      summary: Delete a tag
+      description: Delete a tag and remove it from all cards
+      tags:
+        - Tags
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tag ID
+      responses:
+        '204':
+          description: Tag deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Search
+  /search:
+    get:
+      summary: Search cards
+      description: Full-text search across cards
+      tags:
+        - Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Search query
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [all, title, content, tags]
+            default: 'all'
+          description: Search field
+        - name: folderId
+          in: query
+          schema:
+            type: string
+          description: Limit search to folder
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Filter by tags
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Maximum results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Results offset
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SearchResult'
+                  total:
+                    type: integer
+                  hasMore:
+                    type: boolean
+                  query:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Images
+  /images:
+    post:
+      summary: Upload an image
+      description: Upload and process an image
+      tags:
+        - Images
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file
+              required:
+                - image
+      responses:
+        '201':
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Image'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: File too large
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /images/{id}:
+    get:
+      summary: Get image data
+      description: Retrieve image data by ID
+      tags:
+        - Images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Image ID
+        - name: thumbnail
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Return thumbnail instead of full image
+      responses:
+        '200':
+          description: Image data
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete an image
+      description: Delete an image (soft delete)
+      tags:
+        - Images
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Image ID
+      responses:
+        '204':
+          description: Image deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Data Export/Import
+  /export:
+    post:
+      summary: Export data
+      description: Export all data to file
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '200':
+          description: Export data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /import:
+    post:
+      summary: Import data
+      description: Import data from file
+      tags:
+        - Data
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Data file
+                strategy:
+                  type: string
+                  enum: [merge, replace, skip]
+                  default: 'merge'
+                  description: Import strategy
+              required:
+                - file
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Settings
+  /settings:
+    get:
+      summary: Get all settings
+      description: Retrieve all application settings
+      tags:
+        - Settings
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: any
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update settings
+      description: Update multiple settings
+      tags:
+        - Settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: any
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: any
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /settings/{key}:
+    get:
+      summary: Get a specific setting
+      description: Retrieve a single setting value
+      tags:
+        - Settings
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Setting key
+      responses:
+        '200':
+          description: Setting value
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  value:
+                    type: any
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update a setting
+      description: Update a single setting value
+      tags:
+        - Settings
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Setting key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: any
+                  description: Setting value
+              required:
+                - value
+      responses:
+        '200':
+          description: Setting updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  value:
+                    type: any
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    Card:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Card unique identifier
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Card title
+        content:
+          type: string
+          maxLength: 100000
+          description: Card front content
+        backContent:
+          type: string
+          maxLength: 100000
+          description: Card back content
+        contentType:
+          type: string
+          enum: [text, richtext]
+          description: Content type
+        folderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent folder ID
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 20
+          description: Associated tag IDs
+        images:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 10
+          description: Associated image IDs
+        style:
+          $ref: '#/components/schemas/CardStyle'
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        version:
+          type: integer
+          minimum: 1
+          description: Card version for conflict detection
+        isArchived:
+          type: boolean
+          description: Whether the card is archived
+        isFavorite:
+          type: boolean
+          description: Whether the card is favorited
+        viewCount:
+          type: integer
+          minimum: 0
+          description: Number of times the card was viewed
+      required:
+        - id
+        - title
+        - content
+        - contentType
+        - tags
+        - images
+        - style
+        - createdAt
+        - updatedAt
+        - version
+        - isArchived
+        - isFavorite
+        - viewCount
+
+    CreateCardRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Card title
+        content:
+          type: string
+          maxLength: 100000
+          description: Card front content
+        backContent:
+          type: string
+          maxLength: 100000
+          description: Card back content
+        contentType:
+          type: string
+          enum: [text, richtext]
+          default: richtext
+          description: Content type
+        folderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent folder ID
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 20
+          description: Associated tag IDs
+        style:
+          $ref: '#/components/schemas/CardStyle'
+      required:
+        - title
+        - content
+
+    UpdateCardRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Card title
+        content:
+          type: string
+          maxLength: 100000
+          description: Card front content
+        backContent:
+          type: string
+          maxLength: 100000
+          description: Card back content
+        contentType:
+          type: string
+          enum: [text, richtext]
+          description: Content type
+        folderId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent folder ID
+        tags:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 20
+          description: Associated tag IDs
+        style:
+          $ref: '#/components/schemas/CardStyle'
+        isArchived:
+          type: boolean
+          description: Whether the card is archived
+        isFavorite:
+          type: boolean
+          description: Whether the card is favorited
+
+    CardStyle:
+      type: object
+      properties:
+        backgroundColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Background color in hex format
+        backgroundImage:
+          type: string
+          format: uuid
+          nullable: true
+          description: Background image ID
+        gradientType:
+          type: string
+          enum: [linear, radial]
+          nullable: true
+          description: Gradient type
+        gradientStart:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Gradient start color
+        gradientEnd:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Gradient end color
+        gradientAngle:
+          type: integer
+          minimum: 0
+          maximum: 360
+          nullable: true
+          description: Gradient angle
+        textColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Text color
+        fontSize:
+          type: integer
+          minimum: 8
+          maximum: 72
+          nullable: true
+          description: Font size in pixels
+        fontFamily:
+          type: string
+          nullable: true
+          description: Font family
+        padding:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Padding in pixels
+        borderRadius:
+          type: integer
+          minimum: 0
+          maximum: 50
+          nullable: true
+          description: Border radius in pixels
+        textAlign:
+          type: string
+          enum: [left, center, right]
+          nullable: true
+          description: Text alignment
+        shadowColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Shadow color
+        shadowBlur:
+          type: integer
+          minimum: 0
+          maximum: 50
+          nullable: true
+          description: Shadow blur
+        shadowOffsetX:
+          type: integer
+          nullable: true
+          description: Shadow X offset
+        shadowOffsetY:
+          type: integer
+          nullable: true
+          description: Shadow Y offset
+      required:
+        - backgroundColor
+        - textColor
+
+    Folder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Folder unique identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Folder name
+        description:
+          type: string
+          maxLength: 500
+          description: Folder description
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Folder color
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent folder ID
+        path:
+          type: string
+          description: Full path
+        level:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Hierarchy level
+        cardCount:
+          type: integer
+          minimum: 0
+          description: Number of cards in folder
+        childFolderCount:
+          type: integer
+          minimum: 0
+          description: Number of child folders
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        isExpanded:
+          type: boolean
+          description: UI expansion state
+        sortOrder:
+          type: integer
+          description: Sort order
+      required:
+        - id
+        - name
+        - path
+        - level
+        - cardCount
+        - childFolderCount
+        - createdAt
+        - updatedAt
+        - isExpanded
+        - sortOrder
+
+    CreateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Folder name
+        description:
+          type: string
+          maxLength: 500
+          description: Folder description
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Folder color
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Parent folder ID
+      required:
+        - name
+
+    UpdateFolderRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Folder name
+        description:
+          type: string
+          maxLength: 500
+          description: Folder description
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Folder color
+
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Tag unique identifier
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Tag name
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Tag color
+        description:
+          type: string
+          maxLength: 200
+          description: Tag description
+        usageCount:
+          type: integer
+          minimum: 0
+          description: Number of times tag is used
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last usage timestamp
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        isSystem:
+          type: boolean
+          description: Whether this is a system tag
+        sortOrder:
+          type: integer
+          description: Sort order
+      required:
+        - id
+        - name
+        - usageCount
+        - createdAt
+        - isSystem
+        - sortOrder
+
+    CreateTagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Tag name
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Tag color
+        description:
+          type: string
+          maxLength: 200
+          description: Tag description
+      required:
+        - name
+
+    UpdateTagRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Tag name
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+          description: Tag color
+        description:
+          type: string
+          maxLength: 200
+          description: Tag description
+
+    Image:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Image unique identifier
+        filename:
+          type: string
+          maxLength: 255
+          description: Original filename
+        mimeType:
+          type: string
+          description: MIME type
+        size:
+          type: integer
+          minimum: 0
+          maximum: 10485760
+          description: File size in bytes
+        width:
+          type: integer
+          minimum: 1
+          description: Image width in pixels
+        height:
+          type: integer
+          minimum: 1
+          description: Image height in pixels
+        format:
+          type: string
+          description: Image format
+        optimizedSize:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Optimized file size
+        compressionRatio:
+          type: number
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: Compression ratio
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        cardUsageCount:
+          type: integer
+          minimum: 0
+          description: Number of cards using this image
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last usage timestamp
+        isDeleted:
+          type: boolean
+          description: Soft delete flag
+      required:
+        - id
+        - filename
+        - mimeType
+        - size
+        - width
+        - height
+        - format
+        - createdAt
+        - updatedAt
+        - cardUsageCount
+        - isDeleted
+
+    SearchResult:
+      type: object
+      properties:
+        card:
+          $ref: '#/components/schemas/Card'
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Search relevance score
+        highlights:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              fragments:
+                type: array
+                items:
+                  type: string
+          description: Search highlights
+      required:
+        - card
+        - score
+
+    ExportRequest:
+      type: object
+      properties:
+        format:
+          type: string
+          enum: [json, markdown]
+          default: json
+          description: Export format
+        includeImages:
+          type: boolean
+          default: true
+          description: Include image data
+        includeSettings:
+          type: boolean
+          default: false
+          description: Include settings
+        folderIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific folders to export (null for all)
+        dateRange:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+          description: Date range filter
+      required:
+        - format
+
+    ExportResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: Exported data
+        filename:
+          type: string
+          description: Suggested filename
+        mimeType:
+          type: string
+          description: MIME type
+        size:
+          type: integer
+          description: File size in bytes
+        createdAt:
+          type: string
+          format: date-time
+          description: Export timestamp
+      required:
+        - data
+        - filename
+        - mimeType
+        - size
+        - createdAt
+
+    ImportResponse:
+      type: object
+      properties:
+        imported:
+          type: object
+          properties:
+            cards:
+              type: integer
+            folders:
+              type: integer
+            tags:
+              type: integer
+            images:
+              type: integer
+          description: Number of items imported
+        skipped:
+          type: object
+          properties:
+            cards:
+              type: integer
+            folders:
+              type: integer
+            tags:
+              type: integer
+            images:
+              type: integer
+          description: Number of items skipped
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              message:
+                type: string
+              details:
+                type: object
+          description: Import errors
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Import warnings
+      required:
+        - imported
+        - skipped
+        - errors
+        - warnings
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+              details:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+              traceId:
+                type: string
+
+tags:
+  - name: Cards
+    description: Card management operations
+  - name: Folders
+    description: Folder management operations
+  - name: Tags
+    description: Tag management operations
+  - name: Search
+    description: Search operations
+  - name: Images
+    description: Image management operations
+  - name: Data
+    description: Data import/export operations
+  - name: Settings
+    description: Settings management operations

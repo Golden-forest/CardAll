@@ -1,0 +1,41 @@
+{
+  "exportInfo": {
+    "timestamp": "2025-10-05T14:31:42.137Z",
+    "version": "4.0.0",
+    "description": "CardAll降级重构前的完整数据备份",
+    "branch": "backup-before-downgrade"
+  },
+  "database": {
+    "cards": [],
+    "folders": [],
+    "tags": [],
+    "images": [],
+    "settings": [
+      {
+        "key": "storageMode",
+        "value": "indexeddb",
+        "scope": "global",
+        "updatedAt": "2025-10-05T14:31:42.137Z"
+      },
+      {
+        "key": "databaseVersion",
+        "value": "4.0.0",
+        "scope": "global",
+        "updatedAt": "2025-10-05T14:31:42.137Z"
+      },
+      {
+        "key": "localMode",
+        "value": true,
+        "scope": "global",
+        "updatedAt": "2025-10-05T14:31:42.137Z"
+      }
+    ]
+  },
+  "statistics": {
+    "totalCards": 0,
+    "totalFolders": 0,
+    "totalTags": 0,
+    "totalImages": 0,
+    "exportSize": "N/A"
+  }
+}

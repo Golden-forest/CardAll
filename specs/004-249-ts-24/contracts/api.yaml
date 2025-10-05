@@ -1,0 +1,638 @@
+openapi: 3.0.3
+info:
+  title: CardAll System Simplification API
+  description: API for managing system simplification process, including backup, monitoring, and phase management
+  version: 1.0.0
+  contact:
+    name: System Administrator
+    email: admin@cardall.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://cardall.com/api/v1
+    description: Production server
+
+paths:
+  # Backup Management
+  /backup:
+    post:
+      summary: Create system backup
+      description: Creates a complete backup of the current system state
+      tags:
+        - Backup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBackupRequest'
+      responses:
+        '201':
+          description: Backup created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemBackup'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      summary: List all backups
+      description: Retrieves a list of all available system backups
+      tags:
+        - Backup
+      responses:
+        '200':
+          description: List of backups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SystemBackup'
+
+  /backup/{backupId}/restore:
+    post:
+      summary: Restore from backup
+      description: Restores the system to a previous backup state
+      tags:
+        - Backup
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: System restored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreResponse'
+        '404':
+          description: Backup not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Simplification Phases
+  /phases:
+    get:
+      summary: Get all simplification phases
+      description: Retrieves the status of all simplification phases
+      tags:
+        - Phases
+      responses:
+        '200':
+          description: List of phases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SimplificationPhase'
+
+    post:
+      summary: Create new phase
+      description: Creates a new simplification phase
+      tags:
+        - Phases
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePhaseRequest'
+      responses:
+        '201':
+          description: Phase created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimplificationPhase'
+
+  /phases/{phaseId}/start:
+    post:
+      summary: Start phase execution
+      description: Starts the execution of a specific simplification phase
+      tags:
+        - Phases
+      parameters:
+        - name: phaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Phase started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseStartResponse'
+
+  /phases/{phaseId}/rollback:
+    post:
+      summary: Rollback phase
+      description: Rolls back a phase to its previous state
+      tags:
+        - Phases
+      parameters:
+        - name: phaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Phase rolled back successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PhaseRollbackResponse'
+
+  # Code Analysis
+  /analysis/redundancy:
+    get:
+      summary: Analyze code redundancy
+      description: Performs redundancy analysis on the current codebase
+      tags:
+        - Analysis
+      responses:
+        '200':
+          description: Redundancy analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RedundancyAnalysis'
+
+  /analysis/impact:
+    post:
+      summary: Analyze change impact
+      description: Analyzes the impact of proposed code changes
+      tags:
+        - Analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImpactAnalysisRequest'
+      responses:
+        '200':
+          description: Impact analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CodeChangeImpact'
+
+  # Performance Monitoring
+  /performance/benchmark:
+    get:
+      summary: Get performance benchmarks
+      description: Retrieves performance benchmark data
+      tags:
+        - Performance
+      parameters:
+        - name: phase
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Performance benchmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PerformanceBenchmark'
+
+    post:
+      summary: Create performance benchmark
+      description: Creates a new performance benchmark
+      tags:
+        - Performance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBenchmarkRequest'
+      responses:
+        '201':
+          description: Benchmark created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceBenchmark'
+
+  # System Monitoring
+  /monitoring/dashboard:
+    get:
+      summary: Get monitoring dashboard
+      description: Retrieves current system monitoring data
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Monitoring dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringDashboard'
+
+  /monitoring/health:
+    get:
+      summary: Get system health
+      description: Retrieves current system health status
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: System health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+
+components:
+  schemas:
+    SystemBackup:
+      type: object
+      required:
+        - id
+        - timestamp
+        - version
+        - description
+        - dataBackupPath
+        - codeBackupPath
+        - checksum
+        - size
+        - status
+        - createdBy
+        - metadata
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        description:
+          type: string
+        dataBackupPath:
+          type: string
+        codeBackupPath:
+          type: string
+        checksum:
+          type: string
+        size:
+          type: integer
+        status:
+          $ref: '#/components/schemas/BackupStatus'
+        createdBy:
+          type: string
+        metadata:
+          $ref: '#/components/schemas/BackupMetadata'
+
+    BackupStatus:
+      type: string
+      enum:
+        - creating
+        - complete
+        - corrupted
+        - restored
+
+    BackupMetadata:
+      type: object
+      required:
+        - totalFiles
+        - totalLines
+        - servicesCount
+        - dependencies
+      properties:
+        totalFiles:
+          type: integer
+        totalLines:
+          type: integer
+        servicesCount:
+          type: integer
+        dependencies:
+          type: array
+          items:
+            type: string
+
+    CreateBackupRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+        includeData:
+          type: boolean
+          default: true
+        includeCode:
+          type: boolean
+          default: true
+
+    RestoreResponse:
+      type: object
+      required:
+        - success
+        - timestamp
+        - restoredBackupId
+      properties:
+        success:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+        restoredBackupId:
+          type: string
+        message:
+          type: string
+
+    SimplificationPhase:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - status
+        - dependencies
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/PhaseStatus'
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        phase1Data:
+          $ref: '#/components/schemas/Phase1Data'
+        phase2Data:
+          $ref: '#/components/schemas/Phase2Data'
+        phase3Data:
+          $ref: '#/components/schemas/Phase3Data'
+        phase4Data:
+          $ref: '#/components/schemas/Phase4Data'
+        dependencies:
+          type: array
+          items:
+            type: string
+        rollbackPoint:
+          type: string
+
+    PhaseStatus:
+      type: string
+      enum:
+        - pending
+        - in-progress
+        - completed
+        - failed
+        - rolled-back
+
+    CreatePhaseRequest:
+      type: object
+      required:
+        - name
+        - description
+        - dependencies
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+
+    PhaseStartResponse:
+      type: object
+      required:
+        - success
+        - phaseId
+        - startTime
+      properties:
+        success:
+          type: boolean
+        phaseId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    PhaseRollbackResponse:
+      type: object
+      required:
+        - success
+        - phaseId
+        - rollbackTime
+      properties:
+        success:
+          type: boolean
+        phaseId:
+          type: string
+        rollbackTime:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    RedundancyAnalysis:
+      type: object
+      required:
+        - id
+        - timestamp
+        - totalFiles
+        - totalLines
+        - redundantFiles
+        - coreFiles
+        - categories
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        totalFiles:
+          type: integer
+        totalLines:
+          type: integer
+        redundantFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RedundantFile'
+        coreFiles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoreFile'
+        categories:
+          $ref: '#/components/schemas/RedundancyCategories'
+
+    RedundantFile:
+      type: object
+      required:
+        - path
+        - size
+        - lines
+        - category
+        - reason
+        - dependencies
+        - canDeleteSafely
+      properties:
+        path:
+          type: string
+        size:
+          type: integer
+        lines:
+          type: integer
+        category:
+          type: string
+        reason:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+        canDeleteSafely:
+          type: boolean
+
+    CoreFile:
+      type: object
+      required:
+        - path
+        - size
+        - lines
+        - purpose
+        - dependencies
+        - criticalLevel
+      properties:
+        path:
+          type: string
+        size:
+          type: integer
+        lines:
+          type: integer
+        purpose:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+        criticalLevel:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+
+    PerformanceBenchmark:
+      type: object
+      required:
+        - id
+        - timestamp
+        - phase
+        - codeMetrics
+        - runtimeMetrics
+        - comparison
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        phase:
+          type: string
+        codeMetrics:
+          $ref: '#/components/schemas/CodeMetrics'
+        runtimeMetrics:
+          $ref: '#/components/schemas/RuntimeMetrics'
+        comparison:
+          $ref: '#/components/schemas/PerformanceComparison'
+
+    MonitoringDashboard:
+      type: object
+      required:
+        - id
+        - timestamp
+        - systemHealth
+        - simplificationProgress
+        - liveMetrics
+        - alerts
+      properties:
+        id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        systemHealth:
+          $ref: '#/components/schemas/SystemHealth'
+        simplificationProgress:
+          $ref: '#/components/schemas/SimplificationProgress'
+        liveMetrics:
+          $ref: '#/components/schemas/LiveMetrics'
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+tags:
+  - name: Backup
+    description: System backup and restore operations
+  - name: Phases
+    description: Simplification phase management
+  - name: Analysis
+    description: Code analysis and impact assessment
+  - name: Performance
+    description: Performance monitoring and benchmarking
+  - name: Monitoring
+    description: System health and monitoring

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(timeout:*)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__get_logs",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_text_file",
+      "Bash(npm run dev)",
+      "mcp__filesystem__list_allowed_directories",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__search_files",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__supabase__list_projects",
+      "Bash(find:*)",
+      "mcp__supabase__get_project",
+      "mcp__supabase__execute_sql",
+      "Bash(grep:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

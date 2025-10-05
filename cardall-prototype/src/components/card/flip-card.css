@@ -1,0 +1,66 @@
+/* 3D Flip Card Styles */
+.flip-card-container {
+  perspective: 1000px;
+  width: 100%;
+  min-height: fit-content;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  min-height: fit-content;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.flip-card-face {
+  position: relative;
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  -moz-backface-visibility: hidden;
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* 确保翻转时的平滑过渡 */
+.flip-card-inner.flipping {
+  pointer-events: none;
+}
+
+/* 确保当前可见的卡片面能够接收点击事件 */
+.flip-card-face[style*="opacity: 1"] {
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* 确保不可见的卡片面不阻挡事件 */
+.flip-card-face[style*="opacity: 0"] {
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 确保卡片面内的按钮可以正常接收点击事件 */
+.flip-card-face button,
+.flip-card-face .btn,
+.flip-card-face [role="button"],
+.flip-card-face [data-slot="button"] {
+  pointer-events: auto !important;
+  position: relative;
+  z-index: 20;
+}
+
+/* 优化移动端体验 */
+@media (max-width: 768px) {
+  .flip-card-inner {
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+  }
+}
+
+/* 防止翻转时的闪烁 */
+.flip-card-container * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

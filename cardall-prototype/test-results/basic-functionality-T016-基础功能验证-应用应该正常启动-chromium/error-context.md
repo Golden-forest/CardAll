@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]: "[plugin:vite:esbuild]"
+    - generic [ref=e6]: "Transform failed with 1 error: D:/Projects/CardEverything/cardall-prototype/src/services/image-processor.ts:249:12: ERROR: Expected \";\" but found \"img_$\""
+  - generic [ref=e7]:
+    - text: "D:"
+    - generic [ref=e8] [cursor=pointer]: /Projects/CardEverything/cardall-prototype/src/services/image-processor.ts:249:12
+  - generic [ref=e9]: "Expected \";\" but found \"img_$\" 247| // 生成图片ID 248| private generateImageId(): string { 249| return `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`; | ^ 250| } 251|"
+  - generic [ref=e10]:
+    - text: at failureErrorWithLog (
+    - generic [ref=e11] [cursor=pointer]: D:\Projects\CardEverything\cardall-prototype\node_modules\esbuild\lib\main.js:1472:15
+    - text: ) at
+    - generic [ref=e12] [cursor=pointer]: D:\Projects\CardEverything\cardall-prototype\node_modules\esbuild\lib\main.js:755:50
+    - text: at responseCallbacks.<computed> (
+    - generic [ref=e13] [cursor=pointer]: D:\Projects\CardEverything\cardall-prototype\node_modules\esbuild\lib\main.js:622:9
+    - text: ) at handleIncomingPacket (
+    - generic [ref=e14] [cursor=pointer]: D:\Projects\CardEverything\cardall-prototype\node_modules\esbuild\lib\main.js:677:12
+    - text: ) at Socket.readFromStdout (
+    - generic [ref=e15] [cursor=pointer]: D:\Projects\CardEverything\cardall-prototype\node_modules\esbuild\lib\main.js:600:7
+    - text: ) at Socket.emit (node:events:508:28) at addChunk (node:internal
+    - generic [ref=e16] [cursor=pointer]: /streams/readable:559:12
+    - text: ) at readableAddChunkPushByteMode (node:internal
+    - generic [ref=e17] [cursor=pointer]: /streams/readable:510:3
+    - text: ) at Readable.push (node:internal
+    - generic [ref=e18] [cursor=pointer]: /streams/readable:390:5
+    - text: ) at Pipe.onStreamRead (node:internal
+    - generic [ref=e19] [cursor=pointer]: /stream_base_commons:189:23
+  - generic [ref=e20]:
+    - text: Click outside, press
+    - generic [ref=e21]: Esc
+    - text: key, or fix the code to dismiss.
+    - text: You can also disable this overlay by setting
+    - code [ref=e22]: server.hmr.overlay
+    - text: to
+    - code [ref=e23]: "false"
+    - text: in
+    - code [ref=e24]: vite.config.ts
+    - text: .
+```

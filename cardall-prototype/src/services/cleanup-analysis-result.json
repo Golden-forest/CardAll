@@ -1,0 +1,2388 @@
+{
+  "timestamp": "2025-10-03T18:15:27.521Z",
+  "deletionTargets": [
+    "sync-queue.ts",
+    "conflict-resolver.ts",
+    "network-manager.ts",
+    "unified-sync-service.ts",
+    "cloud-sync.ts",
+    "enhanced-conflict-detection.ts",
+    "intelligent-merge-strategy.ts",
+    "performance-optimizer.ts",
+    "memory-optimization-manager.ts",
+    "advanced-cache.ts",
+    "comprehensive-performance-monitor.ts",
+    "sync-orchestrator.ts",
+    "sync-diagnostics.ts",
+    "data-consistency-validator.ts",
+    "data-integrity-service.ts"
+  ],
+  "coreFiles": [
+    "database.ts",
+    "auth.ts",
+    "simple-sync-service.ts",
+    "supabase.ts",
+    "image-processor.ts",
+    "error-handler.ts",
+    "storage-adapter.ts",
+    "local-operation.ts",
+    "backup-service.ts"
+  ],
+  "impact": {
+    "sync-queue.ts": {
+      "directDependents": [
+        "data-sync-service.ts",
+        "data-sync-service.ts",
+        "debug-system-manager.ts",
+        "network-adapter.ts",
+        "offline-manager.ts",
+        "performance-tester.ts",
+        "smart-error-handler.ts",
+        "sync/enhanced-offline-manager.ts",
+        "sync/queue-state-manager.ts",
+        "sync/resource-manager.ts",
+        "sync/unified-sync-service-enhanced.ts",
+        "sync-diagnostics.ts",
+        "sync-integration.ts",
+        "sync-orchestrator.ts",
+        "unified-sync-service-base.ts",
+        "unified-sync-service-enhanced.ts",
+        "unified-sync-service.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 17,
+      "riskLevel": "MEDIUM"
+    },
+    "conflict-resolver.ts": {
+      "directDependents": [
+        "data-consistency-validation.ts",
+        "data-consistency-validation.ts",
+        "sync-diagnostics.ts",
+        "sync-integration.ts",
+        "sync-orchestrator.ts",
+        "sync-queue.ts",
+        "sync-validation-suite.ts",
+        "unified-sync-service-enhanced.ts",
+        "unified-sync-service.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 9,
+      "riskLevel": "MEDIUM"
+    },
+    "network-manager.ts": {
+      "directDependents": [
+        "cloud-sync.ts",
+        "local-operation-isolation.ts",
+        "network-aware-handler.ts",
+        "network-compat.ts",
+        "retry-manager.ts",
+        "sync/data-change-listener.ts",
+        "sync/queue-persistence.ts",
+        "sync-diagnostics.ts",
+        "sync-diagnostics.ts",
+        "sync-integration.ts",
+        "sync-orchestrator.ts",
+        "sync-queue.ts",
+        "sync-validation-suite.ts",
+        "unified-sync-service-enhanced.ts",
+        "unified-sync-service.ts"
+      ],
+      "coreDependents": [
+        "error-handler.ts"
+      ],
+      "totalDependents": 16,
+      "riskLevel": "HIGH"
+    },
+    "unified-sync-service.ts": {
+      "directDependents": [
+        "api-compat-layer/integration.ts",
+        "app-init.ts",
+        "auth-debug.ts",
+        "sync-initialization-utils.ts",
+        "sync-integration.ts",
+        "sync-migration-helper.ts",
+        "sync-performance-test.ts",
+        "sync-validation-suite.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 8,
+      "riskLevel": "MEDIUM"
+    },
+    "cloud-sync.ts": {
+      "directDependents": [
+        "debug-system-manager.ts",
+        "intelligent-batch-upload.ts",
+        "smart-error-handler.ts",
+        "smart-error-handler.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 4,
+      "riskLevel": "MEDIUM"
+    },
+    "enhanced-conflict-detection.ts": {
+      "directDependents": [],
+      "coreDependents": [],
+      "totalDependents": 0,
+      "riskLevel": "MEDIUM"
+    },
+    "intelligent-merge-strategy.ts": {
+      "directDependents": [],
+      "coreDependents": [],
+      "totalDependents": 0,
+      "riskLevel": "MEDIUM"
+    },
+    "performance-optimizer.ts": {
+      "directDependents": [
+        "performance-initializer.ts",
+        "performance-test-suite.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 2,
+      "riskLevel": "MEDIUM"
+    },
+    "memory-optimization-manager.ts": {
+      "directDependents": [
+        "performance-optimization-implementation-plan.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 1,
+      "riskLevel": "MEDIUM"
+    },
+    "advanced-cache.ts": {
+      "directDependents": [
+        "multilevel-cache-service.ts",
+        "offline-manager.ts",
+        "performance-tester.ts",
+        "sync/enhanced-offline-manager.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 4,
+      "riskLevel": "MEDIUM"
+    },
+    "comprehensive-performance-monitor.ts": {
+      "directDependents": [],
+      "coreDependents": [],
+      "totalDependents": 0,
+      "riskLevel": "MEDIUM"
+    },
+    "sync-orchestrator.ts": {
+      "directDependents": [],
+      "coreDependents": [],
+      "totalDependents": 0,
+      "riskLevel": "MEDIUM"
+    },
+    "sync-diagnostics.ts": {
+      "directDependents": [
+        "debug-system-manager.ts",
+        "smart-error-handler.ts",
+        "sync-validation-suite.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 3,
+      "riskLevel": "MEDIUM"
+    },
+    "data-consistency-validator.ts": {
+      "directDependents": [
+        "data-sync-service.ts",
+        "database-performance-monitor.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 2,
+      "riskLevel": "MEDIUM"
+    },
+    "data-integrity-service.ts": {
+      "directDependents": [
+        "storage-monitor.ts"
+      ],
+      "coreDependents": [],
+      "totalDependents": 1,
+      "riskLevel": "MEDIUM"
+    }
+  },
+  "plan": {
+    "safeToDelete": [
+      {
+        "file": "enhanced-conflict-detection.ts",
+        "analysis": {
+          "directDependents": [],
+          "coreDependents": [],
+          "totalDependents": 0,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "intelligent-merge-strategy.ts",
+        "analysis": {
+          "directDependents": [],
+          "coreDependents": [],
+          "totalDependents": 0,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "comprehensive-performance-monitor.ts",
+        "analysis": {
+          "directDependents": [],
+          "coreDependents": [],
+          "totalDependents": 0,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "sync-orchestrator.ts",
+        "analysis": {
+          "directDependents": [],
+          "coreDependents": [],
+          "totalDependents": 0,
+          "riskLevel": "MEDIUM"
+        }
+      }
+    ],
+    "riskDeletion": [
+      {
+        "file": "sync-queue.ts",
+        "analysis": {
+          "directDependents": [
+            "data-sync-service.ts",
+            "data-sync-service.ts",
+            "debug-system-manager.ts",
+            "network-adapter.ts",
+            "offline-manager.ts",
+            "performance-tester.ts",
+            "smart-error-handler.ts",
+            "sync/enhanced-offline-manager.ts",
+            "sync/queue-state-manager.ts",
+            "sync/resource-manager.ts",
+            "sync/unified-sync-service-enhanced.ts",
+            "sync-diagnostics.ts",
+            "sync-integration.ts",
+            "sync-orchestrator.ts",
+            "unified-sync-service-base.ts",
+            "unified-sync-service-enhanced.ts",
+            "unified-sync-service.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 17,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "conflict-resolver.ts",
+        "analysis": {
+          "directDependents": [
+            "data-consistency-validation.ts",
+            "data-consistency-validation.ts",
+            "sync-diagnostics.ts",
+            "sync-integration.ts",
+            "sync-orchestrator.ts",
+            "sync-queue.ts",
+            "sync-validation-suite.ts",
+            "unified-sync-service-enhanced.ts",
+            "unified-sync-service.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 9,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "unified-sync-service.ts",
+        "analysis": {
+          "directDependents": [
+            "api-compat-layer/integration.ts",
+            "app-init.ts",
+            "auth-debug.ts",
+            "sync-initialization-utils.ts",
+            "sync-integration.ts",
+            "sync-migration-helper.ts",
+            "sync-performance-test.ts",
+            "sync-validation-suite.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 8,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "cloud-sync.ts",
+        "analysis": {
+          "directDependents": [
+            "debug-system-manager.ts",
+            "intelligent-batch-upload.ts",
+            "smart-error-handler.ts",
+            "smart-error-handler.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 4,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "performance-optimizer.ts",
+        "analysis": {
+          "directDependents": [
+            "performance-initializer.ts",
+            "performance-test-suite.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 2,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "memory-optimization-manager.ts",
+        "analysis": {
+          "directDependents": [
+            "performance-optimization-implementation-plan.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 1,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "advanced-cache.ts",
+        "analysis": {
+          "directDependents": [
+            "multilevel-cache-service.ts",
+            "offline-manager.ts",
+            "performance-tester.ts",
+            "sync/enhanced-offline-manager.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 4,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "sync-diagnostics.ts",
+        "analysis": {
+          "directDependents": [
+            "debug-system-manager.ts",
+            "smart-error-handler.ts",
+            "sync-validation-suite.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 3,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "data-consistency-validator.ts",
+        "analysis": {
+          "directDependents": [
+            "data-sync-service.ts",
+            "database-performance-monitor.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 2,
+          "riskLevel": "MEDIUM"
+        }
+      },
+      {
+        "file": "data-integrity-service.ts",
+        "analysis": {
+          "directDependents": [
+            "storage-monitor.ts"
+          ],
+          "coreDependents": [],
+          "totalDependents": 1,
+          "riskLevel": "MEDIUM"
+        }
+      }
+    ],
+    "needsReview": [
+      {
+        "file": "network-manager.ts",
+        "analysis": {
+          "directDependents": [
+            "cloud-sync.ts",
+            "local-operation-isolation.ts",
+            "network-aware-handler.ts",
+            "network-compat.ts",
+            "retry-manager.ts",
+            "sync/data-change-listener.ts",
+            "sync/queue-persistence.ts",
+            "sync-diagnostics.ts",
+            "sync-diagnostics.ts",
+            "sync-integration.ts",
+            "sync-orchestrator.ts",
+            "sync-queue.ts",
+            "sync-validation-suite.ts",
+            "unified-sync-service-enhanced.ts",
+            "unified-sync-service.ts"
+          ],
+          "coreDependents": [
+            "error-handler.ts"
+          ],
+          "totalDependents": 16,
+          "riskLevel": "HIGH"
+        }
+      }
+    ]
+  },
+  "dependencyGraph": {
+    "advanced-cache.ts": [
+      "./database-unified"
+    ],
+    "advanced-memory-leak-detector.ts": [],
+    "api-compat-layer/auth-service-adapter.ts": [
+      "./base-adapter",
+      "../auth",
+      "./version-manager"
+    ],
+    "api-compat-layer/base-adapter.ts": [
+      "./version-manager"
+    ],
+    "api-compat-layer/database-adapter.ts": [
+      "./base-adapter",
+      "../database",
+      "./version-manager"
+    ],
+    "api-compat-layer/index.ts": [
+      "./base-adapter",
+      "./sync-service-adapter",
+      "./auth-service-adapter",
+      "./database-adapter",
+      "./version-manager"
+    ],
+    "api-compat-layer/integration.ts": [
+      "./index",
+      "../unified-sync-service",
+      "../auth",
+      "../database",
+      "./version-manager"
+    ],
+    "api-compat-layer/types.ts": [],
+    "api-compat-layer/usage-examples.ts": [],
+    "api-compat-layer/version-manager.ts": [
+      "./types"
+    ],
+    "app-init-enhanced.ts": [
+      "./database",
+      "./unified-sync-service-enhanced",
+      "./migration",
+      "./file-system",
+      "./auth",
+      "./service-factory-enhanced",
+      "./sync-initialization-utils"
+    ],
+    "app-init.ts": [
+      "./database",
+      "./unified-sync-service",
+      "./migration",
+      "./file-system",
+      "./auth",
+      "./service-factory",
+      "./sync-initialization-utils"
+    ],
+    "auth-debug.ts": [
+      "./auth",
+      "./unified-sync-service",
+      "./event-system",
+      "./supabase"
+    ],
+    "auth.ts": [
+      "./supabase",
+      "./event-system"
+    ],
+    "background-task-manager.ts": [],
+    "backup-service.ts": [],
+    "batch-upload-optimizer.ts": [
+      "./network-monitor",
+      "./local-operation",
+      "./optimized-cloud-sync"
+    ],
+    "cardall-provider-adapter.ts": [
+      "./universal-storage-adapter",
+      "./data-migration.service",
+      "./migration-validator",
+      "./unified-error-handler",
+      "./performance-monitor",
+      "./storage-adapter"
+    ],
+    "change-processor.ts": [
+      "./data-watcher"
+    ],
+    "cloud-sync-service.ts": [
+      "./background-task-manager"
+    ],
+    "cloud-sync.ts": [
+      "./supabase",
+      "./database",
+      "./local-operation",
+      "./network-manager",
+      "./offline-manager"
+    ],
+    "comprehensive-performance-monitor.ts": [
+      "./database-unified",
+      "./performance-monitoring",
+      "./multilevel-cache-service",
+      "./optimized-query-service",
+      "./optimized-batch-operation-service",
+      "./memory-leak-detection-service"
+    ],
+    "conflict/conflict-resolution-engine.ts": [],
+    "conflict-prevention.ts": [],
+    "conflict-resolution-engine.ts": [
+      "./optimized-cloud-sync",
+      "./database"
+    ],
+    "conflict-resolver.ts": [
+      "./database",
+      "./conflict-resolution-engine"
+    ],
+    "consistency-monitor.ts": [
+      "./data-consistency-checker",
+      "./sync-integration",
+      "./network-monitor",
+      "./auth"
+    ],
+    "core/backup/backup-core.service.ts": [
+      "../../database-unified",
+      "../../file-system",
+      "../../data-validator",
+      "../../utils/secure-storage"
+    ],
+    "core/backup/backup-recovery.service.ts": [
+      "../data-validator"
+    ],
+    "core/backup/backup-scheduler.service.ts": [
+      "./backup-core.service"
+    ],
+    "core/backup/backup-validator.service.ts": [
+      "../data-validator"
+    ],
+    "core/backup/index.ts": [],
+    "core/performance/unified-performance-monitoring.service.ts": [
+      "../database-unified",
+      "../multilevel-cache-service",
+      "../optimized-query-service",
+      "../intelligent-batch-upload",
+      "../upload-queue-manager",
+      "../network-state-detector"
+    ],
+    "core/unified-services.index.ts": [],
+    "data-compression-optimizer.ts": [
+      "./intelligent-batch-upload",
+      "./network-state-detector"
+    ],
+    "data-consistency-checker.ts": [
+      "./supabase",
+      "./database",
+      "./sync-strategy",
+      "./network-monitor",
+      "./auth"
+    ],
+    "data-consistency-validation.ts": [
+      "./conflict-resolver",
+      "./database-sync-adapter",
+      "./database",
+      "./conflict-resolver",
+      "./database-sync-adapter"
+    ],
+    "data-consistency-validator.ts": [
+      "./database",
+      "./supabase",
+      "./data-converter"
+    ],
+    "data-converter-adapter.ts": [],
+    "data-converter.ts": [],
+    "data-event-publisher.ts": [],
+    "data-integrity-service.ts": [
+      "./database-unified",
+      "./data-validator",
+      "./core/backup/backup-core.service"
+    ],
+    "data-migration-tool.ts": [
+      "./database-unified",
+      "./file-system",
+      "./supabase"
+    ],
+    "data-migration.service.ts": [
+      "./data-converter-adapter",
+      "./storage-adapter"
+    ],
+    "data-protection.ts": [
+      "./database",
+      "./auth"
+    ],
+    "data-recovery.ts": [
+      "../types/cardall",
+      "./universal-storage-adapter",
+      "./storage-monitor"
+    ],
+    "data-security.ts": [
+      "./database"
+    ],
+    "data-sync-service.ts": [
+      "./database",
+      "./supabase",
+      "./data-converter",
+      "./sync-queue",
+      "./offline-manager",
+      "./conflict-resolution-engine",
+      "./data-consistency-validator",
+      "./sync-queue"
+    ],
+    "data-validator.ts": [
+      "./database-unified"
+    ],
+    "data-watcher.ts": [
+      "./supabase",
+      "./sync-event-bus"
+    ],
+    "database-network-adapter.ts": [
+      "./network-state-detector",
+      "./network-error-handler",
+      "./network-monitor"
+    ],
+    "database-performance-monitor.ts": [
+      "./database",
+      "./auth",
+      "./sync-monitoring",
+      "./data-consistency-validator"
+    ],
+    "database-unified.ts": [],
+    "database.ts": [
+      "./supabase",
+      "./auth"
+    ],
+    "debug-system-manager.ts": [
+      "./debug-system",
+      "./sync-diagnostics",
+      "./smart-error-handler",
+      "./cloud-sync",
+      "./sync-queue",
+      "./auth"
+    ],
+    "debug-system.ts": [],
+    "enhanced-conflict-detection.ts": [
+      "./supabase",
+      "./database",
+      "./sync-monitoring",
+      "./network-monitor",
+      "./event-system"
+    ],
+    "enhanced-version-comparator.ts": [
+      "../database-unified",
+      "../network-state-detector"
+    ],
+    "error-handler.ts": [
+      "./event-system",
+      "./network-manager"
+    ],
+    "error-handling/enhanced-network-error-handler.ts": [
+      "./network-state-detector",
+      "./network-monitor",
+      "./error-handling/sync-error-integration"
+    ],
+    "error-handling/error-handling-service.ts": [
+      "./error-monitoring-service",
+      "./recovery-strategy-manager",
+      "./self-healing-framework",
+      "../network-state-detector"
+    ],
+    "error-handling/error-handling-test.ts": [
+      "./error-handling-service",
+      "./sync-error-integration",
+      "./types"
+    ],
+    "error-handling/error-monitoring-service.ts": [
+      "../network-state-detector",
+      "./unified-error-handler"
+    ],
+    "error-handling/index.ts": [
+      "./error-handling-service",
+      "./sync-error-integration",
+      "./unified-error-handler"
+    ],
+    "error-handling/recovery-strategy-manager.ts": [
+      "./error-monitoring-service"
+    ],
+    "error-handling/self-healing-framework.ts": [
+      "./recovery-strategy-manager",
+      "./error-monitoring-service"
+    ],
+    "error-handling/types.ts": [],
+    "error-handling/unified-error-handler.ts": [
+      "../network-state-detector",
+      "../network-error-handler",
+      "../sync/conflict/intelligent-conflict-resolver",
+      "../database-unified"
+    ],
+    "event-bus-manager.ts": [],
+    "event-bus.ts": [],
+    "event-system.ts": [],
+    "file-system-simple.ts": [],
+    "file-system.ts": [
+      "./database",
+      "./auth"
+    ],
+    "image-processor.ts": [
+      "./file-system-simple"
+    ],
+    "indexeddb-watcher.ts": [
+      "./data-watcher",
+      "./database"
+    ],
+    "intelligent-batch-upload.ts": [
+      "./supabase",
+      "./network-state-detector",
+      "./cloud-sync",
+      "./database"
+    ],
+    "intelligent-data-cache.ts": [
+      "./database",
+      "./sync-monitoring",
+      "./network-monitor",
+      "./event-system"
+    ],
+    "intelligent-merge-strategy.ts": [
+      "./enhanced-version-comparator",
+      "../network-state-detector"
+    ],
+    "intelligent-network-cache.ts": [],
+    "local-operation-isolation.ts": [
+      "./database-unified",
+      "./local-operation",
+      "./network-manager",
+      "./offline-manager",
+      "./supabase-client"
+    ],
+    "local-operation-service.ts": [
+      "./database-unified",
+      "./local-operation",
+      "./local-operation"
+    ],
+    "local-operation.ts": [
+      "./database",
+      "../types/card"
+    ],
+    "localstorage-watcher.ts": [
+      "./data-watcher"
+    ],
+    "memory-leak-detection-service.ts": [
+      "./multilevel-cache-service",
+      "./optimized-query-service",
+      "./optimized-batch-operation-service"
+    ],
+    "memory-optimization-manager.ts": [],
+    "migration-unified.ts": [
+      "./database-unified"
+    ],
+    "migration-validator.ts": [
+      "./data-converter-adapter",
+      "./data-migration.service"
+    ],
+    "migration.ts": [
+      "./database",
+      "./file-system"
+    ],
+    "monitoring/business-metrics-manager.ts": [],
+    "monitoring/intelligent-alert-engine.ts": [],
+    "monitoring/monitoring-service.ts": [
+      "./unified-metrics-collector",
+      "./intelligent-alert-engine",
+      "../types/monitoring-types",
+      "../../utils/performance-test-utils"
+    ],
+    "monitoring/predictive-monitoring.ts": [],
+    "monitoring/unified-metrics-collector.ts": [
+      "../realtime/monitoring-system",
+      "../performance-monitoring-service",
+      "../realtime/realtime-performance-optimizer"
+    ],
+    "monitoring-sync-integration.ts": [
+      "./data-watcher",
+      "./change-processor",
+      "./performance-manager",
+      "./event-bus-manager",
+      "./sync-enhanced",
+      "./sync-event-bus"
+    ],
+    "multilevel-cache-service.ts": [
+      "./advanced-cache",
+      "./database-unified"
+    ],
+    "network-adapter.ts": [
+      "./network-monitor",
+      "./optimized-cloud-sync",
+      "./sync-queue"
+    ],
+    "network-aware-handler.ts": [
+      "./event-system",
+      "./network-manager",
+      "./error-handler",
+      "./retry-manager"
+    ],
+    "network-compat.ts": [
+      "./network-manager",
+      "./network-state-detector",
+      "./network-monitor",
+      "./network-detector"
+    ],
+    "network-detector.ts": [],
+    "network-error-handler.ts": [
+      "./network-state-detector",
+      "./network-monitor"
+    ],
+    "network-manager.ts": [],
+    "network-monitor.ts": [],
+    "network-state-detector.ts": [
+      "./network-monitor"
+    ],
+    "offline/enhanced-local-storage-manager.ts": [
+      "./enhanced-network-manager",
+      "../../types/offline-architecture",
+      "../../types/offline"
+    ],
+    "offline/enhanced-network-manager.ts": [
+      "../network-state-detector",
+      "../offline-manager"
+    ],
+    "offline/enhanced-offline-manager.ts": [],
+    "offline/intelligent-conflict-resolver.ts": [
+      "./enhanced-network-manager",
+      "../../types/offline",
+      "../../types/offline"
+    ],
+    "offline/offline-functionality-wrapper.ts": [
+      "./enhanced-network-manager",
+      "./enhanced-local-storage-manager",
+      "./offline-operation-queue",
+      "./intelligent-conflict-resolver",
+      "../../types/offline"
+    ],
+    "offline/offline-operation-queue.ts": [
+      "./enhanced-network-manager",
+      "./enhanced-local-storage-manager",
+      "../../types/offline",
+      "../../types/offline"
+    ],
+    "offline/offline-system-controller.ts": [
+      "./enhanced-network-manager",
+      "./enhanced-local-storage-manager",
+      "./offline-operation-queue",
+      "./intelligent-conflict-resolver",
+      "./offline-functionality-wrapper",
+      "../../types/offline-architecture",
+      "../../types/offline"
+    ],
+    "offline/offline-system-integration-test.ts": [
+      "./offline-system-controller",
+      "../../components/offline/offline-indicator",
+      "./enhanced-network-manager",
+      "./enhanced-local-storage-manager",
+      "./offline-operation-queue",
+      "./intelligent-conflict-resolver",
+      "./offline-functionality-wrapper"
+    ],
+    "offline-manager.ts": [
+      "./database-unified",
+      "./sync-queue",
+      "./local-operation",
+      "./advanced-cache"
+    ],
+    "optimized-batch-operation-service.ts": [
+      "./database-unified",
+      "./multilevel-cache-service",
+      "./optimized-query-service",
+      "./local-operation-service"
+    ],
+    "optimized-batch-operations.ts": [
+      "./supabase",
+      "./database",
+      "./sync-monitoring",
+      "./network-monitor",
+      "./event-system"
+    ],
+    "optimized-cloud-sync.ts": [
+      "./supabase",
+      "./database",
+      "./local-operation",
+      "./network-monitor"
+    ],
+    "optimized-query-service.ts": [
+      "./database-unified",
+      "./multilevel-cache-service"
+    ],
+    "performance/performance-monitor.ts": [],
+    "performance-initializer.ts": [
+      "./performance-optimizer",
+      "./query-optimizer",
+      "./enhanced-persistence-manager",
+      "./consistency-validator",
+      "./performance-test-suite",
+      "./state-cleaner"
+    ],
+    "performance-manager.ts": [
+      "./performance-monitor",
+      "./memory-leak-detection-service",
+      "./data-watcher",
+      "./change-processor"
+    ],
+    "performance-monitor.ts": [
+      "./storage-adapter"
+    ],
+    "performance-monitoring-service.ts": [
+      "./intelligent-batch-upload",
+      "./upload-queue-manager",
+      "./resumable-upload-service",
+      "./network-state-detector",
+      "./data-compression-optimizer"
+    ],
+    "performance-monitoring.ts": [],
+    "performance-network-integration.ts": [
+      "./sync/network-optimization-integration",
+      "./performance-monitoring",
+      "./network-state-detector"
+    ],
+    "performance-optimization-implementation-plan.ts": [
+      "./memory-optimization-manager",
+      "./advanced-memory-leak-detector",
+      "./smart-index-manager",
+      "./intelligent-network-cache",
+      "./database-unified"
+    ],
+    "performance-optimizer.ts": [
+      "./enhanced-persistence-manager",
+      "./consistency-validator",
+      "./query-optimizer"
+    ],
+    "performance-test-suite.ts": [
+      "./performance-optimizer",
+      "./query-optimizer",
+      "./enhanced-persistence-manager",
+      "./consistency-validator"
+    ],
+    "performance-tester.ts": [
+      "./local-operation",
+      "./query-optimizer",
+      "./advanced-cache",
+      "./sync-queue",
+      "./offline-manager",
+      "./database-unified"
+    ],
+    "persistence/consistency-validator.ts": [
+      "./enhanced-persistence-manager"
+    ],
+    "persistence/enhanced-persistence-manager.ts": [],
+    "persistence/state-cleaner.ts": [
+      "./enhanced-persistence-manager"
+    ],
+    "query-optimizer.ts": [
+      "./database-unified"
+    ],
+    "query-performance-enhanced.ts": [
+      "./database-unified"
+    ],
+    "query-performance.ts": [
+      "./database-unified"
+    ],
+    "realtime/monitoring-system.ts": [
+      "./realtime-system-integration",
+      "./realtime-performance-optimizer",
+      "./realtime-connection-manager"
+    ],
+    "realtime/multi-device-sync.ts": [
+      "./supabase-realtime-listener",
+      "./realtime-system-integration"
+    ],
+    "realtime/realtime-connection-manager.ts": [
+      "../sync/optimized-cloud-sync"
+    ],
+    "realtime/realtime-init-example.ts": [
+      "./realtime-system-integration",
+      "./realtime-performance-optimizer",
+      "./realtime-connection-manager",
+      "../sync/optimized-cloud-sync"
+    ],
+    "realtime/realtime-performance-optimizer.ts": [
+      "./supabase-realtime-listener",
+      "./smart-realtime-manager",
+      "../sync/optimized-cloud-sync"
+    ],
+    "realtime/realtime-system-integration.ts": [
+      "./supabase-realtime-listener",
+      "./smart-realtime-manager",
+      "./realtime-performance-optimizer",
+      "./realtime-connection-manager",
+      "../sync/conflict/intelligent-conflict-resolver",
+      "../sync/optimized-cloud-sync"
+    ],
+    "realtime/smart-realtime-manager.ts": [
+      "./supabase-realtime-listener",
+      "../sync/optimized-cloud-sync",
+      "../network-state-detector",
+      "../sync/conflict/intelligent-conflict-resolver",
+      "../database-unified"
+    ],
+    "realtime/supabase-realtime-listener.ts": [
+      "../supabase",
+      "../database-unified",
+      "../sync/types/sync-types",
+      "../network-state-detector",
+      "../sync/conflict/intelligent-conflict-resolver"
+    ],
+    "resumable-upload-service.ts": [
+      "./intelligent-batch-upload",
+      "./upload-queue-manager",
+      "./network-state-detector",
+      "./data-compression-optimizer"
+    ],
+    "retry-manager.ts": [
+      "./event-system",
+      "./network-manager",
+      "./error-handler"
+    ],
+    "security/data-encryption-service.ts": [],
+    "service-factory-enhanced.ts": [],
+    "service-factory.ts": [],
+    "simple-high-performance-sync-service.ts": [
+      "./supabase",
+      "./database",
+      "./auth"
+    ],
+    "simple-network-manager.ts": [],
+    "simple-sync-service.ts": [],
+    "small-dataset-cache.ts": [],
+    "small-dataset-controller.ts": [
+      "./small-dataset-optimizer",
+      "./small-dataset-cache",
+      "../utils/lightweight-query-optimizer",
+      "./database-unified"
+    ],
+    "small-dataset-optimizer.ts": [
+      "../services/database-unified",
+      "./lightweight-query-optimizer",
+      "./intelligent-cache"
+    ],
+    "smart-error-handler.ts": [
+      "./debug-system",
+      "./sync-diagnostics",
+      "./cloud-sync",
+      "./sync-queue",
+      "./auth",
+      "./cloud-sync"
+    ],
+    "smart-index-manager.ts": [],
+    "smart-pagination-manager.ts": [],
+    "storage-adapter.ts": [],
+    "storage-monitor.ts": [
+      "./universal-storage-adapter",
+      "./performance-monitoring-service",
+      "./error-handling/error-monitoring-service",
+      "./network-state-detector",
+      "./data-integrity-service"
+    ],
+    "supabase-client.ts": [],
+    "supabase-test.ts": [
+      "./supabase"
+    ],
+    "supabase-watcher.ts": [
+      "./supabase",
+      "./data-watcher"
+    ],
+    "supabase.ts": [
+      "./supabase-client"
+    ],
+    "sync/cache-integration-service.ts": [
+      "./intelligent-cache-system",
+      "./unified-sync-service-enhanced",
+      "./sync-performance-optimizer",
+      "../database",
+      "../network-state-detector"
+    ],
+    "sync/cache-performance-tester.ts": [
+      "./intelligent-cache-system",
+      "./cache-strategies",
+      "./intelligent-cache-system"
+    ],
+    "sync/cache-strategies.ts": [
+      "./intelligent-cache-system"
+    ],
+    "sync/conflict/conflict-pattern-analyzer.test.ts": [
+      "./conflict-pattern-analyzer",
+      "../types/sync-types",
+      "./optimized-conflict-resolver",
+      "./strategy-performance-monitor"
+    ],
+    "sync/conflict/conflict-pattern-analyzer.ts": [
+      "../types/sync-types",
+      "./optimized-conflict-resolver",
+      "./strategy-performance-monitor"
+    ],
+    "sync/conflict/intelligent-conflict-resolver.ts": [
+      "../types/sync-types",
+      "../database-unified"
+    ],
+    "sync/conflict/optimized-conflict-resolver.test.ts": [
+      "./optimized-conflict-resolver",
+      "../types/sync-types",
+      "./intelligent-conflict-resolver"
+    ],
+    "sync/conflict/optimized-conflict-resolver.ts": [
+      "../types/sync-types",
+      "../database-unified",
+      "../../../types/conflict"
+    ],
+    "sync/conflict/performance-benchmark.ts": [
+      "./optimized-conflict-resolver",
+      "./intelligent-conflict-resolver",
+      "./strategy-performance-monitor",
+      "./conflict-pattern-analyzer",
+      "../types/sync-types",
+      "./intelligent-conflict-resolver"
+    ],
+    "sync/conflict/strategy-performance-monitor.test.ts": [
+      "./strategy-performance-monitor",
+      "./optimized-conflict-resolver",
+      "../types/sync-types",
+      "./optimized-conflict-resolver"
+    ],
+    "sync/conflict/strategy-performance-monitor.ts": [
+      "../types/sync-types",
+      "./optimized-conflict-resolver"
+    ],
+    "sync/conflict-diagnostic-tools.ts": [
+      "./conflict-state-manager",
+      "../event-bus"
+    ],
+    "sync/conflict-management-test-suite.ts": [
+      "./conflict-state-manager",
+      "./conflict-diagnostic-tools",
+      "./conflict-storage-optimizer",
+      "./conflict-resolution-engine/unified-conflict-resolution-engine"
+    ],
+    "sync/conflict-resolution-engine/conflict-detector.ts": [
+      "../../database"
+    ],
+    "sync/conflict-resolution-engine/conflict-resolver.ts": [],
+    "sync/conflict-resolution-engine/integration.test.ts": [
+      "../unified-sync-service-base"
+    ],
+    "sync/conflict-resolution-engine/performance.test.ts": [
+      "./unified-conflict-resolution-engine"
+    ],
+    "sync/conflict-resolution-engine/test-setup.ts": [],
+    "sync/conflict-resolution-engine/unified-conflict-resolution-engine.test.ts": [
+      "./conflict-detector",
+      "./conflict-resolver"
+    ],
+    "sync/conflict-resolution-engine/unified-conflict-resolution-engine.ts": [
+      "../../database-unified",
+      "../../optimized-cloud-sync",
+      "../../types/conflict",
+      "../../database-unified"
+    ],
+    "sync/conflict-resolution-engine/vitest.config.ts": [],
+    "sync/conflict-state-manager.ts": [
+      "./conflict-resolution-engine/unified-conflict-resolution-engine",
+      "../database-unified",
+      "../event-bus"
+    ],
+    "sync/conflict-storage-optimizer.ts": [
+      "./conflict-state-manager",
+      "../database"
+    ],
+    "sync/connection-pool-manager.ts": [
+      "../supabase",
+      "../database-unified",
+      "../supabase"
+    ],
+    "sync/data-change-listener.ts": [
+      "../database-unified",
+      "./multi-level-queue",
+      "../network-manager"
+    ],
+    "sync/database-query-optimizer.ts": [
+      "../database-unified",
+      "../supabase"
+    ],
+    "sync/enhanced-conflict-detector.ts": [
+      "../optimized-cloud-sync",
+      "./input-validator"
+    ],
+    "sync/enhanced-database-optimizer.ts": [
+      "./database-query-optimizer",
+      "./query-performance-monitor",
+      "./connection-pool-manager",
+      "../supabase",
+      "../database-unified"
+    ],
+    "sync/enhanced-offline-manager.ts": [
+      "../database-unified",
+      "../network-state-detector",
+      "../sync-queue",
+      "../local-operation",
+      "../advanced-cache",
+      "../data-converter",
+      "./version-control-system",
+      "./sync-performance-optimizer",
+      "./incremental-sync-algorithm"
+    ],
+    "sync/error-classifier.ts": [],
+    "sync/fault-tolerant-rule-chain.ts": [
+      "../optimized-cloud-sync"
+    ],
+    "sync/input-validator.ts": [],
+    "sync/integration-manager.ts": [
+      "./multi-level-queue",
+      "./data-change-listener",
+      "./queue-persistence",
+      "./performance-monitoring"
+    ],
+    "sync/intelligent-cache-system.ts": [
+      "../database",
+      "../network-state-detector",
+      "./sync-performance-optimizer"
+    ],
+    "sync/memory-benchmark.ts": [
+      "./memory-usage-optimizer",
+      "./object-pool-manager",
+      "./memory-leak-detector"
+    ],
+    "sync/memory-leak-detector.ts": [
+      "./memory-usage-optimizer"
+    ],
+    "sync/memory-optimization-integration.ts": [
+      "./memory-usage-optimizer",
+      "./object-pool-manager",
+      "./memory-leak-detector",
+      "./memory-benchmark"
+    ],
+    "sync/memory-optimization.test.ts": [
+      "./memory-usage-optimizer",
+      "./object-pool-manager",
+      "./memory-leak-detector",
+      "./memory-benchmark",
+      "./memory-optimization-integration"
+    ],
+    "sync/memory-usage-optimizer.ts": [],
+    "sync/multi-level-queue.ts": [
+      "./database-unified",
+      "./network-manager",
+      "./conflict-resolver"
+    ],
+    "sync/network-bandwidth-optimizer.ts": [
+      "../network-state-detector",
+      "../performance-monitor"
+    ],
+    "sync/network-optimization-integration.ts": [
+      "./network-request-optimizer",
+      "./request-priority-manager",
+      "./network-bandwidth-optimizer",
+      "../network-state-detector"
+    ],
+    "sync/network-request-optimizer.ts": [
+      "../network-state-detector",
+      "../performance-monitor",
+      "../cache-manager"
+    ],
+    "sync/object-pool-manager.ts": [
+      "./memory-usage-optimizer"
+    ],
+    "sync/optimized-cloud-sync.ts": [
+      "../supabase",
+      "../network-state-detector",
+      "../network-error-handler",
+      "./algorithms/incremental-sync-algorithm",
+      "./conflict/intelligent-conflict-resolver",
+      "./types/sync-types",
+      "../database-unified"
+    ],
+    "sync/performance-monitoring.ts": [],
+    "sync/query-optimization-integration.ts": [
+      "./database-query-optimizer",
+      "./connection-pool-manager",
+      "./query-performance-monitor",
+      "../supabase",
+      "../database-unified"
+    ],
+    "sync/query-performance-monitor.ts": [
+      "../database-unified",
+      "../supabase",
+      "./database-query-optimizer",
+      "./connection-pool-manager"
+    ],
+    "sync/queue-persistence.ts": [
+      "../database-unified",
+      "./multi-level-queue",
+      "../network-manager"
+    ],
+    "sync/queue-state-manager.ts": [
+      "../database-unified",
+      "../sync-queue"
+    ],
+    "sync/request-priority-manager.ts": [
+      "../network-state-detector",
+      "../performance-monitor"
+    ],
+    "sync/resource-manager.ts": [
+      "../sync-queue"
+    ],
+    "sync/sync-integration-service.ts": [
+      "../unified-sync-service-base",
+      "./unified-sync-service-enhanced",
+      "./incremental-sync-algorithm",
+      "./version-control-system",
+      "./sync-performance-optimizer",
+      "./sync-compatibility-adapter"
+    ],
+    "sync/sync-performance-optimizer.ts": [
+      "../network-state-detector",
+      "../database",
+      "../supabase",
+      "../sync/types/sync-types"
+    ],
+    "sync/sync-service-network-adapter.ts": [
+      "./unified-sync-service-base",
+      "./network-optimization-integration",
+      "../network-state-detector",
+      "../supabase"
+    ],
+    "sync/sync-usage-examples.ts": [
+      "./sync-integration-service",
+      "./incremental-sync-algorithm",
+      "./version-control-system",
+      "./sync-performance-optimizer",
+      "./sync-compatibility-adapter"
+    ],
+    "sync/types/sync-types.ts": [],
+    "sync/unified-sync-service-enhanced.ts": [
+      "../supabase",
+      "../database",
+      "../network-state-detector",
+      "../local-operation",
+      "../offline-manager",
+      "../sync-queue",
+      "../data-converter",
+      "./incremental-sync-algorithm",
+      "./version-control-system",
+      "./sync-performance-optimizer"
+    ],
+    "sync/version-control-system.ts": [
+      "../database",
+      "../supabase",
+      "../network-state-detector",
+      "./incremental-sync-algorithm"
+    ],
+    "sync-diagnostics.ts": [
+      "./event-system",
+      "./network-manager",
+      "./sync-queue",
+      "./conflict-resolver",
+      "./database",
+      "./network-manager"
+    ],
+    "sync-error-integrator.ts": [],
+    "sync-error-recovery.ts": [
+      "./database",
+      "./database"
+    ],
+    "sync-initialization-utils.ts": [
+      "./unified-sync-service"
+    ],
+    "sync-integration.ts": [
+      "./unified-sync-service",
+      "./sync-queue",
+      "./network-manager",
+      "./conflict-resolver"
+    ],
+    "sync-migration-helper.ts": [
+      "./unified-sync-service",
+      "./simple-high-performance-sync-service",
+      "./database"
+    ],
+    "sync-orchestrator.ts": [
+      "../types/database",
+      "./network-manager",
+      "./conflict-resolution-engine",
+      "./conflict-resolver",
+      "./offline-manager",
+      "./event-system",
+      "./sync-error-integrator",
+      "./sync-queue"
+    ],
+    "sync-performance-optimizer.ts": [],
+    "sync-performance-test.ts": [
+      "./simple-high-performance-sync-service",
+      "./unified-sync-service",
+      "./database"
+    ],
+    "sync-queue.ts": [
+      "./database-unified",
+      "./local-operation",
+      "./conflict-resolution-engine",
+      "./conflict-resolver",
+      "./network-manager",
+      "./sync-error-integrator",
+      "./sync-error-recovery"
+    ],
+    "sync-validation-suite.ts": [
+      "./unified-sync-service",
+      "./sync-diagnostics",
+      "./network-manager",
+      "./database",
+      "./conflict-resolver",
+      "./event-system",
+      "./auth",
+      "./database",
+      "./database"
+    ],
+    "sync-validation.ts": [
+      "./database",
+      "./auth",
+      "./supabase",
+      "./data-protection",
+      "./event-system"
+    ],
+    "ui/conflict-ui-service.ts": [],
+    "ui/performance-monitor.ts": [],
+    "unified-error-handler.ts": [
+      "./storage-adapter"
+    ],
+    "unified-sync-service-base.ts": [
+      "./supabase",
+      "./database",
+      "./network-state-detector",
+      "./local-operation",
+      "./offline-manager",
+      "./sync-queue",
+      "./data-converter",
+      "./sync/sync-performance-optimizer",
+      "./sync/conflict-state-manager",
+      "./sync/conflict-diagnostic-tools",
+      "./sync/conflict-storage-optimizer",
+      "./sync/conflict-management-test-suite"
+    ],
+    "unified-sync-service-enhanced.ts": [
+      "./supabase",
+      "./database",
+      "./sync-queue",
+      "./network-manager",
+      "./conflict-resolver",
+      "./data-sync-service",
+      "./data-converter",
+      "./local-operation",
+      "./event-system",
+      "./sync-validation",
+      "./auth",
+      "./database"
+    ],
+    "unified-sync-service.ts": [
+      "./supabase",
+      "./database",
+      "./sync-queue",
+      "./network-manager",
+      "./conflict-resolver",
+      "./data-sync-service",
+      "./data-converter",
+      "./local-operation",
+      "./event-system",
+      "./sync-validation",
+      "./auth",
+      "./retry-manager",
+      "./error-handler",
+      "./database"
+    ],
+    "universal-storage-adapter.ts": [],
+    "upload-queue-manager.ts": [
+      "./intelligent-batch-upload",
+      "./network-state-detector",
+      "./data-compression-optimizer"
+    ]
+  },
+  "reverseDependencyGraph": {
+    "database-unified.ts": [
+      "advanced-cache.ts",
+      "comprehensive-performance-monitor.ts",
+      "core/backup/backup-core.service.ts",
+      "data-integrity-service.ts",
+      "data-migration-tool.ts",
+      "data-validator.ts",
+      "error-handling/unified-error-handler.ts",
+      "local-operation-isolation.ts",
+      "local-operation-service.ts",
+      "migration-unified.ts",
+      "multilevel-cache-service.ts",
+      "offline-manager.ts",
+      "optimized-batch-operation-service.ts",
+      "optimized-query-service.ts",
+      "performance-optimization-implementation-plan.ts",
+      "performance-tester.ts",
+      "query-optimizer.ts",
+      "query-performance-enhanced.ts",
+      "query-performance.ts",
+      "realtime/smart-realtime-manager.ts",
+      "realtime/supabase-realtime-listener.ts",
+      "small-dataset-controller.ts",
+      "sync/conflict-resolution-engine/unified-conflict-resolution-engine.ts",
+      "sync/conflict-resolution-engine/unified-conflict-resolution-engine.ts",
+      "sync/conflict-state-manager.ts",
+      "sync/connection-pool-manager.ts",
+      "sync/data-change-listener.ts",
+      "sync/database-query-optimizer.ts",
+      "sync/enhanced-database-optimizer.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/optimized-cloud-sync.ts",
+      "sync/query-optimization-integration.ts",
+      "sync/query-performance-monitor.ts",
+      "sync/queue-persistence.ts",
+      "sync/queue-state-manager.ts",
+      "sync-queue.ts"
+    ],
+    "api-compat-layer/base-adapter.ts": [
+      "api-compat-layer/auth-service-adapter.ts",
+      "api-compat-layer/database-adapter.ts",
+      "api-compat-layer/index.ts"
+    ],
+    "auth.ts": [
+      "api-compat-layer/auth-service-adapter.ts",
+      "api-compat-layer/integration.ts",
+      "app-init-enhanced.ts",
+      "app-init.ts",
+      "auth-debug.ts",
+      "consistency-monitor.ts",
+      "data-consistency-checker.ts",
+      "data-protection.ts",
+      "database-performance-monitor.ts",
+      "database.ts",
+      "debug-system-manager.ts",
+      "file-system.ts",
+      "simple-high-performance-sync-service.ts",
+      "smart-error-handler.ts",
+      "sync-validation-suite.ts",
+      "sync-validation.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "api-compat-layer/version-manager.ts": [
+      "api-compat-layer/auth-service-adapter.ts",
+      "api-compat-layer/base-adapter.ts",
+      "api-compat-layer/database-adapter.ts",
+      "api-compat-layer/index.ts",
+      "api-compat-layer/integration.ts"
+    ],
+    "database.ts": [
+      "api-compat-layer/database-adapter.ts",
+      "api-compat-layer/integration.ts",
+      "app-init-enhanced.ts",
+      "app-init.ts",
+      "cloud-sync.ts",
+      "conflict-resolution-engine.ts",
+      "conflict-resolver.ts",
+      "data-consistency-checker.ts",
+      "data-consistency-validation.ts",
+      "data-consistency-validator.ts",
+      "data-protection.ts",
+      "data-security.ts",
+      "data-sync-service.ts",
+      "database-performance-monitor.ts",
+      "enhanced-conflict-detection.ts",
+      "file-system.ts",
+      "indexeddb-watcher.ts",
+      "intelligent-batch-upload.ts",
+      "intelligent-data-cache.ts",
+      "local-operation.ts",
+      "migration.ts",
+      "optimized-batch-operations.ts",
+      "optimized-cloud-sync.ts",
+      "simple-high-performance-sync-service.ts",
+      "sync/cache-integration-service.ts",
+      "sync/conflict-resolution-engine/conflict-detector.ts",
+      "sync/conflict-storage-optimizer.ts",
+      "sync/intelligent-cache-system.ts",
+      "sync/sync-performance-optimizer.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync/version-control-system.ts",
+      "sync-diagnostics.ts",
+      "sync-error-recovery.ts",
+      "sync-error-recovery.ts",
+      "sync-migration-helper.ts",
+      "sync-performance-test.ts",
+      "sync-validation-suite.ts",
+      "sync-validation-suite.ts",
+      "sync-validation-suite.ts",
+      "sync-validation.ts",
+      "unified-sync-service-base.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts",
+      "unified-sync-service.ts"
+    ],
+    "api-compat-layer/auth-service-adapter.ts": [
+      "api-compat-layer/index.ts"
+    ],
+    "api-compat-layer/database-adapter.ts": [
+      "api-compat-layer/index.ts"
+    ],
+    "api-compat-layer/index.ts": [
+      "api-compat-layer/integration.ts"
+    ],
+    "unified-sync-service.ts": [
+      "api-compat-layer/integration.ts",
+      "app-init.ts",
+      "auth-debug.ts",
+      "sync-initialization-utils.ts",
+      "sync-integration.ts",
+      "sync-migration-helper.ts",
+      "sync-performance-test.ts",
+      "sync-validation-suite.ts"
+    ],
+    "api-compat-layer/types.ts": [
+      "api-compat-layer/version-manager.ts"
+    ],
+    "unified-sync-service-enhanced.ts": [
+      "app-init-enhanced.ts"
+    ],
+    "migration.ts": [
+      "app-init-enhanced.ts",
+      "app-init.ts"
+    ],
+    "file-system.ts": [
+      "app-init-enhanced.ts",
+      "app-init.ts",
+      "core/backup/backup-core.service.ts",
+      "data-migration-tool.ts",
+      "migration.ts"
+    ],
+    "service-factory-enhanced.ts": [
+      "app-init-enhanced.ts"
+    ],
+    "sync-initialization-utils.ts": [
+      "app-init-enhanced.ts",
+      "app-init.ts"
+    ],
+    "service-factory.ts": [
+      "app-init.ts"
+    ],
+    "event-system.ts": [
+      "auth-debug.ts",
+      "auth.ts",
+      "enhanced-conflict-detection.ts",
+      "error-handler.ts",
+      "intelligent-data-cache.ts",
+      "network-aware-handler.ts",
+      "optimized-batch-operations.ts",
+      "retry-manager.ts",
+      "sync-diagnostics.ts",
+      "sync-orchestrator.ts",
+      "sync-validation-suite.ts",
+      "sync-validation.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "supabase.ts": [
+      "auth-debug.ts",
+      "auth.ts",
+      "cloud-sync.ts",
+      "data-consistency-checker.ts",
+      "data-consistency-validator.ts",
+      "data-migration-tool.ts",
+      "data-sync-service.ts",
+      "data-watcher.ts",
+      "database.ts",
+      "enhanced-conflict-detection.ts",
+      "intelligent-batch-upload.ts",
+      "optimized-batch-operations.ts",
+      "optimized-cloud-sync.ts",
+      "realtime/supabase-realtime-listener.ts",
+      "simple-high-performance-sync-service.ts",
+      "supabase-test.ts",
+      "supabase-watcher.ts",
+      "sync/connection-pool-manager.ts",
+      "sync/connection-pool-manager.ts",
+      "sync/database-query-optimizer.ts",
+      "sync/enhanced-database-optimizer.ts",
+      "sync/optimized-cloud-sync.ts",
+      "sync/query-optimization-integration.ts",
+      "sync/query-performance-monitor.ts",
+      "sync/sync-performance-optimizer.ts",
+      "sync/sync-service-network-adapter.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync/version-control-system.ts",
+      "sync-validation.ts",
+      "unified-sync-service-base.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "network-monitor.ts": [
+      "batch-upload-optimizer.ts",
+      "consistency-monitor.ts",
+      "data-consistency-checker.ts",
+      "database-network-adapter.ts",
+      "enhanced-conflict-detection.ts",
+      "intelligent-data-cache.ts",
+      "network-adapter.ts",
+      "network-compat.ts",
+      "network-error-handler.ts",
+      "network-state-detector.ts",
+      "optimized-batch-operations.ts",
+      "optimized-cloud-sync.ts"
+    ],
+    "local-operation.ts": [
+      "batch-upload-optimizer.ts",
+      "cloud-sync.ts",
+      "local-operation-isolation.ts",
+      "local-operation-service.ts",
+      "local-operation-service.ts",
+      "offline-manager.ts",
+      "optimized-cloud-sync.ts",
+      "performance-tester.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync-queue.ts",
+      "unified-sync-service-base.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "optimized-cloud-sync.ts": [
+      "batch-upload-optimizer.ts",
+      "conflict-resolution-engine.ts",
+      "network-adapter.ts",
+      "sync/conflict-resolution-engine/unified-conflict-resolution-engine.ts",
+      "sync/enhanced-conflict-detector.ts",
+      "sync/fault-tolerant-rule-chain.ts"
+    ],
+    "universal-storage-adapter.ts": [
+      "cardall-provider-adapter.ts",
+      "data-recovery.ts",
+      "storage-monitor.ts"
+    ],
+    "data-migration.service.ts": [
+      "cardall-provider-adapter.ts",
+      "migration-validator.ts"
+    ],
+    "migration-validator.ts": [
+      "cardall-provider-adapter.ts"
+    ],
+    "unified-error-handler.ts": [
+      "cardall-provider-adapter.ts"
+    ],
+    "performance-monitor.ts": [
+      "cardall-provider-adapter.ts",
+      "performance-manager.ts",
+      "sync/network-bandwidth-optimizer.ts",
+      "sync/network-request-optimizer.ts",
+      "sync/request-priority-manager.ts"
+    ],
+    "storage-adapter.ts": [
+      "cardall-provider-adapter.ts",
+      "data-migration.service.ts",
+      "performance-monitor.ts",
+      "unified-error-handler.ts"
+    ],
+    "data-watcher.ts": [
+      "change-processor.ts",
+      "indexeddb-watcher.ts",
+      "localstorage-watcher.ts",
+      "monitoring-sync-integration.ts",
+      "performance-manager.ts",
+      "supabase-watcher.ts"
+    ],
+    "background-task-manager.ts": [
+      "cloud-sync-service.ts"
+    ],
+    "network-manager.ts": [
+      "cloud-sync.ts",
+      "error-handler.ts",
+      "local-operation-isolation.ts",
+      "network-aware-handler.ts",
+      "network-compat.ts",
+      "retry-manager.ts",
+      "sync/data-change-listener.ts",
+      "sync/queue-persistence.ts",
+      "sync-diagnostics.ts",
+      "sync-diagnostics.ts",
+      "sync-integration.ts",
+      "sync-orchestrator.ts",
+      "sync-queue.ts",
+      "sync-validation-suite.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "offline-manager.ts": [
+      "cloud-sync.ts",
+      "data-sync-service.ts",
+      "local-operation-isolation.ts",
+      "offline/enhanced-network-manager.ts",
+      "performance-tester.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync-orchestrator.ts",
+      "unified-sync-service-base.ts"
+    ],
+    "performance-monitoring.ts": [
+      "comprehensive-performance-monitor.ts",
+      "performance-network-integration.ts"
+    ],
+    "multilevel-cache-service.ts": [
+      "comprehensive-performance-monitor.ts",
+      "memory-leak-detection-service.ts",
+      "optimized-batch-operation-service.ts",
+      "optimized-query-service.ts"
+    ],
+    "optimized-query-service.ts": [
+      "comprehensive-performance-monitor.ts",
+      "memory-leak-detection-service.ts",
+      "optimized-batch-operation-service.ts"
+    ],
+    "optimized-batch-operation-service.ts": [
+      "comprehensive-performance-monitor.ts",
+      "memory-leak-detection-service.ts"
+    ],
+    "memory-leak-detection-service.ts": [
+      "comprehensive-performance-monitor.ts",
+      "performance-manager.ts"
+    ],
+    "conflict-resolution-engine.ts": [
+      "conflict-resolver.ts",
+      "data-sync-service.ts",
+      "sync-orchestrator.ts",
+      "sync-queue.ts"
+    ],
+    "data-consistency-checker.ts": [
+      "consistency-monitor.ts"
+    ],
+    "sync-integration.ts": [
+      "consistency-monitor.ts"
+    ],
+    "data-validator.ts": [
+      "core/backup/backup-core.service.ts",
+      "data-integrity-service.ts"
+    ],
+    "core/backup/backup-core.service.ts": [
+      "core/backup/backup-scheduler.service.ts",
+      "data-integrity-service.ts"
+    ],
+    "intelligent-batch-upload.ts": [
+      "data-compression-optimizer.ts",
+      "performance-monitoring-service.ts",
+      "resumable-upload-service.ts",
+      "upload-queue-manager.ts"
+    ],
+    "network-state-detector.ts": [
+      "data-compression-optimizer.ts",
+      "database-network-adapter.ts",
+      "error-handling/error-handling-service.ts",
+      "error-handling/error-monitoring-service.ts",
+      "error-handling/unified-error-handler.ts",
+      "intelligent-batch-upload.ts",
+      "network-compat.ts",
+      "network-error-handler.ts",
+      "offline/enhanced-network-manager.ts",
+      "performance-monitoring-service.ts",
+      "performance-network-integration.ts",
+      "realtime/smart-realtime-manager.ts",
+      "realtime/supabase-realtime-listener.ts",
+      "resumable-upload-service.ts",
+      "storage-monitor.ts",
+      "sync/cache-integration-service.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/intelligent-cache-system.ts",
+      "sync/network-bandwidth-optimizer.ts",
+      "sync/network-optimization-integration.ts",
+      "sync/network-request-optimizer.ts",
+      "sync/optimized-cloud-sync.ts",
+      "sync/request-priority-manager.ts",
+      "sync/sync-performance-optimizer.ts",
+      "sync/sync-service-network-adapter.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync/version-control-system.ts",
+      "unified-sync-service-base.ts",
+      "upload-queue-manager.ts"
+    ],
+    "conflict-resolver.ts": [
+      "data-consistency-validation.ts",
+      "data-consistency-validation.ts",
+      "sync-diagnostics.ts",
+      "sync-integration.ts",
+      "sync-orchestrator.ts",
+      "sync-queue.ts",
+      "sync-validation-suite.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "data-converter.ts": [
+      "data-consistency-validator.ts",
+      "data-sync-service.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "unified-sync-service-base.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "data-converter-adapter.ts": [
+      "data-migration.service.ts",
+      "migration-validator.ts"
+    ],
+    "storage-monitor.ts": [
+      "data-recovery.ts"
+    ],
+    "sync-queue.ts": [
+      "data-sync-service.ts",
+      "data-sync-service.ts",
+      "debug-system-manager.ts",
+      "network-adapter.ts",
+      "offline-manager.ts",
+      "performance-tester.ts",
+      "smart-error-handler.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/queue-state-manager.ts",
+      "sync/resource-manager.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "sync-diagnostics.ts",
+      "sync-integration.ts",
+      "sync-orchestrator.ts",
+      "unified-sync-service-base.ts",
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "data-consistency-validator.ts": [
+      "data-sync-service.ts",
+      "database-performance-monitor.ts"
+    ],
+    "network-error-handler.ts": [
+      "database-network-adapter.ts",
+      "error-handling/unified-error-handler.ts",
+      "sync/optimized-cloud-sync.ts"
+    ],
+    "debug-system.ts": [
+      "debug-system-manager.ts",
+      "smart-error-handler.ts"
+    ],
+    "sync-diagnostics.ts": [
+      "debug-system-manager.ts",
+      "smart-error-handler.ts",
+      "sync-validation-suite.ts"
+    ],
+    "smart-error-handler.ts": [
+      "debug-system-manager.ts"
+    ],
+    "cloud-sync.ts": [
+      "debug-system-manager.ts",
+      "intelligent-batch-upload.ts",
+      "smart-error-handler.ts",
+      "smart-error-handler.ts"
+    ],
+    "error-handling/error-monitoring-service.ts": [
+      "error-handling/error-handling-service.ts",
+      "error-handling/recovery-strategy-manager.ts",
+      "error-handling/self-healing-framework.ts",
+      "storage-monitor.ts"
+    ],
+    "error-handling/recovery-strategy-manager.ts": [
+      "error-handling/error-handling-service.ts",
+      "error-handling/self-healing-framework.ts"
+    ],
+    "error-handling/self-healing-framework.ts": [
+      "error-handling/error-handling-service.ts"
+    ],
+    "error-handling/error-handling-service.ts": [
+      "error-handling/error-handling-test.ts",
+      "error-handling/index.ts"
+    ],
+    "error-handling/types.ts": [
+      "error-handling/error-handling-test.ts"
+    ],
+    "error-handling/unified-error-handler.ts": [
+      "error-handling/error-monitoring-service.ts",
+      "error-handling/index.ts"
+    ],
+    "sync/conflict/intelligent-conflict-resolver.ts": [
+      "error-handling/unified-error-handler.ts",
+      "realtime/realtime-system-integration.ts",
+      "realtime/smart-realtime-manager.ts",
+      "realtime/supabase-realtime-listener.ts",
+      "sync/conflict/optimized-conflict-resolver.test.ts",
+      "sync/conflict/performance-benchmark.ts",
+      "sync/conflict/performance-benchmark.ts",
+      "sync/optimized-cloud-sync.ts"
+    ],
+    "file-system-simple.ts": [
+      "image-processor.ts"
+    ],
+    "enhanced-version-comparator.ts": [
+      "intelligent-merge-strategy.ts"
+    ],
+    "supabase-client.ts": [
+      "local-operation-isolation.ts",
+      "supabase.ts"
+    ],
+    "../types/card.ts": [
+      "local-operation.ts"
+    ],
+    "monitoring/unified-metrics-collector.ts": [
+      "monitoring/monitoring-service.ts"
+    ],
+    "monitoring/intelligent-alert-engine.ts": [
+      "monitoring/monitoring-service.ts"
+    ],
+    "../utils/performance-test-utils.ts": [
+      "monitoring/monitoring-service.ts"
+    ],
+    "realtime/monitoring-system.ts": [
+      "monitoring/unified-metrics-collector.ts"
+    ],
+    "performance-monitoring-service.ts": [
+      "monitoring/unified-metrics-collector.ts",
+      "storage-monitor.ts"
+    ],
+    "realtime/realtime-performance-optimizer.ts": [
+      "monitoring/unified-metrics-collector.ts",
+      "realtime/monitoring-system.ts",
+      "realtime/realtime-init-example.ts",
+      "realtime/realtime-system-integration.ts"
+    ],
+    "change-processor.ts": [
+      "monitoring-sync-integration.ts",
+      "performance-manager.ts"
+    ],
+    "performance-manager.ts": [
+      "monitoring-sync-integration.ts"
+    ],
+    "event-bus-manager.ts": [
+      "monitoring-sync-integration.ts"
+    ],
+    "advanced-cache.ts": [
+      "multilevel-cache-service.ts",
+      "offline-manager.ts",
+      "performance-tester.ts",
+      "sync/enhanced-offline-manager.ts"
+    ],
+    "error-handler.ts": [
+      "network-aware-handler.ts",
+      "retry-manager.ts",
+      "unified-sync-service.ts"
+    ],
+    "retry-manager.ts": [
+      "network-aware-handler.ts",
+      "unified-sync-service.ts"
+    ],
+    "network-detector.ts": [
+      "network-compat.ts"
+    ],
+    "offline/enhanced-network-manager.ts": [
+      "offline/enhanced-local-storage-manager.ts",
+      "offline/intelligent-conflict-resolver.ts",
+      "offline/offline-functionality-wrapper.ts",
+      "offline/offline-operation-queue.ts",
+      "offline/offline-system-controller.ts",
+      "offline/offline-system-integration-test.ts"
+    ],
+    "../types/offline-architecture.ts": [
+      "offline/enhanced-local-storage-manager.ts",
+      "offline/offline-system-controller.ts"
+    ],
+    "../types/offline.ts": [
+      "offline/enhanced-local-storage-manager.ts",
+      "offline/intelligent-conflict-resolver.ts",
+      "offline/intelligent-conflict-resolver.ts",
+      "offline/offline-functionality-wrapper.ts",
+      "offline/offline-operation-queue.ts",
+      "offline/offline-operation-queue.ts",
+      "offline/offline-system-controller.ts"
+    ],
+    "offline/enhanced-local-storage-manager.ts": [
+      "offline/offline-functionality-wrapper.ts",
+      "offline/offline-operation-queue.ts",
+      "offline/offline-system-controller.ts",
+      "offline/offline-system-integration-test.ts"
+    ],
+    "offline/offline-operation-queue.ts": [
+      "offline/offline-functionality-wrapper.ts",
+      "offline/offline-system-controller.ts",
+      "offline/offline-system-integration-test.ts"
+    ],
+    "offline/intelligent-conflict-resolver.ts": [
+      "offline/offline-functionality-wrapper.ts",
+      "offline/offline-system-controller.ts",
+      "offline/offline-system-integration-test.ts"
+    ],
+    "offline/offline-functionality-wrapper.ts": [
+      "offline/offline-system-controller.ts",
+      "offline/offline-system-integration-test.ts"
+    ],
+    "offline/offline-system-controller.ts": [
+      "offline/offline-system-integration-test.ts"
+    ],
+    "local-operation-service.ts": [
+      "optimized-batch-operation-service.ts"
+    ],
+    "performance-optimizer.ts": [
+      "performance-initializer.ts",
+      "performance-test-suite.ts"
+    ],
+    "query-optimizer.ts": [
+      "performance-initializer.ts",
+      "performance-optimizer.ts",
+      "performance-test-suite.ts",
+      "performance-tester.ts"
+    ],
+    "performance-test-suite.ts": [
+      "performance-initializer.ts"
+    ],
+    "upload-queue-manager.ts": [
+      "performance-monitoring-service.ts",
+      "resumable-upload-service.ts"
+    ],
+    "resumable-upload-service.ts": [
+      "performance-monitoring-service.ts"
+    ],
+    "data-compression-optimizer.ts": [
+      "performance-monitoring-service.ts",
+      "resumable-upload-service.ts",
+      "upload-queue-manager.ts"
+    ],
+    "sync/network-optimization-integration.ts": [
+      "performance-network-integration.ts",
+      "sync/sync-service-network-adapter.ts"
+    ],
+    "memory-optimization-manager.ts": [
+      "performance-optimization-implementation-plan.ts"
+    ],
+    "advanced-memory-leak-detector.ts": [
+      "performance-optimization-implementation-plan.ts"
+    ],
+    "smart-index-manager.ts": [
+      "performance-optimization-implementation-plan.ts"
+    ],
+    "intelligent-network-cache.ts": [
+      "performance-optimization-implementation-plan.ts"
+    ],
+    "persistence/enhanced-persistence-manager.ts": [
+      "persistence/consistency-validator.ts",
+      "persistence/state-cleaner.ts"
+    ],
+    "realtime/realtime-system-integration.ts": [
+      "realtime/monitoring-system.ts",
+      "realtime/multi-device-sync.ts",
+      "realtime/realtime-init-example.ts"
+    ],
+    "realtime/realtime-connection-manager.ts": [
+      "realtime/monitoring-system.ts",
+      "realtime/realtime-init-example.ts",
+      "realtime/realtime-system-integration.ts"
+    ],
+    "realtime/supabase-realtime-listener.ts": [
+      "realtime/multi-device-sync.ts",
+      "realtime/realtime-performance-optimizer.ts",
+      "realtime/realtime-system-integration.ts",
+      "realtime/smart-realtime-manager.ts"
+    ],
+    "sync/optimized-cloud-sync.ts": [
+      "realtime/realtime-connection-manager.ts",
+      "realtime/realtime-init-example.ts",
+      "realtime/realtime-performance-optimizer.ts",
+      "realtime/realtime-system-integration.ts",
+      "realtime/smart-realtime-manager.ts"
+    ],
+    "realtime/smart-realtime-manager.ts": [
+      "realtime/realtime-performance-optimizer.ts",
+      "realtime/realtime-system-integration.ts"
+    ],
+    "sync/types/sync-types.ts": [
+      "realtime/supabase-realtime-listener.ts",
+      "sync/conflict/conflict-pattern-analyzer.test.ts",
+      "sync/conflict/conflict-pattern-analyzer.ts",
+      "sync/conflict/intelligent-conflict-resolver.ts",
+      "sync/conflict/optimized-conflict-resolver.test.ts",
+      "sync/conflict/optimized-conflict-resolver.ts",
+      "sync/conflict/performance-benchmark.ts",
+      "sync/conflict/strategy-performance-monitor.test.ts",
+      "sync/conflict/strategy-performance-monitor.ts",
+      "sync/optimized-cloud-sync.ts",
+      "sync/sync-performance-optimizer.ts"
+    ],
+    "small-dataset-optimizer.ts": [
+      "small-dataset-controller.ts"
+    ],
+    "small-dataset-cache.ts": [
+      "small-dataset-controller.ts"
+    ],
+    "../utils/lightweight-query-optimizer.ts": [
+      "small-dataset-controller.ts"
+    ],
+    "../services/database-unified.ts": [
+      "small-dataset-optimizer.ts"
+    ],
+    "data-integrity-service.ts": [
+      "storage-monitor.ts"
+    ],
+    "sync/intelligent-cache-system.ts": [
+      "sync/cache-integration-service.ts",
+      "sync/cache-performance-tester.ts",
+      "sync/cache-performance-tester.ts",
+      "sync/cache-strategies.ts"
+    ],
+    "sync/unified-sync-service-enhanced.ts": [
+      "sync/cache-integration-service.ts",
+      "sync/sync-integration-service.ts"
+    ],
+    "sync/sync-performance-optimizer.ts": [
+      "sync/cache-integration-service.ts",
+      "sync/enhanced-offline-manager.ts",
+      "sync/intelligent-cache-system.ts",
+      "sync/sync-integration-service.ts",
+      "sync/sync-usage-examples.ts",
+      "sync/unified-sync-service-enhanced.ts",
+      "unified-sync-service-base.ts"
+    ],
+    "sync/cache-strategies.ts": [
+      "sync/cache-performance-tester.ts"
+    ],
+    "sync/conflict/conflict-pattern-analyzer.ts": [
+      "sync/conflict/conflict-pattern-analyzer.test.ts",
+      "sync/conflict/performance-benchmark.ts"
+    ],
+    "sync/conflict/optimized-conflict-resolver.ts": [
+      "sync/conflict/conflict-pattern-analyzer.test.ts",
+      "sync/conflict/conflict-pattern-analyzer.ts",
+      "sync/conflict/optimized-conflict-resolver.test.ts",
+      "sync/conflict/performance-benchmark.ts",
+      "sync/conflict/strategy-performance-monitor.test.ts",
+      "sync/conflict/strategy-performance-monitor.test.ts",
+      "sync/conflict/strategy-performance-monitor.ts"
+    ],
+    "sync/conflict/strategy-performance-monitor.ts": [
+      "sync/conflict/conflict-pattern-analyzer.test.ts",
+      "sync/conflict/conflict-pattern-analyzer.ts",
+      "sync/conflict/performance-benchmark.ts",
+      "sync/conflict/strategy-performance-monitor.test.ts"
+    ],
+    "../types/conflict.ts": [
+      "sync/conflict/optimized-conflict-resolver.ts"
+    ],
+    "sync/conflict-state-manager.ts": [
+      "sync/conflict-diagnostic-tools.ts",
+      "sync/conflict-management-test-suite.ts",
+      "sync/conflict-storage-optimizer.ts",
+      "unified-sync-service-base.ts"
+    ],
+    "event-bus.ts": [
+      "sync/conflict-diagnostic-tools.ts",
+      "sync/conflict-state-manager.ts"
+    ],
+    "sync/conflict-diagnostic-tools.ts": [
+      "sync/conflict-management-test-suite.ts",
+      "unified-sync-service-base.ts"
+    ],
+    "sync/conflict-storage-optimizer.ts": [
+      "sync/conflict-management-test-suite.ts",
+      "unified-sync-service-base.ts"
+    ],
+    "sync/conflict-resolution-engine/unified-conflict-resolution-engine.ts": [
+      "sync/conflict-management-test-suite.ts",
+      "sync/conflict-resolution-engine/performance.test.ts",
+      "sync/conflict-state-manager.ts"
+    ],
+    "sync/conflict-resolution-engine/conflict-detector.ts": [
+      "sync/conflict-resolution-engine/unified-conflict-resolution-engine.test.ts"
+    ],
+    "sync/conflict-resolution-engine/conflict-resolver.ts": [
+      "sync/conflict-resolution-engine/unified-conflict-resolution-engine.test.ts"
+    ],
+    "sync/multi-level-queue.ts": [
+      "sync/data-change-listener.ts",
+      "sync/integration-manager.ts",
+      "sync/queue-persistence.ts"
+    ],
+    "sync/input-validator.ts": [
+      "sync/enhanced-conflict-detector.ts"
+    ],
+    "sync/database-query-optimizer.ts": [
+      "sync/enhanced-database-optimizer.ts",
+      "sync/query-optimization-integration.ts",
+      "sync/query-performance-monitor.ts"
+    ],
+    "sync/query-performance-monitor.ts": [
+      "sync/enhanced-database-optimizer.ts",
+      "sync/query-optimization-integration.ts"
+    ],
+    "sync/connection-pool-manager.ts": [
+      "sync/enhanced-database-optimizer.ts",
+      "sync/query-optimization-integration.ts",
+      "sync/query-performance-monitor.ts"
+    ],
+    "sync/version-control-system.ts": [
+      "sync/enhanced-offline-manager.ts",
+      "sync/sync-integration-service.ts",
+      "sync/sync-usage-examples.ts",
+      "sync/unified-sync-service-enhanced.ts"
+    ],
+    "sync/data-change-listener.ts": [
+      "sync/integration-manager.ts"
+    ],
+    "sync/queue-persistence.ts": [
+      "sync/integration-manager.ts"
+    ],
+    "sync/performance-monitoring.ts": [
+      "sync/integration-manager.ts"
+    ],
+    "sync/memory-usage-optimizer.ts": [
+      "sync/memory-benchmark.ts",
+      "sync/memory-leak-detector.ts",
+      "sync/memory-optimization-integration.ts",
+      "sync/memory-optimization.test.ts",
+      "sync/object-pool-manager.ts"
+    ],
+    "sync/object-pool-manager.ts": [
+      "sync/memory-benchmark.ts",
+      "sync/memory-optimization-integration.ts",
+      "sync/memory-optimization.test.ts"
+    ],
+    "sync/memory-leak-detector.ts": [
+      "sync/memory-benchmark.ts",
+      "sync/memory-optimization-integration.ts",
+      "sync/memory-optimization.test.ts"
+    ],
+    "sync/memory-benchmark.ts": [
+      "sync/memory-optimization-integration.ts",
+      "sync/memory-optimization.test.ts"
+    ],
+    "sync/memory-optimization-integration.ts": [
+      "sync/memory-optimization.test.ts"
+    ],
+    "sync/network-request-optimizer.ts": [
+      "sync/network-optimization-integration.ts"
+    ],
+    "sync/request-priority-manager.ts": [
+      "sync/network-optimization-integration.ts"
+    ],
+    "sync/network-bandwidth-optimizer.ts": [
+      "sync/network-optimization-integration.ts"
+    ],
+    "unified-sync-service-base.ts": [
+      "sync/sync-integration-service.ts"
+    ],
+    "sync/sync-integration-service.ts": [
+      "sync/sync-usage-examples.ts"
+    ],
+    "simple-high-performance-sync-service.ts": [
+      "sync-migration-helper.ts",
+      "sync-performance-test.ts"
+    ],
+    "sync-error-integrator.ts": [
+      "sync-orchestrator.ts",
+      "sync-queue.ts"
+    ],
+    "sync-error-recovery.ts": [
+      "sync-queue.ts"
+    ],
+    "data-protection.ts": [
+      "sync-validation.ts"
+    ],
+    "sync/conflict-management-test-suite.ts": [
+      "unified-sync-service-base.ts"
+    ],
+    "data-sync-service.ts": [
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ],
+    "sync-validation.ts": [
+      "unified-sync-service-enhanced.ts",
+      "unified-sync-service.ts"
+    ]
+  }
+}
