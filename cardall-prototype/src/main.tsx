@@ -4,6 +4,15 @@ import App from './App.tsx'
 import { AppInitialization } from './components/app-initialization'
 import { InitializationResult } from './services/app-init'
 
+// 开发环境下引入配置测试
+if (import.meta.env.DEV) {
+  import('./utils/config-test').then(module => {
+    console.log('🔧 配置测试模块已加载');
+  }).catch(error => {
+    console.error('❌ 配置测试模块加载失败:', error);
+  });
+}
+
 function AppRoot() {
   const [initializationState, setInitializationState] = useState<{
     isInitialized: boolean

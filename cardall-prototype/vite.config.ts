@@ -1,10 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // 加载环境变量
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
   plugins: [
     react(),
     VitePWA({
@@ -91,5 +95,13 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000
+  },
+  define: {
+    // 定义环境变量的类型，确保 TypeScript 类型安全
+    __ENABLE_CLOUD_SYNC__: env.VITE_ENABLE_CLOUD_SYNC === 'true',
+    __ENABLE_AUTH__: env.VITE_ENABLE_AUTH === 'true',
+    __ENABLE_REALTIME__: env.VITE_ENABLE_REALTIME === 'true',
+    __ENABLE_DEBUG_MODE__: env.VITE_ENABLE_DEBUG_MODE === 'true',
   }
+}
 })
