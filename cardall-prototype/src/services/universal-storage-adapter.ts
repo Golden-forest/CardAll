@@ -2,6 +2,7 @@ import { Card, CardFilter, ViewSettings } from '@/types/card'
 import { db, DbCard } from '@/services/database'
 import { secureStorage } from '@/utils/secure-storage'
 import { unifiedSyncService } from '@/services/unified-sync-service'
+import { AppConfig } from '@/config/app-config'
 import {
   StorageAdapter,
   StorageConfig,
@@ -71,8 +72,21 @@ export class UniversalStorageAdapter implements StorageAdapter {
   // 取消令牌支持
   private cancelToken: { cancelled: boolean; reason?: string } | null = null
 
+  // 同步服务引用（可为null）
+  private syncService: typeof unifiedSyncService | null = null
+
   constructor(config: StorageConfig = DEFAULT_STORAGE_CONFIG) {
     this.config = config
+
+    // 检查云端同步功能是否启用
+    if (!AppConfig.enableCloudSync) {
+      console.log('使用纯本地存储模式')
+      this.syncService = null  // 不初始化同步服务
+    } else {
+      console.log('云端同步功能已启用，初始化同步服务')
+      this.syncService = unifiedSyncService
+    }
+
     this.initializeStorageMode()
     this.setupEventListeners()
   }

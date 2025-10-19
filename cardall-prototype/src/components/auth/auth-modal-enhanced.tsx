@@ -5,13 +5,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  Loader2, 
-  Github, 
-  Mail, 
-  Lock, 
-  User, 
-  Eye, 
+import {
+  Loader2,
+  Github,
+  Mail,
+  Lock,
+  User,
+  Eye,
   EyeOff,
   ArrowLeft,
   CheckCircle,
@@ -20,6 +20,7 @@ import {
 import { authService, type AuthState } from '@/services/auth'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { UserAvatar } from '@/components/ui/user-avatar'
+import { AppConfig } from '@/config/app-config'
 
 interface AuthModalEnhancedProps {
   open: boolean
@@ -194,10 +195,12 @@ export function AuthModalEnhanced({ open, onOpenChange }: AuthModalEnhancedProps
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">{authState.user.username || '用户'}</h3>
                     <p className="text-sm text-muted-foreground">{authState.user.email}</p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <CheckCircle className="h-3 w-3 text-green-500" />
-                      <span className="text-xs text-green-600">云端同步已启用</span>
-                    </div>
+                    {AppConfig.enableCloudSync && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        <span className="text-xs text-green-600">云端同步已启用</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -205,19 +208,21 @@ export function AuthModalEnhanced({ open, onOpenChange }: AuthModalEnhancedProps
 
             {/* 操作按钮 */}
             <div className="space-y-3">
-              <Button 
-                onClick={handleSyncNow}
-                variant="outline" 
-                className="w-full h-12 rounded-2xl border-2 hover:bg-blue-50 transition-all duration-200"
-                disabled={authState.loading}
-              >
-                {authState.loading ? (
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                ) : (
-                  <CheckCircle className="h-5 w-5 mr-2 text-blue-500" />
-                )}
-                立即同步数据
-              </Button>
+              {AppConfig.enableCloudSync && (
+                <Button
+                  onClick={handleSyncNow}
+                  variant="outline"
+                  className="w-full h-12 rounded-2xl border-2 hover:bg-blue-50 transition-all duration-200"
+                  disabled={authState.loading}
+                >
+                  {authState.loading ? (
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircle className="h-5 w-5 mr-2 text-blue-500" />
+                  )}
+                  立即同步数据
+                </Button>
+              )}
               
               <Button 
                 onClick={handleLogout}
@@ -294,7 +299,7 @@ export function AuthModalEnhanced({ open, onOpenChange }: AuthModalEnhancedProps
 
       {/* 说明文字 */}
       <div className="text-xs text-muted-foreground text-center space-y-1 pt-4">
-        <p>登录后可享受云端同步功能</p>
+        {AppConfig.enableCloudSync && <p>登录后可享受云端同步功能</p>}
         <p>即使不登录也可正常使用本地功能</p>
       </div>
     </div>

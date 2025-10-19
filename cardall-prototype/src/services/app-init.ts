@@ -3,6 +3,7 @@ import { unifiedSyncService } from './unified-sync-service'
 import { migrationService } from './migration'
 import { fileSystemService } from './file-system'
 import { authService } from './auth'
+import { AppConfig } from '../config/app-config'
 
 export interface InitializationStatus {
   step: string
@@ -154,12 +155,24 @@ class AppInitializationService {
       })
 
       try {
-        // 设置认证服务到同步服务
-        unifiedSyncService.setAuthService(authService)
+        // 检查云端同步功能是否启用
+        if (!AppConfig.enableCloudSync) {
+          console.log('云端同步功能已禁用，跳过同步服务初始化')
+          this.updateStatus({
+            step: 'sync',
+            progress: 85,
+            message: '云端同步功能已禁用，使用本地模式',
+            isComplete: true,
+            hasError: false
+          })
+        } else {
+          // 设置认证服务到同步服务
+          unifiedSyncService.setAuthService(authService)
 
-        // 如果用户已登录，执行完整同步
-        if (authService.isAuthenticated()) {
-          await unifiedSyncService.performFullSync()
+          // 如果用户已登录，执行完整同步
+          if (authService.isAuthenticated()) {
+            await unifiedSyncService.performFullSync()
+          }
         }
       } catch (syncError) {
         console.error('同步服务初始化失败:', syncError)

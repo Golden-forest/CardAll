@@ -1,23 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { 
-  Cloud, 
-  CloudOff, 
-  RefreshCw, 
-  CheckCircle, 
-  AlertCircle, 
-  Loader2 
+import {
+  Cloud,
+  CloudOff,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Loader2
 } from 'lucide-react'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { authService } from '@/services/auth'
 import { useToast } from '@/hooks/use-toast'
+import { AppConfig } from '@/config/app-config'
 
 interface SyncStatusIndicatorProps {
   className?: string
 }
 
 export function SyncStatusIndicator({ className }: SyncStatusIndicatorProps) {
+  // 如果云端同步功能被禁用，则不渲染组件
+  if (!AppConfig.enableCloudSync) {
+    return null
+  }
+
   const [syncStatus, setSyncStatus] = useState<any>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)

@@ -6,6 +6,7 @@ import { Loader2, Github, Cloud, Shield, RefreshCw } from 'lucide-react'
 import { authService, type AuthState } from '@/services/auth'
 import { cloudSyncService } from '@/services/cloud-sync'
 import { UserAvatar } from '@/components/ui/user-avatar'
+import { AppConfig } from '@/config/app-config'
 
 interface AuthModalProps {
   open: boolean
@@ -70,27 +71,31 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Cloud className="h-4 w-4" />
-                  云端同步已启用
-                </div>
+                {AppConfig.enableCloudSync && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Cloud className="h-4 w-4" />
+                    云端同步已启用
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             <div className="flex gap-2">
-              <Button 
-                onClick={handleSyncNow}
-                variant="outline" 
-                className="flex-1"
-                disabled={authState.loading}
-              >
-                {authState.loading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                立即同步
-              </Button>
+              {AppConfig.enableCloudSync && (
+                <Button
+                  onClick={handleSyncNow}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={authState.loading}
+                >
+                  {authState.loading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  立即同步
+                </Button>
+              )}
               
               <Button 
                 onClick={handleLogout}

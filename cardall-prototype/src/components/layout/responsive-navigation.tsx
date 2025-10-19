@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useResponsive } from '@/hooks/use-responsive'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { 
-  Menu, 
-  X, 
-  Search, 
-  Plus, 
-  User, 
+import {
+  Menu,
+  X,
+  Search,
+  Plus,
+  User,
   LogIn,
   Settings,
   Bell,
@@ -18,6 +18,7 @@ import {
   Archive,
   Trash
 } from 'lucide-react'
+import { AppConfig } from '@/config/app-config'
 
 interface ResponsiveNavigationProps {
   user?: any
@@ -208,24 +209,28 @@ export function ResponsiveNavigation({
           </div>
         </div>
         
-        {user ? (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <User className="w-4 h-4 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.email}</p>
-              <p className="text-xs text-muted-foreground">已登录</p>
-            </div>
-            <Button variant="ghost" size="sm" onClick={onSignOut}>
-              <LogIn className="w-4 h-4" />
-            </Button>
-          </div>
-        ) : (
-          <Button onClick={onSignIn} className="w-full">
-            <LogIn className="w-4 h-4 mr-2" />
-            登录
-          </Button>
+        {AppConfig.enableAuth && (
+          <>
+            {user ? (
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">已登录</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={onSignOut}>
+                  <LogIn className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={onSignIn} className="w-full">
+                <LogIn className="w-4 h-4 mr-2" />
+                登录
+              </Button>
+            )}
+          </>
         )}
       </div>
 
@@ -394,30 +399,32 @@ export function ResponsiveNavigation({
         </div>
       </div>
 
-      {/* User section */}
-      <div className="p-4 border-b border-border">
-        {user ? (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-5 h-5 text-primary" />
+      {/* User section - 仅在启用认证时显示 */}
+      {AppConfig.enableAuth && (
+        <div className="p-4 border-b border-border">
+          {user ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{user.email}</p>
+                  <p className="text-xs text-muted-foreground">已登录</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">{user.email}</p>
-                <p className="text-xs text-muted-foreground">已登录</p>
-              </div>
+              <Button variant="ghost" size="sm" onClick={onSignOut}>
+                <LogIn className="w-4 h-4" />
+              </Button>
             </div>
-            <Button variant="ghost" size="sm" onClick={onSignOut}>
-              <LogIn className="w-4 h-4" />
+          ) : (
+            <Button onClick={onSignIn} className="w-full">
+              <LogIn className="w-4 h-4 mr-2" />
+              登录
             </Button>
-          </div>
-        ) : (
-          <Button onClick={onSignIn} className="w-full">
-            <LogIn className="w-4 h-4 mr-2" />
-            登录
-          </Button>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Navigation items */}
       <nav className="p-4 space-y-1">

@@ -10,6 +10,7 @@ import { TagPanelProvider } from '@/contexts/tag-panel-context'
 import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
+import { AppConfig } from '@/config/app-config'
 import './globals.css'
 
 interface AppProps {
@@ -46,8 +47,8 @@ function AppContent({ initializationError }: AppProps) {
       {/* PWA Install Prompt */}
       <InstallPrompt />
 
-      {/* Authentication Modal */}
-      <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />
+      {/* Authentication Modal - 仅在启用认证时显示 */}
+      {AppConfig.enableAuth && <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />}
 
       <Toaster />
     </div>

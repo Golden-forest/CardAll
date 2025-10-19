@@ -2,11 +2,14 @@ import React, { createContext, useContext, ReactNode } from 'react'
 import { useCardsAdapter } from '@/hooks/use-cards-adapter'
 import { useFolders } from '@/hooks/use-folders'
 import { useTags } from '@/hooks/use-tags'
+import { AppConfig } from '@/config/app-config'
 
 interface CardAllContextType {
   cards: ReturnType<typeof useCardsAdapter>
   folders: ReturnType<typeof useFolders>
   tags: ReturnType<typeof useTags>
+  cloudSyncEnabled: boolean
+  appConfig: typeof AppConfig
 }
 
 const CardAllContext = createContext<CardAllContextType | null>(null)
@@ -19,6 +22,9 @@ export function CardAllProvider({ children }: CardAllProviderProps) {
   const cards = useCardsAdapter()
   const folders = useFolders()
   const tags = useTags()
+
+  // 获取云端同步配置状态
+  const cloudSyncEnabled = AppConfig.enableCloudSync
 
   // Sync tags with card data (only when ready and not migrating)
   React.useEffect(() => {
@@ -34,7 +40,9 @@ export function CardAllProvider({ children }: CardAllProviderProps) {
   const value: CardAllContextType = {
     cards,
     folders,
-    tags
+    tags,
+    cloudSyncEnabled,
+    appConfig: AppConfig
   }
 
   return (

@@ -4,9 +4,9 @@ import { authService, type AuthState } from '@/services/auth'
 import { useAuthModal } from '@/contexts/auth-modal-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   Settings,
   User,
   LogIn
@@ -18,6 +18,7 @@ import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-util
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
 import { DataIntegrityIndicator } from '@/components/data-integrity/data-integrity-indicator'
+import { AppConfig } from '@/config/app-config'
 
 interface DashboardHeaderProps {
   authState: AuthState
@@ -59,7 +60,7 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
 
   // 处理创建卡片
   const handleCreateCard = async () => {
-    if (!authState.user) {
+    if (AppConfig.enableAuth && !authState.user) {
       openModal()
       return
     }
@@ -180,24 +181,26 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
             新建卡片
           </Button>
 
-          {/* 用户区域 */}
-          <div className="flex items-center space-x-2 ml-4">
-            {authState.user ? (
-              <UserAvatar 
-                user={authState.user} 
-                onSignOut={() => authService.signOut()}
-              />
-            ) : (
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => openModal()}
-              >
-                <LogIn className="h-4 w-4 mr-2" />
-                登录
-              </Button>
-            )}
-          </div>
+          {/* 用户区域 - 仅在启用认证时显示 */}
+          {AppConfig.enableAuth && (
+            <div className="flex items-center space-x-2 ml-4">
+              {authState.user ? (
+                <UserAvatar
+                  user={authState.user}
+                  onSignOut={() => authService.signOut()}
+                />
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openModal()}
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  登录
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

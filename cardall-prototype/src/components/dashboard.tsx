@@ -48,6 +48,7 @@ import { ConflictPanel } from '@/components/conflict/conflict-panel'
 import { ConflictDetail } from '@/components/conflict/conflict-detail'
 import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
 import { PerformanceMonitorPanel } from '@/components/performance/performance-monitor-panel'
+import { AppConfig } from '@/config/app-config'
 
 interface DashboardProps {
   className?: string
@@ -642,12 +643,14 @@ export function Dashboard({ className }: DashboardProps) {
                 </Button>
               )}
 
-              {/* Sync Status Indicator */}
-              <SyncStatusIndicator
-                showDetails={true}
-                showLabel={false}
-                className="mr-1"
-              />
+              {/* Sync Status Indicator - 仅在启用云端同步时显示 */}
+              {AppConfig.enableCloudSync && (
+                <SyncStatusIndicator
+                  showDetails={true}
+                  showLabel={false}
+                  className="mr-1"
+                />
+              )}
 
               {/* Performance Monitor */}
               <PerformanceMonitorPanel
@@ -715,30 +718,32 @@ export function Dashboard({ className }: DashboardProps) {
                 <span className="sr-only">Add Card</span>
               </Button>
               
-              {/* Authentication Button */}
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={openModal}
-                className="flex items-center gap-2"
-              >
-                {authState.user ? (
-                  <>
-                    <UserAvatar 
-                      user={authState.user}
-                      size="sm"
-                      onClick={openModal}
-                      showHoverEffect={true}
-                    />
-                    <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline text-sm">Login</span>
-                  </>
-                )}
-              </Button>
+              {/* Authentication Button - 仅在启用认证时显示 */}
+              {AppConfig.enableAuth && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={openModal}
+                  className="flex items-center gap-2"
+                >
+                  {authState.user ? (
+                    <>
+                      <UserAvatar
+                        user={authState.user}
+                        size="sm"
+                        onClick={openModal}
+                        showHoverEffect={true}
+                      />
+                      <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" />
+                      <span className="hidden sm:inline text-sm">Login</span>
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </header>

@@ -10,6 +10,7 @@ import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { PWAStatus } from '@/components/pwa/pwa-status'
 import { Button } from '@/components/ui/button'
 import { Database, Home, Image, User, Cloud } from 'lucide-react'
+import { AppConfig } from '@/config/app-config'
 import './globals.css'
 
 // 简化版本的App，用于测试基础功能
@@ -65,16 +66,18 @@ function SimpleApp() {
               {/* 右侧状态和认证 */}
               <div className="flex items-center gap-2">
                 <PWAStatus />
-                <SyncStatusIndicator />
-                <Button
-                  onClick={() => setShowAuthModal(true)}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white shadow-lg"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  账户
-                </Button>
+                {AppConfig.enableCloudSync && <SyncStatusIndicator />}
+                {AppConfig.enableAuth && (
+                  <Button
+                    onClick={() => setShowAuthModal(true)}
+                    variant="outline"
+                    size="sm"
+                    className="bg-white shadow-lg"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    账户
+                  </Button>
+                )}
               </div>
             </div>
 

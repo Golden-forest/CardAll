@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle, AlertCircle, RefreshCw, FolderOpen } from 'lucide-react'
+import { CheckCircle, AlertCircle, RefreshCw, FolderOpen, CloudOff } from 'lucide-react'
 import { appInitService, InitializationStatus, InitializationResult } from '@/services/app-init'
+import { AppConfig } from '@/config/app-config'
 
 interface AppInitializationProps {
   onInitialized: (_result: InitializationResult) => void
@@ -91,7 +92,9 @@ export function AppInitialization({ onInitialized, onError, onSkipInitialization
       'migration-check': '检查是否有需要从localStorage迁移的数据',
       'migration': '将现有数据迁移到新的数据库结构',
       'filesystem': '请求文件系统访问权限以支持本地文件存储',
-      'sync': '初始化同步服务，准备离线和在线数据同步',
+      'sync': AppConfig.enableCloudSync
+        ? '初始化同步服务，准备离线和在线数据同步'
+        : '云端同步功能已禁用，使用本地存储模式',
       'complete': '所有组件初始化完成，应用准备就绪'
     }
     return descriptions[step] || '正在处理...'
@@ -150,12 +153,22 @@ export function AppInitialization({ onInitialized, onError, onSkipInitialization
             </Alert>
           )}
 
+          {/* 云端同步状态 */}
+          {!AppConfig.enableCloudSync && (
+            <Alert>
+              <CloudOff className="h-4 w-4" />
+              <AlertDescription>
+                云端同步功能已禁用，应用将在本地存储模式下运行
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 文件系统访问状态 */}
           {result && (
             <Alert variant={result.fileSystemAccess ? "default" : "destructive"}>
               <FolderOpen className="h-4 w-4" />
               <AlertDescription>
-                {result.fileSystemAccess 
+                {result.fileSystemAccess
                   ? "文件系统访问权限已获得，支持本地文件存储"
                   : "未获得文件系统访问权限，将使用浏览器内置存储"
                 }
