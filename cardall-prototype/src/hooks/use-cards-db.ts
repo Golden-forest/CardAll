@@ -1,13 +1,11 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Card, CardAction, CardFilter, ViewSettings } from '@/types/card'
 import { db, DbCard } from '@/services/database'
-import { unifiedSyncService } from '@/services/unified-sync-service'
-import { authService } from '@/services/auth'
 import { fileSystemService } from '@/services/file-system'
 
 // 转换数据库卡片到前端卡片格式
 const dbCardToCard = (dbCard: DbCard): Card => {
-  const { userId, syncVersion, lastSyncAt, pendingSync, ...card } = dbCard
+  const card = { ...dbCard }
   return {
     ...card,
     id: card.id || '',

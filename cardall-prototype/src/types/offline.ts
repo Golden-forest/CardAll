@@ -1,5 +1,5 @@
 /**
- * 离线操作相关类型定义
+ * 本地操作相关类型定义
  */
 
 /**
@@ -59,9 +59,9 @@ export interface NetworkQualityAssessment {
 }
 
 /**
- * 离线操作接口
+ * 本地操作接口
  */
-export interface OfflineOperation {
+export interface LocalOperation {
   /**
    * 操作ID
    */
@@ -70,7 +70,7 @@ export interface OfflineOperation {
   /**
    * 操作类型
    */
-  type: 'create' | 'update' | 'delete' | 'sync'
+  type: 'create' | 'update' | 'delete'
 
   /**
    * 数据表
@@ -114,91 +114,6 @@ export interface OfflineOperation {
 }
 
 /**
- * 冲突信息接口
- */
-export interface ConflictInfo {
-  /**
-   * 冲突ID
-   */
-  id: string
-
-  /**
-   * 冲突类型
-   */
-  type: ConflictType
-
-  /**
-   * 实体类型
-   */
-  entityType: string
-
-  /**
-   * 实体ID
-   */
-  entityId: string
-
-  /**
-   * 本地数据
-   */
-  localData: any
-
-  /**
-   * 远程数据
-   */
-  remoteData: any
-
-  /**
-   * 冲突字段
-   */
-  conflictingFields: string[]
-
-  /**
-   * 严重程度 (0-1)
-   */
-  severity?: number
-
-  /**
-   * 风险等级
-   */
-  riskLevel?: RiskLevel
-
-  /**
-   * 本地操作ID
-   */
-  localOperationId?: string
-
-  /**
-   * 远程操作ID
-   */
-  remoteOperationId?: string
-
-  /**
-   * 创建时间
-   */
-  createdAt: Date
-
-  /**
-   * 状态
-   */
-  status: 'pending' | 'resolved' | 'ignored'
-
-  /**
-   * 解决方案
-   */
-  resolution?: ResolutionType
-
-  /**
-   * 解决时间
-   */
-  resolvedAt?: Date
-
-  /**
-   * 冲突描述
-   */
-  description?: string
-}
-
-/**
  * 风险等级枚举
  */
 export enum RiskLevel {
@@ -209,106 +124,14 @@ export enum RiskLevel {
 }
 
 /**
- * 冲突类型枚举
- */
-export enum ConflictType {
-  CONCURRENT_MODIFICATION = 'concurrent_modification',
-  DATA_INCONSISTENCY = 'data_inconsistency',
-  NETWORK_CONFLICT = 'network_conflict',
-  VERSION_CONFLICT = 'version_conflict',
-  STRUCTURE_CONFLICT = 'structure_conflict',
-  SYNC_CONFLICT = 'sync_conflict'
-}
-
-/**
  * 解决类型枚举
  */
 export enum ResolutionType {
   ACCEPT_LOCAL = 'accept_local',
-  ACCEPT_REMOTE = 'accept_remote',
   MERGE = 'merge',
   CREATE_NEW = 'create_new',
   MANUAL = 'manual',
-  MANUAL_INTERVENTION = 'manual_intervention',
-  LOCAL_WINS = 'local_wins',
-  REMOTE_WINS = 'remote_wins',
   AUTO_RESOLVE = 'auto_resolve'
-}
-
-/**
- * 冲突分析结果接口
- */
-export interface ConflictAnalysis {
-  /**
-   * 严重程度 (0-1)
-   */
-  severity: number
-
-  /**
-   * 置信度 (0-1)
-   */
-  confidence: number
-
-  /**
-   * 复杂度 (1-5)
-   */
-  complexity: number
-
-  /**
-   * 风险等级
-   */
-  riskLevel: RiskLevel
-
-  /**
-   * 预计解决时间（毫秒）
-   */
-  estimatedResolutionTime: number
-
-  /**
-   * 主要原因
-   */
-  cause: string
-
-  /**
-   * 涉及的操作
-   */
-  involvedOperations: string[]
-
-  /**
-   * 受影响的数据
-   */
-  affectedData: {
-    /**
-     * 冲突字段
-     */
-    conflictingFields: string[]
-    /**
-     * 数据类型
-     */
-    dataType: string
-  }
-
-  /**
-   * 建议的解决方案
-   */
-  suggestedResolution: {
-    /**
-     * 解决类型
-     */
-    type: ResolutionType
-    /**
-     * 解释
-     */
-    explanation: string
-    /**
-     * 成功概率 (0-1)
-     */
-    successProbability: number
-    /**
-     * 潜在风险
-     */
-    risks: string[]
-  }
 }
 
 /**
@@ -347,51 +170,70 @@ export interface ResolutionResult {
 }
 
 /**
- * 同步操作接口
+ * 本地存储统计信息
  */
-export interface SyncOperation {
+export interface LocalStorageStats {
   /**
-   * 操作ID
+   * 总卡片数
    */
-  id: string
+  totalCards: number
 
   /**
-   * 操作类型
+   * 总文件夹数
    */
-  type: 'upload' | 'download' | 'bidirectional'
+  totalFolders: number
 
   /**
-   * 数据表
+   * 总标签数
    */
-  table: string
+  totalTags: number
 
   /**
-   * 记录ID
+   * 存储大小（字节）
    */
-  recordId: string
+  storageSize: number
 
   /**
-   * 操作数据
+   * 最后更新时间
    */
-  data: any
+  lastUpdated: Date
 
   /**
-   * 时间戳
+   * 数据完整性状态
    */
-  timestamp: Date
+  integrityStatus: 'valid' | 'corrupted' | 'checking'
+}
+
+/**
+ * 本地操作队列接口
+ */
+export interface LocalOperationQueue {
+  /**
+   * 添加操作
+   */
+  addOperation(operation: Omit<LocalOperation, 'id' | 'timestamp'>): Promise<string>
 
   /**
-   * 状态
+   * 获取待处理操作
    */
-  status: 'pending' | 'in_progress' | 'completed' | 'failed'
+  getPendingOperations(): Promise<LocalOperation[]>
 
   /**
-   * 进度（0-100）
+   * 标记操作为已完成
    */
-  progress: number
+  markOperationCompleted(operationId: string): Promise<boolean>
 
   /**
-   * 错误信息
+   * 清理已完成操作
    */
-  error?: string
+  cleanupCompleted(): Promise<void>
+
+  /**
+   * 获取队列状态
+   */
+  getQueueStatus(): Promise<{
+    pending: number
+    completed: number
+    failed: number
+  }>
 }

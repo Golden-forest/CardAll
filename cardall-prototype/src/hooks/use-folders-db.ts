@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction, FolderFilter } from '@/types/card'
 import { db, DbFolder } from '@/services/database'
-import { cloudSyncService } from '@/services/cloud-sync'
-import { authService } from '@/services/auth'
+// import { cloudSyncService } from '@/services/cloud-sync' // 已删除云端同步功能
+// import { authService } from '@/services/auth' // 已删除认证功能
 
 // 转换数据库文件夹到前端文件夹格式
 const dbFolderToFolder = (dbFolder: DbFolder): Folder => {
@@ -26,10 +26,10 @@ const folderToDbFolder = (folder: Folder, userId?: string): DbFolder => {
   }
 }
 
-// 获取当前用户ID
+// 获取当前用户ID（云端同步功能已删除）
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  return user?.id || null
+  // 认证功能已删除，返回null表示本地用户
+  return null
 }
 
 export function useFoldersDb() {
@@ -131,14 +131,8 @@ export function useFoldersDb() {
           const id = await db.folders.add(newFolder)
           console.log('📁 useFoldersDb: Folder added to local DB with id', id)
           
-          await cloudSyncService.queueOperation({
-            type: 'create',
-            table: 'folders',
-            data: newFolder,
-            localId: folderId
-          })
-          
-          console.log('📁 useFoldersDb: Sync operation queued')
+          // 云端同步功能已删除，仅保存到本地数据库
+          console.log('📁 useFoldersDb: Local save completed')
           
           // 重新加载数据
           await loadFolders()
@@ -155,12 +149,7 @@ export function useFoldersDb() {
           }
 
           await db.folders.update(action.payload.id, updates)
-          await cloudSyncService.queueOperation({
-            type: 'update',
-            table: 'folders',
-            data: updates,
-            localId: action.payload.id
-          })
+          // 云端同步功能已删除，仅更新本地数据库
           
           await loadFolders()
           break
@@ -168,12 +157,7 @@ export function useFoldersDb() {
 
         case 'DELETE_FOLDER': {
           await db.folders.delete(action.payload)
-          await cloudSyncService.queueOperation({
-            type: 'delete',
-            table: 'folders',
-            data: { userId },
-            localId: action.payload
-          })
+          // 云端同步功能已删除，仅删除本地数据库
           
           await loadFolders()
           break
@@ -203,12 +187,7 @@ export function useFoldersDb() {
             }
 
             await db.folders.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
-              type: 'update',
-              table: 'folders',
-              data: updates,
-              localId: action.payload
-            })
+            // 云端同步功能已删除，仅更新本地数据库
             
             await loadFolders()
           }
@@ -225,12 +204,7 @@ export function useFoldersDb() {
           }
 
           await db.folders.update(action.payload.folderId, updates)
-          await cloudSyncService.queueOperation({
-            type: 'update',
-            table: 'folders',
-            data: updates,
-            localId: action.payload.folderId
-          })
+          // 云端同步功能已删除，仅更新本地数据库
           
           await loadFolders()
           break

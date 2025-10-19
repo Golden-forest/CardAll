@@ -8,7 +8,6 @@ interface CardAllContextType {
   cards: ReturnType<typeof useCardsAdapter>
   folders: ReturnType<typeof useFolders>
   tags: ReturnType<typeof useTags>
-  cloudSyncEnabled: boolean
   appConfig: typeof AppConfig
 }
 
@@ -23,25 +22,28 @@ export function CardAllProvider({ children }: CardAllProviderProps) {
   const folders = useFolders()
   const tags = useTags()
 
-  // 获取云端同步配置状态
-  const cloudSyncEnabled = AppConfig.enableCloudSync
+  // 优化标签同步，使用useMemo减少计算
+  const allCardTags = React.useMemo(() => {
+    if (!cards.isReady || cards.isMigrating) return []
 
-  // Sync tags with card data (only when ready and not migrating)
+    const tags: string[] = []
+    cards.allCards.forEach(card => {
+      tags.push(...card.frontContent.tags, ...card.backContent.tags)
+    })
+    return tags
+  }, [cards.allCards, cards.isReady, cards.isMigrating])
+
+  // 同步标签与卡片数据
   React.useEffect(() => {
-    if (cards.isReady && !cards.isMigrating) {
-      const allCardTags: string[] = []
-      cards.allCards.forEach(card => {
-        allCardTags.push(...card.frontContent.tags, ...card.backContent.tags)
-      })
+    if (allCardTags.length > 0) {
       tags.syncTagsWithCards(allCardTags)
     }
-  }, [cards.allCards, cards.isReady, cards.isMigrating, tags.syncTagsWithCards])
+  }, [allCardTags, tags.syncTagsWithCards])
 
   const value: CardAllContextType = {
     cards,
     folders,
     tags,
-    cloudSyncEnabled,
     appConfig: AppConfig
   }
 

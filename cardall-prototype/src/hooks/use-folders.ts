@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Folder, FolderAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
-import { authService } from '@/services/auth'
 import { db } from '@/services/database'
-import { triggerFolderSync } from '@/services/unified-sync-service'
 
 // Mock data for development
 const mockFolders: Folder[] = [
@@ -91,17 +89,10 @@ export function useFolders() {
         switch (action.type) {
           case 'CREATE_FOLDER':
             console.log('➕ Creating new folder...')
-            // 获取当前用户ID
-            const currentUser = authService.getCurrentUser()
-            const userId = currentUser?.id || 'default'
-
             const newFolder: Folder = {
               ...action.payload,
               id: `folder-${Date.now()}`,
               cardIds: [],
-              syncVersion: 1,
-              pendingSync: true, // 标记为需要同步
-              userId: userId, // 使用真实用户ID
               createdAt: new Date(),
               updatedAt: new Date()
             }
@@ -115,9 +106,7 @@ export function useFolders() {
                 ? {
                     ...folder,
                     ...action.payload.updates,
-                    updatedAt: new Date(),
-                    syncVersion: (folder.syncVersion || 1) + 1,
-                    pendingSync: true
+                    updatedAt: new Date()
                   }
                 : folder
             )
@@ -186,29 +175,7 @@ export function useFolders() {
       }
     })
 
-    // 触发解耦的云端同步（异步执行，不阻塞UI）
-    const triggerDecoupledSync = () => {
-      try {
-        if (action.type === 'CREATE_FOLDER') {
-          console.log('☁️ 触发文件夹创建同步...')
-          triggerFolderSync('create', action.payload)
-        } else if (action.type === 'UPDATE_FOLDER') {
-          console.log('☁️ 触发文件夹更新同步...')
-          triggerFolderSync('update', { id: action.payload.id, updates: action.payload.updates })
-        } else if (action.type === 'DELETE_FOLDER') {
-          console.log('☁️ 触发文件夹删除同步...')
-          triggerFolderSync('delete', action.payload)
-        } else if (action.type === 'TOGGLE_FOLDER') {
-          console.log('☁️ 触发文件夹展开状态同步...')
-          triggerFolderSync('toggle', { id: action.payload, isExpanded: !getFolderById(action.payload)?.isExpanded })
-        }
-      } catch (error) {
-        console.error('❌ 触发同步失败:', error)
-      }
-    }
-
-    // 对于所有文件夹操作，都触发解耦同步
-    setTimeout(triggerDecoupledSync, 50)
+    // 云端同步功能已删除，仅本地操作
   }, [])
 
   // Utility functions

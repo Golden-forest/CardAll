@@ -1,8 +1,8 @@
 import { initializeDatabase } from './database'
-import { unifiedSyncService } from './unified-sync-service'
+// import { unifiedSyncService } from './unified-sync-service' // 已删除云端同步功能
 import { migrationService } from './migration'
 import { fileSystemService } from './file-system'
-import { authService } from './auth'
+// import { authService } from './auth' // 已删除认证功能
 import { AppConfig } from '../config/app-config'
 
 export interface InitializationStatus {
@@ -145,45 +145,15 @@ class AppInitializationService {
         result.fileSystemAccess = false
       }
 
-      // 步骤4: 初始化同步服务
+// 步骤4: 云端同步功能已删除，跳过云端同步
       this.updateStatus({
         step: 'sync',
-        progress: 80,
-        message: '初始化同步服务...',
-        isComplete: false,
+        progress: 85,
+        message: '云端同步功能已删除，使用纯本地模式',
+        isComplete: true,
         hasError: false
       })
-
-      try {
-        // 检查云端同步功能是否启用
-        if (!AppConfig.enableCloudSync) {
-          console.log('云端同步功能已禁用，跳过同步服务初始化')
-          this.updateStatus({
-            step: 'sync',
-            progress: 85,
-            message: '云端同步功能已禁用，使用本地模式',
-            isComplete: true,
-            hasError: false
-          })
-        } else {
-          // 设置认证服务到同步服务
-          unifiedSyncService.setAuthService(authService)
-
-          // 如果用户已登录，执行完整同步
-          if (authService.isAuthenticated()) {
-            await unifiedSyncService.performFullSync()
-          }
-        }
-      } catch (syncError) {
-        console.error('同步服务初始化失败:', syncError)
-        this.updateStatus({
-          step: 'sync',
-          progress: 85,
-          message: '同步服务初始化失败，使用离线模式',
-          isComplete: true,
-          hasError: false
-        })
-      }
+      console.log('云端同步功能已删除，使用纯本地存储模式')
 
       // 步骤5: 完成初始化
       this.updateStatus({
@@ -231,11 +201,11 @@ class AppInitializationService {
   }> {
     try {
       const migrationStatus = await migrationService.getMigrationStatus()
-      const syncStatus = unifiedSyncService.getCurrentStatus()
+      // 同步服务已删除
       
       return {
         databaseReady: true, // 如果能调用说明数据库已就绪
-        syncServiceReady: syncStatus !== null,
+        syncServiceReady: false, // 同步服务已删除
         fileSystemAccess: fileSystemService.isFileSystemAccessSupported(),
         migrationNeeded: migrationStatus.migrationNeeded
       }

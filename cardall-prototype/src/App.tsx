@@ -2,12 +2,12 @@ import React from 'react'
 import { Dashboard } from '@/components/dashboard'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-import { AuthModalEnhanced } from '@/components/auth/auth-modal-enhanced'
+// import { AuthModalEnhanced } from '@/components/auth/auth-modal-enhanced' // 认证功能已删除
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
-import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context'
+// import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context' // 认证功能已删除
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import { AppConfig } from '@/config/app-config'
@@ -18,7 +18,8 @@ interface AppProps {
 }
 
 function AppContent({ initializationError }: AppProps) {
-  const { isOpen, closeModal } = useAuthModal()
+  // 认证功能已删除
+  // const { isOpen, closeModal } = useAuthModal()
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,8 +48,8 @@ function AppContent({ initializationError }: AppProps) {
       {/* PWA Install Prompt */}
       <InstallPrompt />
 
-      {/* Authentication Modal - 仅在启用认证时显示 */}
-      {AppConfig.enableAuth && <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />}
+      {/* Authentication Modal - 认证功能已删除 */}
+      {/* {AppConfig.enableAuth && <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />} */}
 
       <Toaster />
     </div>
@@ -58,9 +59,8 @@ function AppContent({ initializationError }: AppProps) {
 function App({ initializationError }: AppProps) {
   return (
     <ThemeProvider defaultTheme="light" storageKey="cardall-theme">
-      <AuthModalProvider>
-        <AppContent initializationError={initializationError} />
-      </AuthModalProvider>
+      {/* AuthModalProvider 已删除 */}
+      <AppContent initializationError={initializationError} />
     </ThemeProvider>
   )
 }

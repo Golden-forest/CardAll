@@ -1,25 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
-import { authService, type AuthState } from '@/services/auth'
-import { useAuthModal } from '@/contexts/auth-modal-context'
 import { OptimizedMasonryGrid } from './card/optimized-masonry-grid'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   Settings,
   Folder,
   Tag,
   FolderPlus,
   Sliders,
   ChevronLeft,
-  ChevronRight,
-  User,
-  LogIn,
-  AlertTriangle
+  ChevronRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -29,24 +24,18 @@ import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-util
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
 import { useToast } from '@/hooks/use-toast'
-import { UserAvatar } from '@/components/ui/user-avatar'
-import { 
-  FolderContextMenu, 
-  CreateFolderDialog, 
-  DeleteFolderDialog 
+import {
+  FolderContextMenu,
+  CreateFolderDialog,
+  DeleteFolderDialog
 } from '@/components/folder'
-import { 
+import {
   TagContextMenu,
   RenameTagDialog,
   DeleteTagDialog,
   ConnectedTagPanel
 } from '@/components/tag'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
-import { useConflicts } from '@/hooks/use-conflicts'
-import { ConflictBanner } from '@/components/conflict/conflict-banner'
-import { ConflictPanel } from '@/components/conflict/conflict-panel'
-import { ConflictDetail } from '@/components/conflict/conflict-detail'
-import { SyncStatusIndicator } from '@/components/sync/sync-status-indicator'
 import { PerformanceMonitorPanel } from '@/components/performance/performance-monitor-panel'
 import { AppConfig } from '@/config/app-config'
 
@@ -55,14 +44,14 @@ interface DashboardProps {
 }
 
 export function Dashboard({ className }: DashboardProps) {
-  // Authentication state
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    session: null,
-    loading: false,
-    error: null
-  })
-  const { openModal } = useAuthModal()
+  // Authentication state - 认证功能已删除
+  // const [authState, setAuthState] = useState<AuthState>({
+  //   user: null,
+  //   session: null,
+  //   loading: false,
+  //   error: null
+  // })
+  // const { openModal } = useAuthModal() // 认证功能已删除
 
   const {
     cards,
@@ -102,23 +91,9 @@ export function Dashboard({ className }: DashboardProps) {
     showLayoutControls: false
   })
 
-  // Conflict resolution system
-  const { 
-    stats, 
-    getPendingConflicts, 
-    getHighPriorityConflicts,
-    selectedConflict: selectedConflictId,
-    setSelectedConflict,
-    detectConflicts 
-  } = useConflicts()
-  const [showConflictPanel, setShowConflictPanel] = useState(false)
-  const [showConflictDetail, setShowConflictDetail] = useState(false)
+  // 云端同步功能已删除，不再需要冲突解决系统
 
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = authService.onAuthStateChange(setAuthState)
-    return unsubscribe
-  }, [])
+  // 认证功能已删除，不再监听认证状态变化
 
   // Folder management states
   const [showCreateFolderDialog, setShowCreateFolderDialog] = useState(false)
@@ -622,35 +597,11 @@ export function Dashboard({ className }: DashboardProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              {/* Conflict Notification */}
-              {stats.pendingConflicts > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowConflictPanel(true)}
-                  className="relative text-orange-600 hover:bg-orange-50"
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  {stats.pendingConflicts > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                    >
-                      {stats.pendingConflicts > 99 ? '99+' : stats.pendingConflicts}
-                    </Badge>
-                  )}
-                  <span className="sr-only">Conflict Notifications</span>
-                </Button>
-              )}
+              {/* Conflict Notification - 云端同步功能已删除，冲突通知已禁用 */}
+              {/* Conflict notifications have been disabled as cloud sync functionality has been removed */}
 
-              {/* Sync Status Indicator - 仅在启用云端同步时显示 */}
-              {AppConfig.enableCloudSync && (
-                <SyncStatusIndicator
-                  showDetails={true}
-                  showLabel={false}
-                  className="mr-1"
-                />
-              )}
+              {/* Sync Status Indicator - 云端同步功能已删除，不再显示 */}
+              {/* Sync status indicator has been removed as cloud sync functionality is disabled */}
 
               {/* Performance Monitor */}
               <PerformanceMonitorPanel
@@ -718,44 +669,16 @@ export function Dashboard({ className }: DashboardProps) {
                 <span className="sr-only">Add Card</span>
               </Button>
               
-              {/* Authentication Button - 仅在启用认证时显示 */}
-              {AppConfig.enableAuth && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={openModal}
-                  className="flex items-center gap-2"
-                >
-                  {authState.user ? (
-                    <>
-                      <UserAvatar
-                        user={authState.user}
-                        size="sm"
-                        onClick={openModal}
-                        showHoverEffect={true}
-                      />
-                      <span className="hidden sm:inline text-sm">{authState.user.username || 'User'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogIn className="h-4 w-4" />
-                      <span className="hidden sm:inline text-sm">Login</span>
-                    </>
-                  )}
-                </Button>
-              )}
+            {/* Authentication Button - 认证功能已删除，不再显示 */}
+              {/* Authentication functionality has been removed as cloud sync is disabled */}
             </div>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="flex h-[calc(100vh-4rem)]">
-          {/* Conflict Banner */}
-          <div className="absolute top-16 left-0 right-0 z-30 bg-background border-b">
-            <ConflictBanner 
-              onOpenConflictPanel={() => setShowConflictPanel(true)}
-            />
-          </div>
+          {/* Conflict Banner - 冲突功能已删除，不再显示 */}
+          {/* Conflict banner has been removed as cloud sync functionality is disabled */}
           {/* Sidebar */}
           <aside 
             className={cn(
@@ -1036,21 +959,8 @@ export function Dashboard({ className }: DashboardProps) {
         {/* Tag Panel */}
         <ConnectedTagPanel />
 
-        {/* Conflict Management Modals */}
-        <ConflictPanel 
-          isOpen={showConflictPanel}
-          onClose={() => setShowConflictPanel(false)}
-        />
-
-        {selectedConflictId && (
-          <ConflictDetail 
-            conflictId={selectedConflictId}
-            onClose={() => {
-              setShowConflictDetail(false)
-              setSelectedConflict(null)
-            }}
-          />
-        )}
+        {/* Conflict Management Modals - 冲突功能已删除，不再显示 */}
+        {/* Conflict management modals have been removed as cloud sync functionality is disabled */}
       </div>
     </FolderPanelProvider>
   )

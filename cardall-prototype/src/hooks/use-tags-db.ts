@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { Tag, TagAction, TagFilter } from '@/types/card'
 import { db, DbTag } from '@/services/database'
-import { cloudSyncService } from '@/services/cloud-sync'
-import { authService } from '@/services/auth'
+// import { cloudSyncService } from '@/services/cloud-sync' // 已删除云端同步功能
+// import { authService } from '@/services/auth' // 已删除认证功能
 
 // 转换数据库标签到前端标签格式
 const dbTagToTag = (dbTag: DbTag): Tag => {
@@ -25,10 +25,10 @@ const tagToDbTag = (tag: Tag, userId?: string): DbTag => {
   }
 }
 
-// 获取当前用户ID
+// 获取当前用户ID（云端同步功能已删除）
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  return user?.id || null
+  // 认证功能已删除，返回null表示本地用户
+  return null
 }
 
 export function useTagsDb() {
@@ -134,7 +134,7 @@ export function useTagsDb() {
           const id = await db.tags.add(newTag)
           console.log('🏷️ useTagsDb: Tag added to local DB with id', id)
           
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已删除，仅保存到本地数据库
             type: 'create',
             table: 'tags',
             data: newTag,
@@ -158,7 +158,7 @@ export function useTagsDb() {
           }
 
           await db.tags.update(action.payload.id, updates)
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已删除，仅保存到本地数据库
             type: 'update',
             table: 'tags',
             data: updates,
@@ -171,7 +171,7 @@ export function useTagsDb() {
 
         case 'DELETE_TAG': {
           await db.tags.delete(action.payload)
-          await cloudSyncService.queueOperation({
+          // 云端同步功能已删除，仅保存到本地数据库
             type: 'delete',
             table: 'tags',
             data: { userId },
@@ -206,7 +206,7 @@ export function useTagsDb() {
             }
 
             await db.tags.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
+            // 云端同步功能已删除，仅保存到本地数据库
               type: 'update',
               table: 'tags',
               data: updates,
@@ -230,7 +230,7 @@ export function useTagsDb() {
             }
 
             await db.tags.update(action.payload, updates)
-            await cloudSyncService.queueOperation({
+            // 云端同步功能已删除，仅保存到本地数据库
               type: 'update',
               table: 'tags',
               data: updates,

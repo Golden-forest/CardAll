@@ -3,7 +3,7 @@ import { useCardsDb } from './use-cards-db'
 import { DataMigrationService } from '@/services/data-migration.service'
 import { UniversalStorageAdapter } from '@/services/universal-storage-adapter'
 import { CardAllProviderAdapter } from '@/services/cardall-provider-adapter'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { AppConfig } from '@/config/app-config'
 
 /**
@@ -29,14 +29,6 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
   const storageAdapter = new UniversalStorageAdapter()
 
   try {
-    // 0. 检查云端同步功能是否启用
-    if (!AppConfig.enableCloudSync) {
-      console.log('云端同步功能已禁用，使用本地存储模式')
-
-      // 即使禁用云端同步，仍然可以使用IndexedDB进行本地存储
-      // 这样可以保持更好的性能和数据管理能力
-    }
-
     // 1. 检查IndexedDB可用性和数据
     const indexedDbAvailable = await storageAdapter.isIndexedDBAvailable()
     let hasIndexedDbData = false

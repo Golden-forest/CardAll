@@ -1,7 +1,6 @@
 import { Card, CardFilter, ViewSettings } from '@/types/card'
 import { db, DbCard } from '@/services/database'
 import { secureStorage } from '@/utils/secure-storage'
-import { unifiedSyncService } from '@/services/unified-sync-service'
 import { AppConfig } from '@/config/app-config'
 import {
   StorageAdapter,
@@ -72,20 +71,11 @@ export class UniversalStorageAdapter implements StorageAdapter {
   // 取消令牌支持
   private cancelToken: { cancelled: boolean; reason?: string } | null = null
 
-  // 同步服务引用（可为null）
-  private syncService: typeof unifiedSyncService | null = null
-
   constructor(config: StorageConfig = DEFAULT_STORAGE_CONFIG) {
     this.config = config
 
-    // 检查云端同步功能是否启用
-    if (!AppConfig.enableCloudSync) {
-      console.log('使用纯本地存储模式')
-      this.syncService = null  // 不初始化同步服务
-    } else {
-      console.log('云端同步功能已启用，初始化同步服务')
-      this.syncService = unifiedSyncService
-    }
+    // 使用纯本地存储模式
+    console.log('使用纯本地存储模式')
 
     this.initializeStorageMode()
     this.setupEventListeners()
@@ -1899,23 +1889,18 @@ export class UniversalStorageAdapter implements StorageAdapter {
       // 移除isFlipped的持久化，使其成为纯UI状态
       // isFlipped: card.isFlipped,
       createdAt: card.createdAt,
-      updatedAt: card.updatedAt,
-      userId: undefined, // 将在同步时设置
-      syncVersion: 1,
-      pendingSync: true,
-      lastSyncAt: undefined
+      updatedAt: card.updatedAt
     }
   }
 
   private convertFromDbCard(dbCard: DbCard): Card {
-    const { userId, syncVersion, lastSyncAt, pendingSync, ...card } = dbCard
     return {
-      ...card,
-      id: card.id || '',
+      ...dbCard,
+      id: dbCard.id || '',
       // 确保从数据库加载时isFlipped为false，使其成为纯UI状态
       isFlipped: false,
-      createdAt: new Date(card.createdAt),
-      updatedAt: new Date(card.updatedAt)
+      createdAt: new Date(dbCard.createdAt),
+      updatedAt: new Date(dbCard.updatedAt)
     }
   }
 
