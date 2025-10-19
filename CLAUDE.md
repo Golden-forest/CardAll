@@ -41,50 +41,12 @@ CardAll 是一个现代化的知识卡片管理系统，专注于图文内容的
 - **文件存储**: Supabase Storage
 
 ### 开发工具
-- **测试**: Vitest + Playwright + Jest
+- **测试**: Vitest + Chrome-devtools + Jest
 - **代码检查**: ESLint + TypeScript
 - **构建优化**: Vite PWA 插件
 - **图标系统**: 自动生成多尺寸图标
 
-## 项目结构
 
-```
-cardall-prototype/
-├── src/
-│   ├── components/          # 组件目录 (167个文件)
-│   │   ├── card/           # 卡片相关组件
-│   │   ├── folder/         # 文件夹管理
-│   │   ├── auth/           # 认证组件
-│   │   ├── dashboard/      # 仪表板组件
-│   │   ├── ui/             # UI基础组件 (基于Radix UI)
-│   │   ├── styles/         # 样式相关组件
-│   │   ├── screenshot/     # 截图功能
-│   │   ├── pwa/            # PWA相关组件
-│   │   └── conflict/      # 冲突解决组件
-│   ├── services/           # 服务层 (199个文件)
-│   │   ├── database-*.ts   # 数据库服务
-│   │   ├── sync-*.ts       # 同步服务
-│   │   ├── auth.ts         # 认证服务
-│   │   └── cloud-*.ts      # 云服务
-│   ├── contexts/           # React Context (5个文件)
-│   │   ├── cardall-context.tsx
-│   │   ├── auth-context.tsx
-│   │   └── theme-context.tsx
-│   ├── hooks/              # 自定义Hooks (20个文件)
-│   ├── types/              # TypeScript类型定义 (10个文件)
-│   │   ├── card.ts         # 卡片数据类型
-│   │   ├── sync.ts         # 同步相关类型
-│   │   └── database.ts     # 数据库类型
-│   └── utils/              # 工具函数
-├── tests/                  # 测试目录 (71个文件)
-│   ├── unit/               # 单元测试
-│   ├── integration/        # 集成测试
-│   ├── e2e/                # 端到端测试
-│   └── performance/         # 性能测试
-├── docs/                   # 项目文档
-├── supabase/               # 数据库迁移文件
-└── public/                 # 静态资源
-```
 
 ## 关键技术特性
 
@@ -113,49 +75,6 @@ cardall-prototype/
 - 完整的键盘导航支持
 - 屏幕阅读器兼容
 
-## 开发命令
-
-### 基础命令
-```bash
-# 开发环境
-npm run dev
-
-# 生产构建
-npm run build
-
-# 预览构建结果
-npm run preview
-
-# 代码检查
-npm run lint
-```
-
-### 测试命令
-```bash
-# 运行所有测试
-npm run test
-
-# 监听模式运行测试
-npm run test:watch
-
-# 测试覆盖率
-npm run test:coverage
-
-# 单元测试
-npm run test:unit
-
-# 集成测试
-npm run test:integration
-
-# 端到端测试
-npm run test:e2e
-
-# 性能测试
-npm run test:performance
-
-# 运行所有测试
-npm run test:all
-```
 
 ## 配置说明
 
@@ -272,32 +191,62 @@ VITE_APP_ENVIRONMENT=development
 
 ---
 
-## 快速开始
+## 开发原则和调试指南
 
-1. **环境准备**
-   ```bash
-   node --version  # 确保Node.js 18+
-   npm --version   # 确保npm可用
-   ```
+### 小步子原则 (Small Step Principle)
+1. **每次只修改最小范围**：确保每次修改只解决一个具体问题，避免大范围重构
+2. **渐进式改进**：复杂功能分阶段实现，每个阶段都可以独立测试和验证
+3. **修改前风险评估**：
+   - 识别可能受影响的模块和功能
+   - 评估修改的技术风险和业务风险
+   - 制定回滚计划
+4. **准备降级方案**：
+   - 如果完整方案风险过高，制定最小化的替代方案
+   - 确保核心功能不受影响
+   - 优先解决用户体验最关键的问题
 
-2. **安装依赖**
-   ```bash
-   cd cardall-prototype
-   npm install
-   ```
+### Bug修复流程
+1. **问题分析阶段**
+   - 通过chrome-devtools打开网站进行实际测试
+   - 收集具体的错误信息和复现步骤
+   - 分析问题的根本原因
 
-3. **开发运行**
+2. **方案设计阶段**
+   - 制定完整的修复方案
+   - 识别高风险修改点
+   - 设计降级方案（最小化修改）
+
+3. **实施阶段**
+   - 按照降级方案进行最小化修改
+   - 使用chrome-devtools实时验证效果
+   - 确认没有引入新问题
+
+4. **测试验证阶段**
+   - 功能测试：确保修复了原问题
+   - 回归测试：确保没有破坏现有功能
+   - 边界测试：测试各种边界情况
+
+### Chrome DevTools 调试工作流
+1. **启动开发服务器**：
    ```bash
    npm run dev
    ```
 
-4. **构建部署**
-   ```bash
-   npm run build
-   npm run preview
+2. **打开网站进行调试**：
+   ```javascript
+   // 使用mcp工具
+   mcp__chrome-devtools__new_page({url: 'http://localhost:3000'})
+   mcp__chrome-devtools__wait_for({text: '目标文本', timeout: 10000})
+   mcp__chrome-devtools__take_snapshot()
+   mcp__chrome-devtools__evaluate_script({function: () => {/* 测试代码 */}})
+   mcp__chrome-devtools__list_console_messages()
    ```
 
-项目已配置完整的开发、测试和部署流程，可以直接开始开发工作。
+3. **常用调试命令**：
+   - 检查UI状态：`document.getElementById('element-id').textContent`
+   - 测试交互：`document.getElementById('button-id').click()`
+   - 查看事件监听：`getEventListeners(document.getElementById('element-id'))`
+   - 检查控制台错误：`mcp__chrome-devtools__list_console_messages()`
 
 ## 重要说明
 
