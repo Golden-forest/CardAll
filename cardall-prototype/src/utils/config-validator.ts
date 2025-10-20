@@ -27,18 +27,6 @@ export function validateConfig(config: AppConfigType = AppConfig): ConfigValidat
   const warnings: string[] = [];
 
   // 验证基本类型
-  if (typeof config.enableCloudSync !== 'boolean') {
-    errors.push('enableCloudSync 必须是布尔值');
-  }
-
-  if (typeof config.enableAuth !== 'boolean') {
-    errors.push('enableAuth 必须是布尔值');
-  }
-
-  if (typeof config.enableRealtime !== 'boolean') {
-    errors.push('enableRealtime 必须是布尔值');
-  }
-
   if (typeof config.enableDebugMode !== 'boolean') {
     errors.push('enableDebugMode 必须是布尔值');
   }
@@ -49,25 +37,13 @@ export function validateConfig(config: AppConfigType = AppConfig): ConfigValidat
     errors.push(`defaultStorageMode 必须是以下值之一: ${validStorageModes.join(', ')}`);
   }
 
-  // 验证逻辑一致性
-  if (config.enableRealtime && !config.enableCloudSync) {
-    warnings.push('实时同步功能需要云端同步功能开启，建议同时开启 enableCloudSync');
-  }
-
-  if (config.enableAuth && !config.enableCloudSync) {
-    warnings.push('认证功能需要云端同步功能开启，建议同时开启 enableCloudSync');
-  }
-
   // 生成配置摘要
   const enabledFeatures = [];
-  if (config.enableCloudSync) enabledFeatures.push('云端同步');
-  if (config.enableAuth) enabledFeatures.push('用户认证');
-  if (config.enableRealtime) enabledFeatures.push('实时同步');
   if (config.enableDebugMode) enabledFeatures.push('调试模式');
 
   const featureSummary = enabledFeatures.length > 0
     ? `启用功能: ${enabledFeatures.join(', ')}`
-    : '本地模式 (无云端功能)';
+    : '标准模式';
 
   const summary = `配置验证完成 - ${featureSummary} | 存储模式: ${config.defaultStorageMode}`;
 
@@ -108,11 +84,6 @@ export function checkEnvironmentCompatibility(config: AppConfigType = AppConfig)
     }
   }
 
-  // 检查网络状态
-  if (config.enableCloudSync && typeof navigator !== 'undefined' && !navigator.onLine) {
-    recommendations.push('当前处于离线状态，云端同步功能可能无法正常工作');
-  }
-
   // 检查开发环境
   const isDevelopment = import.meta.env.DEV;
   if (config.enableDebugMode && !isDevelopment) {
@@ -141,11 +112,10 @@ export function logConfigInfo(config: AppConfigType = AppConfig, verbose: boolea
 
   if (verbose) {
     console.log('⚙️ 详细配置:', {
-      enableCloudSync: config.enableCloudSync,
-      enableAuth: config.enableAuth,
-      enableRealtime: config.enableRealtime,
       enableDebugMode: config.enableDebugMode,
-      defaultStorageMode: config.defaultStorageMode
+      defaultStorageMode: config.defaultStorageMode,
+      version: config.version,
+      appName: config.appName
     });
   }
 

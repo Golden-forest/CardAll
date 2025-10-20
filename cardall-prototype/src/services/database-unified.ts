@@ -5,49 +5,40 @@ import { Card, Folder, Tag, ImageData } from '@/types/card'
 // 统一数据库类型定义 - 解决数据库架构统一
 // ============================================================================
 
-// 基础同步接口
-export interface SyncableEntity {
-  id?: string
-  userId?: string
-  syncVersion: number
-  lastSyncAt?: Date
-  pendingSync: boolean
-  updatedAt: Date
-}
-
 // 扩展的数据库卡片实体
-export interface DbCard extends Omit<Card, 'id'>, SyncableEntity {
+export interface DbCard extends Omit<Card, 'id'> {
   id?: string
   // 保持向后兼容的字段
   folderId?: string
   // 新增字段用于优化查询
   searchVector?: string // 全文搜索优化
   thumbnailUrl?: string // 卡片缩略图
+  updatedAt: Date
 }
 
 // 扩展的数据库文件夹实体
-export interface DbFolder extends Omit<Folder, 'id'>, SyncableEntity {
+export interface DbFolder extends Omit<Folder, 'id'> {
   id?: string
   // 新增字段用于优化查询
   fullPath?: string // 完整路径用于快速查找
   depth?: number // 文件夹深度
+  updatedAt: Date
 }
 
 // 扩展的数据库标签实体
-export interface DbTag extends Omit<Tag, 'id'>, SyncableEntity {
+export interface DbTag extends Omit<Tag, 'id'> {
   id?: string
   // 保持向后兼容
   count: number
+  updatedAt: Date
 }
 
 // 图片存储实体 - 统一图片管理
 export interface DbImage {
   id?: string
   cardId: string
-  userId?: string
   fileName: string
   filePath: string
-  cloudUrl?: string
   thumbnailPath?: string
   metadata: {
     originalName: string
@@ -58,57 +49,23 @@ export interface DbImage {
     compressed: boolean
     quality?: number
   }
-  storageMode: 'indexeddb' | 'filesystem' | 'cloud'
+  storageMode: 'indexeddb' | 'filesystem'
   createdAt: Date
   updatedAt: Date
-  syncVersion: number
-  lastSyncAt?: Date
-  pendingSync: boolean
 }
 
-// 同步元数据表接口
-export interface SyncMetadata {
-  id?: string
-  entityType: 'card' | 'folder' | 'tag' | 'image'
-  entityId: string
-  userId?: string
-  syncVersion: number
-  cloudVersion: number
-  lastSyncAt?: Date
-  conflictStatus: 'none' | 'pending' | 'resolved' | 'failed'
-  createdAt?: Date
-  updatedAt?: Date
-}
+// ============================================================================
+// 本地操作队列接口
+// ============================================================================
 
-// 冲突记录表接口
-export interface ConflictRecord {
-  id?: string
-  entityType: 'card' | 'folder' | 'tag' | 'image'
-  entityId: string
-  userId?: string
-  conflictType: 'version' | 'structure' | 'content' | 'timestamp'
-  localData: any
-  cloudData: any
-  timestamp: Date
-  resolution: 'cloud' | 'local' | 'merge' | 'manual' | 'pending'
-  resolvedAt?: Date
-  resolvedBy?: string
-}
-
-// 同步操作队列 - 统一同步逻辑
-export interface SyncOperation {
+export interface LocalOperation {
   id?: string
   type: 'create' | 'update' | 'delete'
   entity: 'card' | 'folder' | 'tag' | 'image'
   entityId: string
-  userId?: string
   data?: any
   timestamp: Date
-  retryCount: number
-  maxRetries: number
-  error?: string
-  priority: 'high' | 'normal' | 'low'
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'retrying'
+  status: 'pending' | 'completed' | 'failed'
 }
 
 // 应用设置 - 统一配置管理
@@ -120,40 +77,15 @@ export interface AppSettings {
   scope: 'user' | 'global' // 设置作用域
 }
 
-// 用户会话信息
-export interface UserSession {
-  id?: string
-  userId: string
-  deviceId: string
-  token?: string
-  expiresAt?: Date
-  lastActivity: Date
-  isActive: boolean
-}
-
 // 数据库统计信息
 export interface DatabaseStats {
   cards: number
   folders: number
   tags: number
   images: number
-  pendingSync: number
   totalSize: number
   lastBackup?: Date
   version: string
-}
-
-// 向后兼容的旧接口（保持现有代码不中断）
-export interface LegacySyncOperation {
-  id?: string
-  type: 'create' | 'update' | 'delete'
-  table: 'cards' | 'folders' | 'tags' | 'images'
-  data?: any
-  localId: string
-  timestamp: Date
-  retryCount: number
-  maxRetries: number
-  error?: string
 }
 
 // ============================================================================
@@ -209,8 +141,8 @@ export interface OfflineBackupStrategy {
   }
 }
 
-// 错误隔离和系统管理表类型
-export interface SyncErrorEntry {
+// 错误记录表类型
+export interface ErrorEntry {
   id?: string
   type: string
   severity: string
@@ -220,20 +152,6 @@ export interface SyncErrorEntry {
   timestamp: Date
   operation?: any
   stack?: string
-  retryCount: number
-  maxRetries: number
-  affectedEntities: string[]
-  isolationLevel: string
-}
-
-export interface IsolatedErrorEntry {
-  id?: string
-  operationId: string
-  operationType: string
-  entityType: string
-  error: string
-  timestamp: Date
-  isolationLevel: string
 }
 
 export interface BackupEntry {
@@ -250,16 +168,6 @@ export interface BackupEntry {
   tags?: string[]
 }
 
-export interface HiddenTagEntry {
-  id?: string
-  userId: string
-  tagId: string
-  name: string
-  color: string
-  hiddenAt: Date
-  reason?: string
-}
-
 // ============================================================================
 // 统一数据库类
 // ============================================================================
@@ -270,10 +178,9 @@ class CardAllUnifiedDatabase extends Dexie {
   folders!: Table<DbFolder>
   tags!: Table<DbTag>
   images!: Table<DbImage>
-  syncQueue!: Table<SyncOperation>
+  localQueue!: Table<LocalOperation>
   settings!: Table<AppSettings>
-  sessions!: Table<UserSession>
-  
+
   // 离线数据持久化增强表
   offlineSnapshots!: Table<OfflineSnapshot>
   offlineBackups!: Table<{
@@ -286,15 +193,9 @@ class CardAllUnifiedDatabase extends Dexie {
     size: number
   }>
 
-  // 同步元数据表
-  syncMetadata!: Table<SyncMetadata>
-  conflictRecords!: Table<ConflictRecord>
-
-  // 错误隔离和系统管理表
-  syncErrors!: Table<SyncErrorEntry>
-  isolatedErrors!: Table<IsolatedErrorEntry>
+  // 错误和备份管理表
+  errors!: Table<ErrorEntry>
   backups!: Table<BackupEntry>
-  hiddenTags!: Table<HiddenTagEntry>
 
   constructor() {
     super('CardAllUnifiedDatabase')

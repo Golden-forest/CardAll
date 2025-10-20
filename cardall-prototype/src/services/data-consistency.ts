@@ -127,8 +127,8 @@ class DataConsistencyService {
     })
 
     // 同步状态一致性验证
-    this.validationRules.set('sync-status-consistency', {
-      id: 'sync-status-consistency',
+      this.validationRules.set('data-format-consistency', {
+      id: 'data-format-consistency',
       name: '同步状态一致性检查',
       description: '验证同步版本和状态的一致性',
       entityType: 'card',

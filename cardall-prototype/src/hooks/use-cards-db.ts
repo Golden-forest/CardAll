@@ -70,15 +70,12 @@ export function useCardsDb() {
   // 监听数据库变化
   useEffect(() => {
     const subscription = db.cards.hook('creating', (primKey, obj, trans) => {
-      console.log('Card creating:', primKey)
     })
 
     const updateSubscription = db.cards.hook('updating', (modifications, primKey, obj, trans) => {
-      console.log('Card updating:', primKey)
     })
 
     const deleteSubscription = db.cards.hook('deleting', (primKey, obj, trans) => {
-      console.log('Card deleting:', primKey)
     })
 
     return () => {

@@ -39,7 +39,6 @@ export class DatabaseStatusChecker {
    * 检查数据库连接和状态
    */
   async checkDatabaseStatus(): Promise<DatabaseStatus> {
-    console.log('🔍 开始检查数据库状态...')
 
     try {
       // 检查数据库连接

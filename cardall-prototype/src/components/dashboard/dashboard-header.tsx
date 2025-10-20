@@ -1,32 +1,24 @@
 import React, { useState, useMemo } from 'react'
 import { useCardAllCards } from '@/contexts/cardall-context'
-import { authService, type AuthState } from '@/services/auth'
-import { useAuthModal } from '@/contexts/auth-modal-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Plus,
   Search,
-  Settings,
-  User,
-  LogIn
+  Settings
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
-import { UserAvatar } from '@/components/ui/user-avatar'
 import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-utils'
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
-import { DataIntegrityIndicator } from '@/components/data-integrity/data-integrity-indicator'
 import { AppConfig } from '@/config/app-config'
 
 interface DashboardHeaderProps {
-  authState: AuthState
   className?: string
 }
 
-export function DashboardHeader({ authState, className }: DashboardHeaderProps) {
-  const { openModal } = useAuthModal()
+export function DashboardHeader({ className }: DashboardHeaderProps) {
   const { 
     cards, 
     filter, 
@@ -60,7 +52,6 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
 
   // 处理创建卡片
   const handleCreateCard = async () => {
-    if (AppConfig.enableAuth && !authState.user) {
       openModal()
       return
     }
@@ -152,9 +143,6 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
 
         {/* 操作按钮 */}
         <div className="flex items-center space-x-2">
-          {/* 数据完整性指示器 */}
-          <DataIntegrityIndicator showDetails={true} />
-
           <Button
             variant="outline"
             size="sm"
@@ -181,27 +169,7 @@ export function DashboardHeader({ authState, className }: DashboardHeaderProps) 
             新建卡片
           </Button>
 
-          {/* 用户区域 - 仅在启用认证时显示 */}
-          {AppConfig.enableAuth && (
-            <div className="flex items-center space-x-2 ml-4">
-              {authState.user ? (
-                <UserAvatar
-                  user={authState.user}
-                  onSignOut={() => authService.signOut()}
-                />
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openModal()}
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  登录
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+                  </div>
       </div>
 
       {/* 截图预览模态框 */}

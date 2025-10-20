@@ -412,7 +412,6 @@ export class IntelligentNetworkCache {
       await this.get(url, { priority: 'low' });
       this.successfulPrefetches++;
     } catch (error) {
-      console.debug(`预取失败: ${url}`, error);
     } finally {
       this.prefetchQueue.delete(url);
     }

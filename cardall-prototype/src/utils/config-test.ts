@@ -3,7 +3,7 @@
  * 用于验证应用配置是否正确导入和工作
  */
 
-import { AppConfig, validateAppConfig, isCloudFeatureEnabled, getConfigSummary } from '@/config/app-config';
+import { AppConfig, validateAppConfig, getConfigSummary } from '@/config/app-config';
 import { validateConfig, logConfigInfo } from '@/utils/config-validator';
 
 /**

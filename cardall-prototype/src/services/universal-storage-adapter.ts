@@ -75,7 +75,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
     this.config = config
 
     // 使用纯本地存储模式
-    console.log('使用纯本地存储模式')
 
     this.initializeStorageMode()
     this.setupEventListeners()
@@ -2357,7 +2356,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
             try {
               window.indexedDB.deleteDatabase(testDBName)
             } catch (cleanupError) {
-              console.debug('Failed to cleanup test database:', cleanupError)
             }
           }
 
@@ -2384,7 +2382,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
             try {
               db.close()
               cleanup()
-              console.debug('IndexedDB availability test passed')
               resolve(true)
             } catch (closeError) {
               console.warn('Failed to close test database:', closeError)
@@ -2394,7 +2391,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
           }
 
           testDB.onupgradeneeded = (event) => {
-            console.debug('IndexedDB upgrade needed during availability test')
           }
         })
 
@@ -2415,7 +2411,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
       // 首先检查IndexedDB是否可用
       const indexedDBAvailable = await this.isIndexedDBAvailable()
       if (!indexedDBAvailable) {
-        console.debug('IndexedDB data check: IndexedDB not available')
         return false
       }
 
@@ -2435,7 +2430,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
         let cardCount: number
         try {
           cardCount = await db.cards.count()
-          console.debug(`IndexedDB card count: ${cardCount}`)
         } catch (countError) {
           console.warn('Failed to get card count:', countError)
           return false
@@ -2452,7 +2446,6 @@ export class UniversalStorageAdapter implements StorageAdapter {
           return true
         }
 
-        console.debug('IndexedDB data check: no data found')
         return false
 
       } catch (dbError) {
@@ -2473,49 +2466,40 @@ export class UniversalStorageAdapter implements StorageAdapter {
       try {
         const folderCount = await db.folders.count()
         if (folderCount > 0) {
-          console.debug(`Found ${folderCount} folders in IndexedDB`)
           return true
         }
       } catch (folderError) {
-        console.debug('Failed to check folders:', folderError)
       }
 
       // 检查标签数据
       try {
         const tagCount = await db.tags.count()
         if (tagCount > 0) {
-          console.debug(`Found ${tagCount} tags in IndexedDB`)
           return true
         }
       } catch (tagError) {
-        console.debug('Failed to check tags:', tagError)
       }
 
       // 检查图片数据
       try {
         const imageCount = await db.images.count()
         if (imageCount > 0) {
-          console.debug(`Found ${imageCount} images in IndexedDB`)
           return true
         }
       } catch (imageError) {
-        console.debug('Failed to check images:', imageError)
       }
 
       // 检查设置数据
       try {
         const settingsCount = await db.settings.count()
         if (settingsCount > 0) {
-          console.debug(`Found ${settingsCount} settings in IndexedDB`)
           return true
         }
       } catch (settingsError) {
-        console.debug('Failed to check settings:', settingsError)
       }
 
       return false
     } catch (error) {
-      console.debug('Error checking other data tables:', error)
       return false
     }
   }

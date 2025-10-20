@@ -52,10 +52,8 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
             ])
 
             indexedDbDataCount += folders + tags + images
-            console.debug(`IndexedDB data count: ${indexedDbDataCount} (cards: ${await db.cards.count()}, folders: ${folders}, tags: ${tags}, images: ${images})`)
           }
         } catch (error) {
-          console.debug('Failed to get IndexedDB data count:', error)
         }
       }
     }
@@ -71,7 +69,6 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
         if (Array.isArray(parsedCards) && parsedCards.length > 0) {
           hasLocalStorageData = true
           localStorageDataCount = parsedCards.length
-          console.debug(`localStorage data count: ${localStorageDataCount}`)
         }
       }
 
@@ -87,41 +84,33 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
               localStorageDataCount += parsed.length
             }
           } catch (e) {
-            console.debug(`Failed to parse localStorage ${key}:`, e)
           }
         }
       }
     } catch (error) {
-      console.debug('Failed to check localStorage data:', error)
     }
 
     // 3. 智能选择逻辑
     if (!indexedDbAvailable) {
-      console.debug('IndexedDB not available, using localStorage')
       return 'localStorage'
     }
 
     if (hasIndexedDbData && !hasLocalStorageData) {
-      console.debug('Only IndexedDB has data, using IndexedDB')
       return 'indexeddb'
     }
 
     if (!hasIndexedDbData && hasLocalStorageData) {
-      console.debug('Only localStorage has data, using localStorage')
       return 'localStorage'
     }
 
     if (hasIndexedDbData && hasLocalStorageData) {
       // 两个存储都有数据，选择数据量更多的
       if (indexedDbDataCount > localStorageDataCount) {
-        console.debug(`Both have data, IndexedDB has more (${indexedDbDataCount} > ${localStorageDataCount}), using IndexedDB`)
         return 'indexeddb'
       } else if (localStorageDataCount > indexedDbDataCount) {
-        console.debug(`Both have data, localStorage has more (${localStorageDataCount} > ${indexedDbDataCount}), using localStorage`)
         return 'localStorage'
       } else {
         // 数据量相同，优先使用IndexedDB（更现代化）
-        console.debug('Both have equal data, preferring IndexedDB')
         return 'indexeddb'
       }
     }
@@ -130,23 +119,18 @@ async function determineStorageMode(): Promise<'localStorage' | 'indexeddb'> {
     try {
       const userPreference = localStorage.getItem('preferredStorageMode')
       if (userPreference === 'indexeddb' && indexedDbAvailable) {
-        console.debug('User prefers IndexedDB, using IndexedDB')
         return 'indexeddb'
       } else if (userPreference === 'localStorage') {
-        console.debug('User prefers localStorage, using localStorage')
         return 'localStorage'
       }
     } catch (error) {
-      console.debug('Failed to get user preference:', error)
     }
 
     // 5. 默认策略：如果IndexedDB可用，优先使用IndexedDB
     if (indexedDbAvailable) {
-      console.debug('Default: IndexedDB available, using IndexedDB')
       return 'indexeddb'
     }
 
-    console.debug('Default: using localStorage')
     return 'localStorage'
 
   } catch (error) {

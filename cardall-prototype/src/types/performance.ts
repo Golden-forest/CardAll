@@ -12,7 +12,6 @@ export enum MetricType {
   RENDERING = 'rendering',
   STORAGE = 'storage',
   USER_INTERACTION = 'userInteraction',
-  SYNC = 'sync',
   CONFLICT_RESOLUTION = 'conflictResolution'
 }
 

@@ -82,13 +82,11 @@ export function useFolders() {
 
   // Folder actions with enhanced error handling and logging
   const dispatch = useCallback((action: FolderAction) => {
-    console.log('🎯 Folder Action dispatched:', action.type, action.payload)
 
     setFolders(prevFolders => {
       try {
         switch (action.type) {
           case 'CREATE_FOLDER':
-            console.log('➕ Creating new folder...')
             const newFolder: Folder = {
               ...action.payload,
               id: `folder-${Date.now()}`,
@@ -96,11 +94,9 @@ export function useFolders() {
               createdAt: new Date(),
               updatedAt: new Date()
             }
-            console.log('✅ New folder created:', newFolder.id, newFolder.name)
             return [...prevFolders, newFolder]
 
           case 'UPDATE_FOLDER':
-            console.log('📝 Updating folder:', action.payload.id)
             const updatedFolders = prevFolders.map(folder =>
               folder.id === action.payload.id
                 ? {
@@ -110,11 +106,9 @@ export function useFolders() {
                   }
                 : folder
             )
-            console.log('✅ Folder updated:', action.payload.id)
             return updatedFolders
 
           case 'DELETE_FOLDER':
-            console.log('🗑️ Deleting folder:', action.payload)
             const folderToDelete = prevFolders.find(f => f.id === action.payload)
             if (folderToDelete) {
               // Get all child folders recursively
@@ -133,24 +127,19 @@ export function useFolders() {
                 .filter(folder => allFoldersToDelete.includes(folder.id))
                 .flatMap(folder => folder.cardIds)
 
-              console.log('📋 Folders to delete:', allFoldersToDelete.length)
-              console.log('📋 Cards to delete:', allCardIdsToDelete.length)
 
               // Trigger card deletion through callback if provided
               if ('onDeleteCards' in action && action.onDeleteCards && allCardIdsToDelete.length > 0) {
-                console.log('🔄 Triggering card deletion callback...')
                 action.onDeleteCards(allCardIdsToDelete)
               }
 
               const remainingFolders = prevFolders.filter(folder => !allFoldersToDelete.includes(folder.id))
-              console.log('✅ Folder deleted successfully. Remaining folders:', remainingFolders.length)
               return remainingFolders
             }
             console.warn('⚠️ Folder to delete not found:', action.payload)
             return prevFolders.filter(folder => folder.id !== action.payload)
 
           case 'TOGGLE_FOLDER':
-            console.log('🔄 Toggling folder expansion:', action.payload)
             const toggledFolders = prevFolders.map(folder =>
               folder.id === action.payload
                 ? {
@@ -162,7 +151,6 @@ export function useFolders() {
                   }
                 : folder
             )
-            console.log('✅ Folder toggled:', action.payload)
             return toggledFolders
 
           default:
@@ -250,21 +238,16 @@ export function useFolders() {
     try {
       // 只有在有数据时才检查一致性
       if (folders.length === 0) {
-        console.log('📋 没有文件夹数据，跳过一致性检查')
         setIsConsistent(true)
         return true
       }
 
-      console.log('🔍 开始检查文件夹数据一致性...')
 
       // 检查IndexedDB中的数据
       const dbFolders = await db.folders.toArray()
       const dbFolderIds = new Set(dbFolders.map(f => f.id))
       const currentFolderIds = new Set(folders.map(f => f.id))
 
-      console.log('📊 数据统计:')
-      console.log('  - 内存中文件夹:', folders.length)
-      console.log('  - IndexedDB中文件夹:', dbFolders.length)
 
       let isDataConsistent = true
 
@@ -304,7 +287,6 @@ export function useFolders() {
           // 只在确实有变化时才更新状态
           if (JSON.stringify(repairedFolders) !== JSON.stringify(folders)) {
             setFolders(repairedFolders)
-            console.log('✅ 自动修复同步字段完成')
           }
         }
       }
@@ -315,14 +297,12 @@ export function useFolders() {
       })
 
       if (needsRestore && folders.length === 0) {
-        console.log('🔄 发现需要恢复的文件夹数据，且当前无数据')
         const backupFolders = secureStorage.get<Folder[]>('folders_backup', {
           validate: true,
           encrypt: true
         })
 
         if (backupFolders && backupFolders.length > 0) {
-          console.log('💾 从备份恢复文件夹数据:', backupFolders.length)
           setFolders(backupFolders)
 
           // 清理恢复标记
@@ -333,7 +313,6 @@ export function useFolders() {
           try {
             await db.folders.clear()
             await db.folders.bulkAdd(backupFolders)
-            console.log('✅ 恢复的文件夹数据已保存到IndexedDB')
             isDataConsistent = true
           } catch (error) {
             console.error('❌ 恢复数据保存失败:', error)
@@ -342,7 +321,6 @@ export function useFolders() {
       }
 
       setIsConsistent(isDataConsistent)
-      console.log('🎯 文件夹数据一致性检查完成:', isDataConsistent ? '✅ 一致' : '❌ 不一致')
 
       return isDataConsistent
     } catch (error) {
@@ -355,7 +333,6 @@ export function useFolders() {
   // 强制数据修复
   const forceDataRepair = useCallback(async () => {
     try {
-      console.log('开始强制修复文件夹数据...')
 
       // 1. 备份当前数据
       secureStorage.set('folders_repair_backup', folders, {
@@ -378,7 +355,6 @@ export function useFolders() {
         validate: true
       })
 
-      console.log('文件夹数据强制修复完成')
       setIsConsistent(true)
 
       return true
@@ -393,24 +369,20 @@ export function useFolders() {
     const loadFolders = async () => {
       // 如果已经初始化过，跳过加载
       if (isInitialized) {
-        console.log('📁 文件夹数据已初始化，跳过加载')
         return
       }
 
       try {
-        console.log('🔄 开始加载文件夹数据...')
 
         let foldersToLoad: Folder[] = []
 
         // 优先使用内存中的数据（如果有）
         if (folders.length > 0) {
-          console.log('📋 使用内存中的文件夹数据:', folders.length)
           foldersToLoad = folders
         } else {
           // 尝试从 IndexedDB 加载数据
           try {
             const dbFolders = await db.folders.toArray()
-            console.log('📊 从 IndexedDB 查找到文件夹:', dbFolders.length)
 
             if (dbFolders.length > 0) {
               // 确保数据格式正确，添加默认同步字段和展开状态
@@ -427,7 +399,6 @@ export function useFolders() {
                   isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
                 }
               })
-              console.log('✅ 使用 IndexedDB 中的文件夹数据')
 
               // 立即更新状态，不等待同步完成
               setFolders(foldersToLoad)
@@ -550,7 +521,6 @@ export function useFolders() {
 
     // 如果没有数据变化，跳过保存操作
     if (folders.length === 0) {
-      console.log('📋 没有文件夹数据，跳过保存操作')
       return
     }
 
