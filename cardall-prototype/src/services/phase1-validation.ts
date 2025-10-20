@@ -127,7 +127,7 @@ export class Phase1Validator {
 
       // 测试基础操作
       const testCard: Card = {
-        id: 'test_card_' + Date.now(),
+        id: `test_card_${  Date.now()}`,
         frontContent: {
           title: 'Test Card',
           text: 'This is a test card',
@@ -202,7 +202,7 @@ export class Phase1Validator {
       console.log('Validating Data Converter...')
 
       const testCard: Card = {
-        id: 'test_converter_' + Date.now(),
+        id: `test_converter_${  Date.now()}`,
         frontContent: {
           title: 'Converter Test',
           text: 'Testing data conversion',
@@ -249,7 +249,7 @@ export class Phase1Validator {
         details: {
           validation: validation.valid,
           sanitization: !!sanitized,
-          comparison: comparison,
+          comparison,
           errors: validation.errors
         },
         executionTime: Date.now() - startTime
@@ -331,7 +331,7 @@ export class Phase1Validator {
       const validator = new MigrationValidator()
 
       const testCard: Card = {
-        id: 'test_validator_' + Date.now(),
+        id: `test_validator_${  Date.now()}`,
         frontContent: {
           title: 'Validator Test',
           text: 'Testing migration validation',

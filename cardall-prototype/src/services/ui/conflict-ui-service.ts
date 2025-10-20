@@ -3,7 +3,7 @@
  * 提供UI层与同步服务之间的接口，处理UI特定的逻辑
  */
 
-import { unifiedSyncService } from '@/services/core/sync/unified-sync.service'
+@// import { unifiedSyncService } from '@/services/core/sync/unified-sync.service'
 import type {
   ConflictBase,
   CardConflict,
@@ -164,7 +164,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async getConflicts(): Promise<(CardConflict | FolderConflict | TagConflict)[]> {
     try {
-      const syncConflicts = unifiedSyncService.getConflicts()
+      const syncConflicts = // unifiedSyncService.getConflicts()
       return this.convertSyncConflictsToUIConflicts(syncConflicts)
     } catch (error) {
       console.error('Failed to get conflicts:', error)
@@ -174,7 +174,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async getConflictById(id: string): Promise<CardConflict | FolderConflict | TagConflict | null> {
     try {
-      const syncConflict = unifiedSyncService.getConflict(id)
+      const syncConflict = // unifiedSyncService.getConflict(id)
       if (!syncConflict) return null
 
       const conflicts = await this.getConflicts()
@@ -187,7 +187,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async resolveConflict(id: string, resolution: ConflictResolution): Promise<boolean> {
     try {
-      const success = await unifiedSyncService.resolveConflict(
+      const success = await // unifiedSyncService.resolveConflict(
         id,
         resolution.type as 'local' | 'cloud' | 'merge',
         resolution.mergedData
@@ -237,7 +237,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async autoResolveConflicts(): Promise<number> {
     try {
-      const resolvedCount = await unifiedSyncService.autoResolveConflicts()
+      const resolvedCount = await // unifiedSyncService.autoResolveConflicts()
       this.clearCache()
       return resolvedCount
     } catch (error) {
@@ -252,7 +252,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async detectNewConflicts(): Promise<(CardConflict | FolderConflict | TagConflict)[]> {
     try {
-      const syncResult = await unifiedSyncService.sync({
+      const syncResult = await // unifiedSyncService.sync({
         type: 'incremental',
         direction: 'bidirectional'
       })
@@ -288,7 +288,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
     try {
       const conflicts = await this.getConflicts()
-      const stats = unifiedSyncService.getStats()
+      const stats = // unifiedSyncService.getStats()
 
       const conflictStats: ConflictStats = {
         totalConflicts: conflicts.length,
@@ -311,7 +311,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
 
   async getSyncStatus(): Promise<SyncStatus> {
     try {
-      const status = unifiedSyncService.getStatus()
+      const status = // unifiedSyncService.getStatus()
       const networkStatus = status.networkStatus
 
       return {
@@ -337,7 +337,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
       const conflict = await this.getConflictById(id)
       if (!conflict) return null
 
-      const syncConflict = unifiedSyncService.getConflict(id)
+      const syncConflict = // unifiedSyncService.getConflict(id)
       const suggestions = await this.getSuggestions(id)
       const affectedEntities = this.getAffectedEntities(conflict)
       const resolutionHistory = this.getResolutionHistory(conflict)
@@ -364,7 +364,7 @@ export class ConflictUIServiceImpl implements ConflictUIService {
       const conflict = await this.getConflictById(id)
       if (!conflict) return []
 
-      const syncConflict = unifiedSyncService.getConflict(id)
+      const syncConflict = // unifiedSyncService.getConflict(id)
       const syncSuggestions = syncConflict?.suggestions || []
 
       return syncSuggestions.map((s: any) => ({

@@ -598,23 +598,27 @@ export class LocalOperationService {
 
   // 执行批处理同步逻辑 - 修复接口调用
   private async executeBatchSync(operations: LocalSyncOperation[], batchId: string): Promise<void> {
-    try {
-      // 导入统一同步服务（延迟导入避免循环依赖）
-      const { unifiedSyncService } = await import('./unified-sync-service')
-
-      // 按操作类型分组处理
-      const operationGroups = this.groupOperationsByType(operations)
-
-      // 处理每个操作组
-      for (const [entityType, entityOperations] of Object.entries(operationGroups)) {
-        await this.processEntityGroup(entityType, entityOperations, unifiedSyncService)
-      }
-
-      console.log(`Batch ${batchId} sync execution completed`)
-    } catch (error) {
-      console.error(`Batch ${batchId} sync execution failed:`, error)
-      throw error
-    }
+      //     try {
+      // 云端同步功能已删除，仅记录日志
+      console.log(`Batch ${batchId} sync execution skipped - cloud sync disabled`)
+      console.log(`Operations that would have been synced:`, operations.length)
+      return
+      //       // 导入统一同步服务（延迟导入避免循环依赖）
+      //       const { unifiedSyncService } = await import('./unified-sync-service')
+      // 
+      //       // 按操作类型分组处理
+      //       const operationGroups = this.groupOperationsByType(operations)
+      // 
+      //       // 处理每个操作组
+      //       for (const [entityType, entityOperations] of Object.entries(operationGroups)) {
+      //         await this.processEntityGroup(entityType, entityOperations, unifiedSyncService)
+      //       }
+      // 
+      //       console.log(`Batch ${batchId} sync execution completed`)
+      //     } catch (error) {
+      //       console.error(`Batch ${batchId} sync execution failed:`, error)
+      //       throw error
+      //     }
   }
 
   // 按实体类型分组操作

@@ -17,13 +17,10 @@ export class DataConverter {
   // 用户ID缓存
   private static cachedUserId: string | null = null
 
-  // 获取当前用户ID
+  // 获取当前用户ID（云端同步功能已删除）
   private static getCurrentUserId(): string | null {
-    if (!this.cachedUserId) {
-      const user = authService.getCurrentUser()
-      this.cachedUserId = user?.id || null
-    }
-    return this.cachedUserId
+    // 认证功能已删除，返回null表示本地用户
+    return null
   }
 
   // 清除用户ID缓存

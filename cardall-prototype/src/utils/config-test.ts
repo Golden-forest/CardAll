@@ -85,23 +85,21 @@ export function testConfigModes(): void {
   // 测试本地模式 (当前配置)
   console.log('🏠 本地模式测试:');
   console.log(`- 云端同步: ${AppConfig.enableCloudSync ? '启用' : '禁用'}`);
-  console.log(`- 用户认证: ${AppConfig.enableAuth ? '启用' : '禁用'}`);
-  console.log(`- 实时同步: ${AppConfig.enableRealtime ? '启用' : '禁用'}`);
   console.log(`- 调试模式: ${AppConfig.enableDebugMode ? '启用' : '禁用'}`);
   console.log(`- 存储模式: ${AppConfig.defaultStorageMode}`);
+  console.log(`- 应用版本: ${AppConfig.version}`);
+  console.log(`- 应用名称: ${AppConfig.appName}`);
 
   // 模拟云端模式
   const cloudConfig = {
     ...AppConfig,
     enableCloudSync: true,
-    enableAuth: true,
-    enableRealtime: true
+    enableDebugMode: false
   };
 
   console.log('☁️ 云端模式模拟:');
   console.log(`- 云端同步: ${cloudConfig.enableCloudSync ? '启用' : '禁用'}`);
-  console.log(`- 用户认证: ${cloudConfig.enableAuth ? '启用' : '禁用'}`);
-  console.log(`- 实时同步: ${cloudConfig.enableRealtime ? '启用' : '禁用'}`);
+  console.log(`- 调试模式: ${cloudConfig.enableDebugMode ? '启用' : '禁用'}`);
   console.log(`- 云端功能状态: ${isCloudFeatureEnabled(cloudConfig) ? '已启用' : '已禁用'}`);
 
   console.groupEnd();

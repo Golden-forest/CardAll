@@ -10,8 +10,6 @@ export interface AppConfigType {
   defaultStorageMode: 'indexeddb' | 'localstorage' | 'memory';
   /** 是否启用调试模式 */
   enableDebugMode: boolean;
-  /** 是否启用云端同步功能 */
-  enableCloudSync: boolean;
   /** 应用版本 */
   version: string;
   /** 应用名称 */
@@ -28,9 +26,6 @@ export const AppConfig: AppConfigType = {
   // 从环境变量读取配置，如果未设置则使用默认值
   enableDebugMode: import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true' || false,
 
-  // 云端同步功能已禁用
-  enableCloudSync: false,
-
   // 默认使用 indexeddb 作为存储模式
   defaultStorageMode: 'indexeddb' as const,
 
@@ -46,7 +41,6 @@ export const AppConfig: AppConfigType = {
 export function validateAppConfig(config: Partial<AppConfigType>): AppConfigType {
   return {
     enableDebugMode: Boolean(config.enableDebugMode),
-    enableCloudSync: Boolean(config.enableCloudSync),
     defaultStorageMode: ['indexeddb', 'localstorage', 'memory'].includes(config.defaultStorageMode as any)
       ? config.defaultStorageMode as 'indexeddb' | 'localstorage' | 'memory'
       : 'indexeddb',
@@ -61,7 +55,7 @@ export function validateAppConfig(config: Partial<AppConfigType>): AppConfigType
 export function getConfigSummary(config: AppConfigType = AppConfig): string {
   const features = [];
   if (config.enableDebugMode) features.push('调试模式');
-  if (!config.enableCloudSync) features.push('本地模式');
+  features.push('本地模式');
 
   const enabledFeatures = features.length > 0 ? features.join('、') : '标准模式';
   return `CardAll ${config.version} - ${enabledFeatures} (存储: ${config.defaultStorageMode})`;

@@ -391,28 +391,28 @@ export async function runAllStorageModeExamples() {
 
   try {
     await basicStorageModeSwitch()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await storageModeSwitchWithProgress()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await cancellableStorageModeSwitch()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await storageStatisticsExample()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await dataValidationExample()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await healthCheckExample()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await eventListenerExample()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     await completeWorkflowExample()
-    console.log('\n' + '='.repeat(50) + '\n')
+    console.log(`\n${  '='.repeat(50)  }\n`)
 
     console.log('🎉 所有示例执行完成!')
 

@@ -419,7 +419,7 @@ export class PerformanceMonitor {
   async performHealthCheck(): Promise<HealthCheckResult> {
     const issues: PerformanceIssue[] = []
     const recommendations: string[] = []
-    let score = 100
+    const score = 100
 
     // 检查数据库性能
     this.checkDatabasePerformance(issues, recommendations, score)

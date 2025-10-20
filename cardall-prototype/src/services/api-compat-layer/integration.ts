@@ -6,7 +6,7 @@
 // ============================================================================
 
 import { apiCompatLayer, type ApiCompatLayerConfig } from './index'
-import { unifiedSyncService } from '../unified-sync-service'
+@// import { unifiedSyncService } from '../unified-sync-service'
 import { authService } from '../auth'
 import { db } from '../database'
 import { versionCheck } from './version-manager'
@@ -159,12 +159,12 @@ export class ApiCompatLayerIntegration {
 
     try {
       // 检查统一同步服务是否可用
-      const syncStatus = await unifiedSyncService.getCurrentStatus()
+      const syncStatus = await // unifiedSyncService.getCurrentStatus()
       
       if (syncStatus) {
         // 设置认证服务到统一同步服务
         if (authService) {
-          unifiedSyncService.setAuthService(authService)
+          // unifiedSyncService.setAuthService(authService)
         }
 
         // 配置统一同步服务以使用API兼容层
@@ -300,13 +300,13 @@ export class ApiCompatLayerIntegration {
   private extendUnifiedSyncService(): void {
     // 添加向后兼容的方法
     const originalMethods = {
-      addOperation: unifiedSyncService.addOperation.bind(unifiedSyncService),
-      performFullSync: unifiedSyncService.performFullSync.bind(unifiedSyncService),
-      getCurrentStatus: unifiedSyncService.getCurrentStatus.bind(unifiedSyncService)
+      addOperation: // unifiedSyncService.addOperation.bind(unifiedSyncService),
+      performFullSync: // unifiedSyncService.performFullSync.bind(unifiedSyncService),
+      getCurrentStatus: // unifiedSyncService.getCurrentStatus.bind(unifiedSyncService)
     }
 
     // 扩展addOperation方法以支持更多格式
-    (unifiedSyncService as any).addOperationLegacy = async function(operation: any) {
+    // (unifiedSyncService as any).addOperationLegacy = async function(operation: any) {
       console.warn('使用已弃用的addOperationLegacy方法，建议迁移到新的API')
       
       // 转换为新的操作格式
@@ -327,7 +327,7 @@ export class ApiCompatLayerIntegration {
     }
 
     // 扩展performFullSync方法以支持更多选项
-    (unifiedSyncService as any).performFullSyncLegacy = async function(options?: any) {
+    // (unifiedSyncService as any).performFullSyncLegacy = async function(options?: any) {
       console.warn('使用已弃用的performFullSyncLegacy方法，建议迁移到新的API')
       
       return originalMethods.performFullSync()

@@ -77,19 +77,10 @@ export default defineConfig(({ mode }) => {
           utils: ['clsx', 'tailwind-merge', 'class-variance-authority', 'date-fns'],
           sync: [
             './src/services/database-unified.ts',
-            './src/services/sync-performance.ts',
             './src/services/query-performance.ts',
-            './src/services/unified-sync-service.ts',
-            './src/services/cloud-sync.ts',
             './src/services/local-operation.ts',
             './src/services/network-monitor.ts',
-            './src/services/offline-manager.ts',
-            './src/services/unified-sync-service-base.ts',
-            './src/services/sync/conflict-state-manager.ts',
-            './src/services/sync/conflict-diagnostic-tools.ts',
-            './src/services/sync/conflict-storage-optimizer.ts',
-            './src/services/sync/conflict-management-test-suite.ts',
-            './src/services/sync/phase1-demo.ts'
+            './src/services/offline-manager.ts'
           ]
         }
       }

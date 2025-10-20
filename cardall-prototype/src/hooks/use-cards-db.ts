@@ -25,10 +25,10 @@ const cardToDbCard = (card: Card, userId?: string): DbCard => {
   }
 }
 
-// 获取当前用户ID
+// 获取当前用户ID（云端同步功能已删除）
 const getCurrentUserId = (): string | null => {
-  const user = authService.getCurrentUser()
-  return user?.id || null
+  // 认证功能已删除，返回null表示本地用户
+  return null
 }
 
 export function useCardsDb() {
@@ -176,13 +176,14 @@ export function useCardsDb() {
           await db.cards.add(newCardData)
           
           // 添加到同步队列
-          await unifiedSyncService.addOperation({
-            type: 'create',
-            entity: 'card',
-            entityId: cardId,
-            data: newCardData,
-            priority: 'normal'
-          })
+          // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'create',
+          //   entity: 'card',
+          //   entityId: cardId,
+          //   data: newCardData,
+          //   priority: 'normal'
+          // })
           
           // 重新加载数据
           await loadCards()
@@ -201,13 +202,14 @@ export function useCardsDb() {
           await db.cards.update(action.payload.id, updates)
           
           // 添加到同步队列
-          await unifiedSyncService.addOperation({
-            type: 'update',
-            entity: 'card',
-            entityId: action.payload.id,
-            data: { ...action.payload.updates, userId },
-            priority: 'normal'
-          })
+          // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'update',
+          //   entity: 'card',
+          //   entityId: action.payload.id,
+          //   data: { ...action.payload.updates, userId },
+          //   priority: 'normal'
+          // })
           
           await loadCards()
           break
@@ -232,13 +234,14 @@ export function useCardsDb() {
           await db.cards.delete(action.payload)
           
           // 添加到同步队列
-          await unifiedSyncService.addOperation({
-            type: 'delete',
-            entity: 'card',
-            entityId: action.payload,
-            data: { userId },
-            priority: 'high'
-          })
+          // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'delete',
+          //   entity: 'card',
+          //   entityId: action.payload,
+          //   data: { userId },
+          //   priority: 'high'
+          // })
           
           await loadCards()
           break
@@ -257,12 +260,13 @@ export function useCardsDb() {
             await db.cards.update(action.payload, updates)
             
             // 添加到同步队列
-            await unifiedSyncService.addOperation({
-              type: 'update',
-              table: 'cards',
-              data: updates,
-              localId: action.payload
-            })
+            // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //     type: 'update',
+          //     table: 'cards',
+          //     data: updates,
+          //     localId: action.payload
+          //   })
             
             await loadCards()
           }
@@ -298,12 +302,13 @@ export function useCardsDb() {
             await db.cards.add(duplicatedCard)
             
             // 添加到同步队列
-            await unifiedSyncService.addOperation({
-              type: 'create',
-              table: 'cards',
-              data: duplicatedCard,
-              localId: duplicatedCardId
-            })
+            // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //     type: 'create',
+          //     table: 'cards',
+          //     data: duplicatedCard,
+          //     localId: duplicatedCardId
+          //   })
             
             await loadCards()
           }
@@ -322,12 +327,13 @@ export function useCardsDb() {
           await db.cards.update(action.payload.cardId, updates)
           
           // 添加到同步队列
-          await unifiedSyncService.addOperation({
-            type: 'update',
-            table: 'cards',
-            data: updates,
-            localId: action.payload.cardId
-          })
+          // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'update',
+          //   table: 'cards',
+          //   data: updates,
+          //   localId: action.payload.cardId
+          // })
           
           await loadCards()
           break
@@ -404,12 +410,13 @@ export function useCardsDb() {
         await db.cards.update(card.id!, updates)
         
         // 添加到同步队列
-        await unifiedSyncService.addOperation({
-          type: 'update',
-          table: 'cards',
-          data: updates,
-          localId: card.id!
-        })
+        // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'update',
+          //   table: 'cards',
+          //   data: updates,
+          //   localId: card.id!
+          // })
       }
 
       await loadCards()
@@ -473,19 +480,21 @@ export function useCardsDb() {
       })
 
       // 添加卡片更新到同步队列
-      await unifiedSyncService.addOperation({
-        type: 'update',
-        table: 'cards',
-        data: { 
-          [currentSide]: { images: updatedImages },
-          userId,
-          updatedAt: new Date()
-        },
-        localId: cardId
-      })
+      // 云端同步功能已删除，仅保存到本地数据库
+          // await unifiedSyncService.addOperation({
+          //   type: 'update',
+          //   table: 'cards',
+          //   data: {
+          //     [currentSide]: { images: updatedImages },
+          //     userId,
+          //     updatedAt: new Date()
+          //   },
+          //   localId: cardId
+          // })
       
       // 添加图片创建到同步队列（如果需要的话）
-      // await unifiedSyncService.addOperation({
+      // // 云端同步功能已删除，仅保存到本地数据库
+              // await unifiedSyncService.addOperation({
       //   type: 'create',
       //   table: 'images',
       //   data: processedImage,

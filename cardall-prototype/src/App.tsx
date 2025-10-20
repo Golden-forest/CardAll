@@ -10,7 +10,6 @@ import { TagPanelProvider } from '@/contexts/tag-panel-context'
 // import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context' // 认证功能已删除
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
-import { AppConfig } from '@/config/app-config'
 import './globals.css'
 
 interface AppProps {

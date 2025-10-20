@@ -1355,7 +1355,7 @@ export class ConflictResolutionEngine {
         details: {
           steps: [],
           algorithm: 'conflict-resolution-engine',
-          strategy: strategy,
+          strategy,
           executionTime: Date.now() - startTime,
           resourceUsage: { cpu: 0, memory: 0, network: 0, disk: 0 },
           logs: []

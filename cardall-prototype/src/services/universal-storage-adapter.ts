@@ -991,7 +991,7 @@ export class UniversalStorageAdapter implements StorageAdapter {
         timestamp: new Date().toISOString(),
         version: this.version,
         purpose: 'rollback_safety',
-        cards: cards
+        cards
       }
 
       const backupJson = JSON.stringify(backupData)
@@ -1800,7 +1800,7 @@ export class UniversalStorageAdapter implements StorageAdapter {
     const backupData = {
       timestamp: new Date().toISOString(),
       version: this.version,
-      cards: cards
+      cards
     }
 
     const backupJson = JSON.stringify(backupData)
