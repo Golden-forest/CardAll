@@ -84,7 +84,7 @@ export function Dashboard({ className }: DashboardProps) {
   
   const { toast } = useToast()
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const [layoutSettings, setLayoutSettings] = useState({
     gap: 16,
     showLayoutControls: false

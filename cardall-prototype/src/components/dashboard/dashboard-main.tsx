@@ -23,7 +23,7 @@ export function Dashboard({ className }: DashboardProps) {
   })
 
   // UI state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
 
   // Context hooks
   const {
