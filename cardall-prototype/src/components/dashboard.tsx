@@ -36,7 +36,6 @@ import {
   ConnectedTagPanel
 } from '@/components/tag'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
-import { PerformanceMonitorPanel } from '@/components/performance/performance-monitor-panel'
 import { AppConfig } from '@/config/app-config'
 
 interface DashboardProps {
@@ -603,12 +602,7 @@ export function Dashboard({ className }: DashboardProps) {
               {/* Sync Status Indicator - 云端同步功能已删除，不再显示 */}
               {/* Sync status indicator has been removed as cloud sync functionality is disabled */}
 
-              {/* Performance Monitor */}
-              <PerformanceMonitorPanel
-                compact={true}
-                autoRefresh={true}
-              />
-
+  
               {/* Layout Controls Popover */}
               <Popover>
                 <PopoverTrigger asChild>
