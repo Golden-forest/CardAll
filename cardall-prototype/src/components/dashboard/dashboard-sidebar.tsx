@@ -7,12 +7,14 @@ import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Slider } from '@/components/ui/slider'
 import { Label } from '@/components/ui/label'
-import { 
+import {
   Folder,
   Tag,
   FolderPlus,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronRight as ChevronRightIcon,
   Sliders
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -86,39 +88,66 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
   const renderFolderTree = useCallback((folders: any[] = [], level = 0) => {
     if (collapsed && level > 0) return null
 
-    return folders.map((folder) => (
-      <div key={folder.id} className="space-y-1">
-        <div
-          className={cn(
-            "flex items-center justify-between px-2 py-1.5 rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer group",
-            selectedFolderId === folder.id && "bg-accent text-accent-foreground"
-          )}
-          style={{ paddingLeft: `${level * 16 + 8}px` }}
-          onClick={() => setSelectedFolderId(folder.id)}
-          onContextMenu={(e) => {
-            e.preventDefault()
-            setContextMenuFolder({ id: folder.id, name: folder.name })
-          }}
-        >
-          <div className="flex items-center space-x-2 flex-1 min-w-0">
-            <Folder className="h-4 w-4 flex-shrink-0" />
-            <span className="truncate text-sm">{folder.name}</span>
-            {folder.cardIds && folder.cardIds.length > 0 && (
-              <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
-                {folder.cardIds.length}
-              </Badge>
-            )}
-          </div>
-        </div>
+    return folders.map((folder) => {
+      const hasChildren = folder.children && folder.children.length > 0
+      const isExpanded = folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
 
-        {folder.children && folder.children.length > 0 && (
-          <div className="ml-2">
-            {renderFolderTree(folder.children, level + 1)}
+      return (
+        <div key={folder.id} className="space-y-1">
+          <div
+            className={cn(
+              "flex items-center justify-between px-2 py-1.5 rounded-sm hover:bg-accent hover:text-accent-foreground cursor-pointer group",
+              selectedFolderId === folder.id && "bg-accent text-accent-foreground"
+            )}
+            style={{ paddingLeft: `${level * 16 + 8}px` }}
+            onClick={() => {
+              // 如果有子文件夹，切换展开状态
+              if (hasChildren) {
+                folderDispatch({
+                  type: 'TOGGLE_FOLDER',
+                  payload: folder.id
+                })
+              }
+              setSelectedFolderId(folder.id)
+            }}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setContextMenuFolder({ id: folder.id, name: folder.name })
+            }}
+          >
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              {/* 展开/折叠箭头图标 */}
+              {hasChildren && (
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 flex-shrink-0 transition-transform duration-200",
+                    !isExpanded && "-rotate-90"
+                  )}
+                />
+              )}
+
+              {/* 文件夹图标 */}
+              <Folder className="h-4 w-4 flex-shrink-0" />
+
+              <span className="truncate text-sm">{folder.name}</span>
+              {folder.cardIds && folder.cardIds.length > 0 && (
+                <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
+                  {folder.cardIds.length}
+                </Badge>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    ))
-  }, [collapsed, selectedFolderId, setSelectedFolderId, isReady])
+
+          {/* 只有展开时才显示子文件夹 */}
+          {hasChildren && isExpanded && (
+            <div className="ml-2">
+              {renderFolderTree(folder.children, level + 1)}
+            </div>
+          )}
+        </div>
+      )
+    })
+  }, [collapsed, selectedFolderId, setSelectedFolderId, folderDispatch, isReady])
 
   // 优化的折叠文件夹渲染
   const renderCollapsedFolderTree = useCallback((folders: any[] = []) => {

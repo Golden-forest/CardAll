@@ -14,7 +14,8 @@ import {
   FolderPlus,
   Sliders,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -492,36 +493,78 @@ export function Dashboard({ className }: DashboardProps) {
     }
   }
 
-  const renderFolderTree = (folders: any[], level = 0) => {
-    return folders.map(folder => (
-      <div key={folder.id} style={{ marginLeft: level * 16 }}>
-        <FolderContextMenu
-          folderId={folder.id}
-          folderName={folder.name}
-          onRename={handleRenameFolder}
-          onDelete={handleDeleteFolder}
-          onCreateSubfolder={handleCreateSubfolder}
-        >
-          <Button
-            variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
-            className="w-full justify-start text-sm mb-1"
-            onClick={() => handleFolderSelect(folder.id)}
+  const renderFolderTree = React.useCallback((folders: any[] = [], level = 0, visited = new Set()) => {
+    // 防止无限递归
+    if (level > 10) return null
+
+    return folders.map(folder => {
+      // 检查是否已经访问过这个文件夹（防止循环引用）
+      if (visited.has(folder.id)) {
+        console.warn('检测到循环引用的文件夹:', folder.id)
+        return null
+      }
+
+      const hasChildren = folder.children && folder.children.length > 0
+      const isExpanded = folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
+
+      return (
+        <div key={folder.id} className="space-y-1">
+          <FolderContextMenu
+            folderId={folder.id}
+            folderName={folder.name}
+            onRename={handleRenameFolder}
+            onDelete={handleDeleteFolder}
+            onCreateSubfolder={handleCreateSubfolder}
           >
-            <Folder className="h-4 w-4 mr-2" style={{ color: folder.color }} />
-            {folder.name}
-            <Badge variant="secondary" className="ml-auto">
-              {folder.cardIds.length}
-            </Badge>
-          </Button>
-        </FolderContextMenu>
-        {folder.children && folder.children.length > 0 && folder.isExpanded && (
-          <div className="ml-4">
-            {renderFolderTree(folder.children, level + 1)}
-          </div>
-        )}
-      </div>
-    ))
-  }
+            <Button
+              variant={selectedFolderId === folder.id ? "secondary" : "ghost"}
+              className="w-full justify-start text-sm mb-1"
+              style={{ paddingLeft: `${level * 16 + 12}px` }}
+              onClick={() => {
+                // 如果有子文件夹，切换展开状态
+                if (hasChildren) {
+                  folderDispatch({
+                    type: 'TOGGLE_FOLDER',
+                    payload: folder.id
+                  })
+                }
+                handleFolderSelect(folder.id)
+              }}
+            >
+              <div className="flex items-center space-x-2 flex-1 min-w-0">
+                {/* 展开/折叠箭头图标 */}
+                {hasChildren && (
+                  <ChevronDown
+                    className={cn(
+                      "h-3 w-3 flex-shrink-0 transition-transform duration-200",
+                      !isExpanded && "-rotate-90"
+                    )}
+                  />
+                )}
+
+                {/* 文件夹图标 */}
+                <Folder className="h-4 w-4 flex-shrink-0" style={{ color: folder.color }} />
+
+                <span className="truncate">{folder.name}</span>
+                {folder.cardIds && folder.cardIds.length > 0 && (
+                  <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
+                    {folder.cardIds.length}
+                  </Badge>
+                )}
+              </div>
+            </Button>
+          </FolderContextMenu>
+
+          {/* 只有展开时才显示子文件夹 */}
+          {hasChildren && isExpanded && (
+            <div className="ml-2">
+              {renderFolderTree(folder.children, level + 1, new Set(visited).add(folder.id))}
+            </div>
+          )}
+        </div>
+      )
+    })
+  }, [selectedFolderId, folderDispatch, handleFolderSelect, handleRenameFolder, handleDeleteFolder, handleCreateSubfolder])
 
   const renderCollapsedFolderTree = (folders: any[]) => {
     return folders.map(folder => (

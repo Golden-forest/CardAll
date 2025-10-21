@@ -3,40 +3,9 @@ import { Folder, FolderAction } from '@/types/card'
 import { secureStorage } from '@/utils/secure-storage'
 import { db } from '@/services/database'
 
-// Mock data for development
-const mockFolders: Folder[] = [
-  {
-    id: 'folder-1',
-    name: 'Development',
-    color: '#3b82f6',
-    icon: 'Code',
-    cardIds: ['1'],
-    isExpanded: true,
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-15')
-  },
-  {
-    id: 'folder-2',
-    name: 'Design Resources',
-    color: '#8b5cf6',
-    icon: 'Palette',
-    cardIds: [],
-    isExpanded: false,
-    createdAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-12')
-  },
-  {
-    id: 'folder-3',
-    name: 'Learning Notes',
-    color: '#10b981',
-    icon: 'BookOpen',
-    cardIds: ['2'],
-    parentId: 'folder-1',
-    isExpanded: true,
-    createdAt: new Date('2024-01-14'),
-    updatedAt: new Date('2024-01-16')
-  }
-]
+// Mock data for development - DISABLED to fix expand/collapse functionality
+// const mockFolders: Folder[] = [] // Disabled: Empty array prevents mock data interference
+const mockFolders: Folder[] = [] // Empty array to prevent mock data from overriding real data
 
 export function useFolders() {
   // 使用状态初始化函数，避免每次渲染都创建空数组
@@ -59,6 +28,8 @@ export function useFolders() {
   // Get folder tree structure
   const getFolderTree = useCallback(() => {
     const rootFolders = folders.filter(folder => !folder.parentId)
+    console.log('🌳 构建文件夹树 - 根文件夹:', rootFolders.map(f => ({ id: f.id, name: f.name })))
+    console.log('🌳 所有文件夹数据:', folders.map(f => ({ id: f.id, name: f.name, parentId: f.parentId })))
 
     const buildTree = (parentFolders: Folder[]): (Folder & { children: Folder[] })[] => {
       return parentFolders.map(folder => {
@@ -69,15 +40,30 @@ export function useFolders() {
         // 如果有子文件夹但展开状态未定义，默认展开
         const isExpanded = folder.isExpanded !== undefined ? folder.isExpanded : (hasChildren ? true : false)
 
-        return {
+        const result = {
           ...folder,
           isExpanded,
           children
         }
+
+        if (hasChildren) {
+          console.log(`📁 文件夹 "${folder.name}" 有 ${children.length} 个子文件夹:`, children.map(c => ({ id: c.id, name: c.name })))
+        }
+
+        return result
       })
     }
 
-    return buildTree(rootFolders)
+    const tree = buildTree(rootFolders)
+    console.log('🌲 最终文件夹树结构:', tree.map(f => ({
+      id: f.id,
+      name: f.name,
+      isExpanded: f.isExpanded,
+      hasChildren: f.children.length > 0,
+      children: f.children.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))
+    })))
+
+    return tree
   }, [folders])
 
   // Folder actions with enhanced error handling and logging
@@ -383,6 +369,7 @@ export function useFolders() {
           // 尝试从 IndexedDB 加载数据
           try {
             const dbFolders = await db.folders.toArray()
+            console.log('🔍 从数据库加载的原始文件夹数据:', dbFolders.map(f => ({ id: f.id, name: f.name, parentId: f.parentId })))
 
             if (dbFolders.length > 0) {
               // 确保数据格式正确，添加默认同步字段和展开状态
@@ -403,37 +390,203 @@ export function useFolders() {
               // 立即更新状态，不等待同步完成
               setFolders(foldersToLoad)
             } else {
-              // 检查是否有迁移标记，避免重复初始化默认数据
-              const migrationComplete = secureStorage.get<boolean>('folder_migration_complete', {
-                validate: true
-              })
+              // 临时禁用迁移检查，强制创建测试数据
+              console.log('🔄 强制创建测试数据，忽略迁移状态')
 
-              if (migrationComplete) {
-                console.log('🔄 迁移已完成但无数据，可能数据被清空，保持空状态')
-                setIsInitialized(true)
-                return
-              }
+              // 创建复杂的测试文件夹结构数据
+              console.log('🎯 创建测试文件夹结构数据以验证展开/折叠功能')
 
-              // 首次使用，初始化默认数据
-              console.log('🎯 首次使用，初始化默认文件夹数据')
-              foldersToLoad = mockFolders.map(folder => ({
-                ...folder,
-                syncVersion: 1,
-                pendingSync: false,
-                userId: 'default',
-                isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
-              }))
+              const now = new Date()
+              const testFolders: Folder[] = [
+                // 主文件夹1 (展开状态)
+                {
+                  id: 'folder-main-1',
+                  name: '前端开发',
+                  color: '#3b82f6',
+                  icon: 'Code',
+                  parentId: null,
+                  cardIds: [],
+                  isExpanded: true,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3600000),
+                  updatedAt: new Date(now.getTime() - 3600000)
+                },
+                // 主文件夹1的子文件夹1-1 (展开状态)
+                {
+                  id: 'folder-sub-1-1',
+                  name: 'React框架',
+                  color: '#10b981',
+                  icon: 'Component',
+                  parentId: 'folder-main-1',
+                  cardIds: [],
+                  isExpanded: true,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3500000),
+                  updatedAt: new Date(now.getTime() - 3500000)
+                },
+                // 主文件夹1的子文件夹1-2 (折叠状态)
+                {
+                  id: 'folder-sub-1-2',
+                  name: 'Vue框架',
+                  color: '#22c55e',
+                  icon: 'Layer',
+                  parentId: 'folder-main-1',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3400000),
+                  updatedAt: new Date(now.getTime() - 3400000)
+                },
+                // 主文件夹1的子文件夹1-3 (默认展开)
+                {
+                  id: 'folder-sub-1-3',
+                  name: 'CSS样式',
+                  color: '#f59e0b',
+                  icon: 'Palette',
+                  parentId: 'folder-main-1',
+                  cardIds: [],
+                  isExpanded: true,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3300000),
+                  updatedAt: new Date(now.getTime() - 3300000)
+                },
+                // 孙文件夹1-1-1
+                {
+                  id: 'folder-grand-1-1-1',
+                  name: 'React Hooks',
+                  color: '#06b6d4',
+                  icon: 'Hook',
+                  parentId: 'folder-sub-1-1',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3450000),
+                  updatedAt: new Date(now.getTime() - 3450000)
+                },
+                // 孙文件夹1-1-2
+                {
+                  id: 'folder-grand-1-1-2',
+                  name: 'React组件',
+                  color: '#0891b2',
+                  icon: 'Box',
+                  parentId: 'folder-sub-1-1',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3400000),
+                  updatedAt: new Date(now.getTime() - 3400000)
+                },
+                // 主文件夹2 (折叠状态)
+                {
+                  id: 'folder-main-2',
+                  name: '后端开发',
+                  color: '#ef4444',
+                  icon: 'Server',
+                  parentId: null,
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3200000),
+                  updatedAt: new Date(now.getTime() - 3200000)
+                },
+                // 主文件夹2的子文件夹2-1
+                {
+                  id: 'folder-sub-2-1',
+                  name: 'Node.js',
+                  color: '#f97316',
+                  icon: 'Code2',
+                  parentId: 'folder-main-2',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3100000),
+                  updatedAt: new Date(now.getTime() - 3100000)
+                },
+                // 主文件夹2的子文件夹2-2
+                {
+                  id: 'folder-sub-2-2',
+                  name: 'Python',
+                  color: '#a855f7',
+                  icon: 'Terminal',
+                  parentId: 'folder-main-2',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 3000000),
+                  updatedAt: new Date(now.getTime() - 3000000)
+                },
+                // 独立文件夹 (无子文件夹)
+                {
+                  id: 'folder-standalone',
+                  name: '设计资源',
+                  color: '#ec4899',
+                  icon: 'Image',
+                  parentId: null,
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 2800000),
+                  updatedAt: new Date(now.getTime() - 2800000)
+                },
+                // 更多测试文件夹
+                {
+                  id: 'folder-tools',
+                  name: '开发工具',
+                  color: '#6366f1',
+                  icon: 'Wrench',
+                  parentId: null,
+                  cardIds: [],
+                  isExpanded: true,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 2600000),
+                  updatedAt: new Date(now.getTime() - 2600000)
+                },
+                {
+                  id: 'folder-config',
+                  name: '配置文件',
+                  color: '#78716c',
+                  icon: 'Settings',
+                  parentId: 'folder-tools',
+                  cardIds: [],
+                  isExpanded: false,
+                  userId: 'default',
+                  syncVersion: 1,
+                  pendingSync: false,
+                  createdAt: new Date(now.getTime() - 2500000),
+                  updatedAt: new Date(now.getTime() - 2500000)
+                }
+              ]
 
-              // 保存默认数据到 IndexedDB
-              await db.folders.clear()
-              await db.folders.bulkAdd(foldersToLoad)
+              foldersToLoad = testFolders
 
-              // 标记初始化完成
+              // 标记初始化完成但不保存Mock数据
               secureStorage.set('folder_migration_complete', true, {
                 validate: true
               })
 
-              console.log('✅ 默认文件夹数据已保存到 IndexedDB')
+              console.log('✅ 文件夹系统已初始化为测试状态，包含', foldersToLoad.length, '个测试文件夹')
               setFolders(foldersToLoad)
             }
           } catch (dbError) {
@@ -454,27 +607,16 @@ export function useFolders() {
                 }))
                 setFolders(foldersToLoad)
               } else {
-                // 只有在完全没有数据时才使用默认数据
-                foldersToLoad = mockFolders.map(folder => ({
-                  ...folder,
-                  syncVersion: 1,
-                  pendingSync: false,
-                  userId: 'default',
-                  isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
-                }))
-                console.log('🚨 使用默认文件夹数据作为应急方案')
+                // 保持空状态，不使用Mock数据以避免干扰
+                foldersToLoad = []
+                console.log('🚨 保持空文件夹状态，避免Mock数据干扰')
                 setFolders(foldersToLoad)
               }
             } catch (backupError) {
               console.error('❌ 从备份恢复失败:', backupError)
-              // 最后的应急方案
-              foldersToLoad = mockFolders.map(folder => ({
-                ...folder,
-                syncVersion: 1,
-                pendingSync: false,
-                userId: 'default',
-                isExpanded: folder.isExpanded !== undefined ? folder.isExpanded : true
-              }))
+              // 最后的应急方案：保持空状态
+              foldersToLoad = []
+              console.log('🚨 最后应急方案：保持空文件夹状态')
               setFolders(foldersToLoad)
             }
           }
