@@ -1,0 +1,166 @@
+/* Rich Text Editor Styles */
+.ProseMirror {
+  outline: none;
+  font-family: inherit;
+  line-height: 1.6;
+  position: relative;
+  z-index: 20; /* 确保编辑器在动画层之上 */
+  pointer-events: auto !important;
+  background: rgba(255, 255, 255, 0.1); /* 添加轻微背景以确保可见性 */
+}
+
+/* 确保编辑器在渐变波浪样式中可见 */
+.gradient-wave-animation .ProseMirror {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.ProseMirror p {
+  margin: 0.5em 0;
+}
+
+.ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6 {
+  font-weight: 600;
+  margin: 1em 0 0.5em 0;
+}
+
+.ProseMirror h1:first-child,
+.ProseMirror h2:first-child,
+.ProseMirror h3:first-child,
+.ProseMirror h4:first-child,
+.ProseMirror h5:first-child,
+.ProseMirror h6:first-child {
+  margin-top: 0;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ProseMirror li {
+  margin: 0.25em 0;
+}
+
+.ProseMirror blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+  color: #6b7280;
+}
+
+.ProseMirror code {
+  background-color: #f3f4f6;
+  padding: 0.125em 0.25em;
+  border-radius: 0.25em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875em;
+}
+
+.ProseMirror pre {
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5em;
+  margin: 0.5em 0;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.ProseMirror img:hover {
+  transform: scale(1.02);
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Placeholder styles */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Focus styles */
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Selection styles */
+.ProseMirror ::selection {
+  background-color: #dbeafe;
+}
+
+/* Drag and drop styles */
+.ProseMirror.drag-over {
+  background-color: #f0f9ff;
+  border: 2px dashed #3b82f6;
+}
+
+/* Loading state */
+.editor-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Image upload progress */
+.image-upload-progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  z-index: 10;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .ProseMirror {
+    font-size: 0.875rem;
+  }
+  
+  .ProseMirror h1 { font-size: 1.5rem; }
+  .ProseMirror h2 { font-size: 1.25rem; }
+  .ProseMirror h3 { font-size: 1.125rem; }
+  .ProseMirror h4 { font-size: 1rem; }
+  .ProseMirror h5 { font-size: 0.875rem; }
+  .ProseMirror h6 { font-size: 0.75rem; }
+}
