@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
             '@radix-ui/react-toggle-group', '@radix-ui/react-accordion', '@radix-ui/react-aspect-ratio'
           ],
           editor: ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-blockquote', '@tiptap/extension-code', '@tiptap/extension-image', '@tiptap/extension-link', '@tiptap/extension-placeholder', '@tiptap/extension-strike', '@tiptap/extension-task-item', '@tiptap/extension-task-list', 'tiptap-markdown-3'],
-          supabase: ['@supabase/supabase-js', '@supabase/auth-ui-react', '@supabase/auth-ui-shared'],
+          // supabase: 已移除云端同步功能
           database: ['dexie'],
           form: ['react-hook-form', '@hookform/resolvers'],
           charts: ['recharts'],
