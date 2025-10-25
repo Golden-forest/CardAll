@@ -1,8 +1,8 @@
 {
-  "rootDirectory": "cardall-prototype",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
   "nodeVersion": "22.x",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "installCommand": "npm install"
+  "buildCommand": "cd cardall-prototype && npm install && npm run build",
+  "outputDirectory": "cardall-prototype/dist",
+  "installCommand": "cd cardall-prototype && npm install"
 }
