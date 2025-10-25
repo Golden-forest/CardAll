@@ -255,4 +255,3 @@ VITE_APP_ENVIRONMENT=development
 - **NEVER create files unless they're absolutely necessary**: 绝不创建不必要的文件
 - **ALWAYS prefer editing an existing file**: 优先编辑现有文件而非创建新文件
 - **NEVER proactively create documentation files**: 不主动创建文档文件
-- 每次测试的时候检查一下当前有没有打开的端口，如果有就不要新开一个端口来测试了
