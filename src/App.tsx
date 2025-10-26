@@ -2,6 +2,7 @@ import React from 'react'
 import { Dashboard } from '@/components/dashboard'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 // import { AuthModalEnhanced } from '@/components/auth/auth-modal-enhanced' // 认证功能已删除
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { CardAllProvider } from '@/contexts/cardall-context'
@@ -36,13 +37,15 @@ function AppContent({ initializationError }: AppProps) {
         </div>
       )}
 
-      <CardAllProvider>
-        <StylePanelProvider>
-          <TagPanelProvider>
-            <Dashboard />
-          </TagPanelProvider>
-        </StylePanelProvider>
-      </CardAllProvider>
+      <TooltipProvider>
+        <CardAllProvider>
+          <StylePanelProvider>
+            <TagPanelProvider>
+              <Dashboard />
+            </TagPanelProvider>
+          </StylePanelProvider>
+        </CardAllProvider>
+      </TooltipProvider>
 
       {/* PWA Install Prompt */}
       <InstallPrompt />

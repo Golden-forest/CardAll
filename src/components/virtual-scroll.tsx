@@ -113,7 +113,7 @@ export function VirtualScroll<T>(props: VirtualScrollProps<T>) {
           left: '50%',
           transform: 'translate(-50%, -50%)',
           'text-align': 'center',
-          color: '#666'
+          color: 'hsl(var(--muted-foreground))'
         }}>
           {props.emptyState}
         </div>
@@ -257,12 +257,12 @@ export function OptimizedCardList(props: {
         style={{
           height: `${props.itemHeight || 120}px`,
           padding: '12px',
-          'border-bottom': '1px solid #eee',
+          'border-bottom': '1px solid hsl(var(--border))',
           cursor: 'pointer',
           transition: 'background-color 0.2s'
         }}
         onClick={() => props.onCardSelect?.(card)}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--muted))'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         <div style={{ 'font-weight': 'bold', 'margin-bottom': '8px' }}>
@@ -270,7 +270,7 @@ export function OptimizedCardList(props: {
         </div>
         <div style={{ 
           'font-size': '14px', 
-          color: '#666',
+          color: 'hsl(var(--muted-foreground))',
           overflow: 'hidden',
           'text-overflow': 'ellipsis',
           'white-space': 'nowrap'
@@ -279,7 +279,7 @@ export function OptimizedCardList(props: {
         </div>
         <div style={{ 
           'font-size': '12px', 
-          color: '#999',
+          color: 'hsl(var(--muted-foreground))',
           'margin-top': '8px'
         }}>
           更新时间: {new Date(card.updatedAt).toLocaleString()}
@@ -291,7 +291,7 @@ export function OptimizedCardList(props: {
   const emptyState = (
     <div>
       <div style={{ 'font-size': '18px', 'margin-bottom': '8px' }}>暂无卡片</div>
-      <div style={{ color: '#666' }}>创建您的第一张卡片开始学习</div>
+      <div style={{ color: 'hsl(var(--muted-foreground))' }}>创建您的第一张卡片开始学习</div>
     </div>
   )
 
@@ -345,21 +345,21 @@ export function OptimizedFolderList(props: {
         style={{
           height: `${props.itemHeight || 60}px`,
           padding: '12px',
-          'border-bottom': '1px solid #eee',
+          'border-bottom': '1px solid hsl(var(--border))',
           cursor: 'pointer',
           display: 'flex',
           'align-items': 'center',
           transition: 'background-color 0.2s'
         }}
         onClick={() => props.onFolderSelect?.(folder)}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--muted))'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         <div style={{ 'margin-right': '12px' }}>📁</div>
         <div style={{ flex: 1 }}>
           <div style={{ 'font-weight': 'bold' }}>{folder.name}</div>
           {folder.description && (
-            <div style={{ 'font-size': '12px', color: '#666' }}>
+            <div style={{ 'font-size': '12px', color: 'hsl(var(--muted-foreground))' }}>
               {folder.description}
             </div>
           )}
@@ -371,7 +371,7 @@ export function OptimizedFolderList(props: {
   const emptyState = (
     <div>
       <div style={{ 'font-size': '18px', 'margin-bottom': '8px' }}>暂无文件夹</div>
-      <div style={{ color: '#666' }}>创建文件夹来组织您的卡片</div>
+      <div style={{ color: 'hsl(var(--muted-foreground))' }}>创建文件夹来组织您的卡片</div>
     </div>
   )
 
@@ -423,14 +423,14 @@ export function OptimizedTagList(props: {
         style={{
           height: `${props.itemHeight || 40}px`,
           padding: '8px 12px',
-          'border-bottom': '1px solid #eee',
+          'border-bottom': '1px solid hsl(var(--border))',
           cursor: 'pointer',
           display: 'flex',
           'align-items': 'center',
           transition: 'background-color 0.2s'
         }}
         onClick={() => props.onTagSelect?.(tag)}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'hsl(var(--muted))'}
         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         <div style={{ 
@@ -444,8 +444,8 @@ export function OptimizedTagList(props: {
         </div>
         <div style={{ 
           'font-size': '12px', 
-          color: '#999',
-          'background-color': '#f0f0f0',
+          color: 'hsl(var(--muted-foreground))',
+          'background-color': 'hsl(var(--muted))',
           padding: '2px 6px',
           'border-radius': '12px'
         }}>
@@ -458,7 +458,7 @@ export function OptimizedTagList(props: {
   const emptyState = (
     <div>
       <div style={{ 'font-size': '18px', 'margin-bottom': '8px' }}>暂无标签</div>
-      <div style={{ color: '#666' }}>创建标签来分类您的卡片</div>
+      <div style={{ color: 'hsl(var(--muted-foreground))' }}>创建标签来分类您的卡片</div>
     </div>
   )
 
@@ -489,7 +489,7 @@ export function SimpleCardList(props: {
         <div style={{
           padding: '40px',
           'text-align': 'center',
-          color: '#666'
+          color: 'hsl(var(--muted-foreground))'
         }}>
           <div style={{ 'font-size': '18px', 'margin-bottom': '8px' }}>暂无卡片</div>
           <div>创建您的第一张卡片开始学习</div>
@@ -500,7 +500,7 @@ export function SimpleCardList(props: {
             key={card.id}
             style={{
               padding: '12px',
-              'border-bottom': '1px solid #eee',
+              'border-bottom': '1px solid hsl(var(--border))',
               cursor: 'pointer',
               transition: 'background-color 0.2s'
             }}
@@ -513,7 +513,7 @@ export function SimpleCardList(props: {
             </div>
             <div style={{ 
               'font-size': '14px', 
-              color: '#666',
+              color: 'hsl(var(--muted-foreground))',
               overflow: 'hidden',
               'text-overflow': 'ellipsis',
               'white-space': 'nowrap'
@@ -522,7 +522,7 @@ export function SimpleCardList(props: {
             </div>
             <div style={{ 
               'font-size': '12px', 
-              color: '#999',
+              color: 'hsl(var(--muted-foreground))',
               'margin-top': '8px'
             }}>
               更新时间: {new Date(card.updatedAt).toLocaleString()}
@@ -544,7 +544,7 @@ export function SimpleFolderList(props: {
         <div style={{
           padding: '40px',
           'text-align': 'center',
-          color: '#666'
+          color: 'hsl(var(--muted-foreground))'
         }}>
           <div style={{ 'font-size': '18px', 'margin-bottom': '8px' }}>暂无文件夹</div>
           <div>创建文件夹来组织您的卡片</div>
@@ -555,7 +555,7 @@ export function SimpleFolderList(props: {
             key={folder.id}
             style={{
               padding: '12px',
-              'border-bottom': '1px solid #eee',
+              'border-bottom': '1px solid hsl(var(--border))',
               cursor: 'pointer',
               display: 'flex',
               'align-items': 'center',
@@ -569,7 +569,7 @@ export function SimpleFolderList(props: {
             <div style={{ flex: 1 }}>
               <div style={{ 'font-weight': 'bold' }}>{folder.name}</div>
               {folder.description && (
-                <div style={{ 'font-size': '12px', color: '#666' }}>
+                <div style={{ 'font-size': '12px', color: 'hsl(var(--muted-foreground))' }}>
                   {folder.description}
                 </div>
               )}

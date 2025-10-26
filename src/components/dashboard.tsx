@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-utils'
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
@@ -695,8 +696,11 @@ export function Dashboard({ className }: DashboardProps) {
                 </PopoverContent>
               </Popover>
 
+              {/* Theme Toggle Button */}
+              <ThemeToggle />
+
               {/* Add Card Button */}
-              <Button 
+              <Button
                 onClick={handleCreateCard}
                 variant="ghost"
                 size="sm"
