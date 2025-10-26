@@ -239,7 +239,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
 
   if (collapsed) {
     return (
-      <div className={cn("w-14 border-r bg-background", className)}>
+      <div className={cn("w-14 md:w-14 border-r bg-background", className)}>
         <div className="flex flex-col h-full">
           {/* 切换按钮 */}
           <div className="p-2 border-b">
@@ -271,12 +271,12 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
   }
 
   return (
-    <div className={cn("w-64 border-r bg-background", className)}>
+    <div className={cn("w-40 md:w-64 border-r bg-background", className)}>
       <div className="flex flex-col h-full">
         {/* 头部 */}
-        <div className="p-4 border-b space-y-2">
+        <div className="p-4 md:p-4 border-b space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">侧边栏</h2>
+            <h2 className="font-semibold truncate">侧边栏</h2>
             <Button
               variant="ghost"
               size="sm"
@@ -285,24 +285,24 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
               <ChevronLeft className="h-4 w-4" />
             </Button>
           </div>
-          
+
           <div className="text-sm text-muted-foreground">
             {folderStats.totalFolders} 文件夹
           </div>
 
           {/* 存储模式指示器 */}
           {isReady && (
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground hidden md:block">
               {isUsingIndexedDB ? 'IndexedDB' : 'localStorage'}
             </div>
           )}
         </div>
 
         {/* 文件夹区域 */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">文件夹</h3>
+              <h3 className="text-sm font-medium truncate">文件夹</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -311,7 +311,7 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
                 <FolderPlus className="h-4 w-4" />
               </Button>
             </div>
-            
+
             <div className="space-y-1 max-h-64 overflow-y-auto">
               {renderFolderTree(folderTree)}
             </div>
@@ -322,10 +322,10 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
           {/* 标签区域 */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">标签</h3>
+              <h3 className="text-sm font-medium truncate">标签</h3>
               <ConnectedTagPanel />
             </div>
-            
+
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {popularTags.slice(0, 10).map((tag) => (
                 <div
@@ -341,19 +341,19 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
                   }}
                 >
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <div 
-                      className="w-3 h-3 rounded-full flex-shrink-0" 
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ backgroundColor: tag.color }}
                     />
                     <span className="truncate text-sm">{tag.name}</span>
-                    <Badge variant="outline" className="text-xs ml-auto flex-shrink-0">
+                    <Badge variant="outline" className="text-xs ml-auto flex-shrink-0 hidden md:block">
                       {tag.count}
                     </Badge>
                   </div>
                 </div>
               ))}
             </div>
-            
+
             {filter.tag && (
               <div className="flex items-center justify-between pt-2 border-t">
                 <span className="text-sm text-muted-foreground truncate">
@@ -371,8 +371,8 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
           </div>
         </div>
 
-        {/* 布局设置 */}
-        <div className="p-4 border-t space-y-4">
+        {/* 布局设置 - 移动端隐藏 */}
+        <div className="hidden md:block p-4 border-t space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">布局设置</h3>
             <Button
@@ -383,14 +383,14 @@ export function DashboardSidebar({ collapsed, onToggle, className }: DashboardSi
               <Sliders className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {showLayoutControls && (
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label className="text-sm">间距</Label>
                 <Slider
                   value={[viewSettings.gap || 16]}
-                  onValueChange={([value]) => 
+                  onValueChange={([value]) =>
                     setViewSettings({ ...viewSettings, gap: value })
                   }
                   min={8}

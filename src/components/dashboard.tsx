@@ -625,15 +625,15 @@ export function Dashboard({ className }: DashboardProps) {
               </div>
             </div>
             
-            {/* Search - Mobile (only when centered search is hidden) */}
-            <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
+            {/* Search - Mobile (only when centered search is hidden) - Moved to right side */}
+            <div className="md:hidden">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
                   value={filter.searchTerm}
                   onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-                  className="pl-10 rounded-full w-60"
+                  className="pl-10 rounded-full w-48 mr-2"
                 />
               </div>
             </div>

@@ -22,7 +22,7 @@ export function runConfigTest(): void {
     console.log('✅ 配置验证通过:', validatedConfig);
 
     // 测试功能状态检查
-    const hasCloudFeatures = isCloudFeatureEnabled();
+    const hasCloudFeatures = AppConfig.enableCloudSync;
     console.log(`🔍 云端功能状态: ${hasCloudFeatures ? '已启用' : '已禁用'}`);
 
     // 测试配置摘要
@@ -100,7 +100,7 @@ export function testConfigModes(): void {
   console.log('☁️ 云端模式模拟:');
   console.log(`- 云端同步: ${cloudConfig.enableCloudSync ? '启用' : '禁用'}`);
   console.log(`- 调试模式: ${cloudConfig.enableDebugMode ? '启用' : '禁用'}`);
-  console.log(`- 云端功能状态: ${isCloudFeatureEnabled(cloudConfig) ? '已启用' : '已禁用'}`);
+  console.log(`- 云端功能状态: ${cloudConfig.enableCloudSync ? '已启用' : '已禁用'}`);
 
   console.groupEnd();
 }

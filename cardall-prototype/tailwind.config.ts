@@ -8,6 +8,13 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "*.{js,ts,jsx,tsx,mdx}"
   ],
+  safelist: [
+    'w-40',
+    'md:w-64',
+    'w-64',
+    'hidden',
+    'md:block'
+  ],
   theme: {
   	extend: {
   		colors: {

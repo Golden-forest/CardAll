@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useCardAllCards, useCardAllFolders, useCardAllTags } from '@/contexts/cardall-context'
 import { OptimizedMasonryGrid } from './card/optimized-masonry-grid'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,8 @@ import {
   Sliders,
   ChevronLeft,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -87,6 +88,8 @@ export function Dashboard({ className }: DashboardProps) {
   const { toast } = useToast()
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const [layoutSettings, setLayoutSettings] = useState({
     gap: 16,
     showLayoutControls: false
@@ -147,6 +150,13 @@ export function Dashboard({ className }: DashboardProps) {
       })
     }
   })
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchOpen])
 
   const handleCardFlip = (cardId: string) => {
     // 使用优化的flipCard函数替代直接dispatch
@@ -612,7 +622,7 @@ export function Dashboard({ className }: DashboardProps) {
               </h1>
             </div>
 
-            {/* Search - Centered */}
+            {/* Search - Desktop (Centered) */}
             <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -624,20 +634,8 @@ export function Dashboard({ className }: DashboardProps) {
                 />
               </div>
             </div>
-            
-            {/* Search - Mobile (only when centered search is hidden) */}
-            <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  value={filter.searchTerm}
-                  onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
-                  className="pl-10 rounded-full w-60"
-                />
-              </div>
-            </div>
 
+  
             {/* Actions */}
             <div className="flex items-center gap-2">
               {/* Conflict Notification - 云端同步功能已删除，冲突通知已禁用 */}
@@ -695,6 +693,17 @@ export function Dashboard({ className }: DashboardProps) {
                   </div>
                 </PopoverContent>
               </Popover>
+
+              {/* Search Button - Mobile - Moved to right side */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSearchOpen(true)}
+                className="md:hidden h-10 w-10 p-0 rounded-full"
+              >
+                <Search className="h-4 w-4" />
+                <span className="sr-only">Search</span>
+              </Button>
 
               {/* Theme Toggle Button */}
               <ThemeToggle />
@@ -999,6 +1008,37 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Tag Panel */}
         <ConnectedTagPanel />
+
+        {/* Mobile Search Overlay */}
+        <div
+          className={cn(
+            'fixed inset-0 z-50 bg-background/95 backdrop-blur md:hidden',
+            isSearchOpen ? 'block' : 'hidden'
+          )}
+        >
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center space-x-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsSearchOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search cards..."
+                  value={filter.searchTerm}
+                  onChange={(e) => setFilter({ ...filter, searchTerm: e.target.value })}
+                  className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Conflict Management Modals - 冲突功能已删除，不再显示 */}
         {/* Conflict management modals have been removed as cloud sync functionality is disabled */}

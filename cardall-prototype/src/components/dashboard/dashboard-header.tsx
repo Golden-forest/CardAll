@@ -1,11 +1,12 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useCardAllCards } from '@/contexts/cardall-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Plus,
   Search,
-  Settings
+  Settings,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -16,18 +17,21 @@ import { AppConfig } from '@/config/app-config'
 
 interface DashboardHeaderProps {
   className?: string
+  authState?: any
 }
 
-export function DashboardHeader({ className }: DashboardHeaderProps) {
-  const { 
-    cards, 
-    filter, 
+export function DashboardHeader({ className, authState }: DashboardHeaderProps) {
+  const {
+    cards,
+    filter,
     setFilter,
     getAllTags,
     getCardsWithTag
   } = useCardAllCards()
   const { toast } = useToast()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   // 截图功能
   const { 
@@ -42,7 +46,7 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
     const allCards = cards.allCards || []
     const allTags = getAllTags() || []
     const filteredCards = getCardsWithTag(filter.tag) || []
-    
+
     return {
       totalCards: allCards.length,
       totalTags: allTags.length,
@@ -50,12 +54,22 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
     }
   }, [cards.allCards, getAllTags, filter.tag, getCardsWithTag])
 
+  // Focus search input when opened
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus()
+    }
+  }, [isSearchOpen])
+
   // 处理创建卡片
   const handleCreateCard = async () => {
-      openModal()
-      return
-    }
     setShowCreateModal(true)
+  }
+
+  // 处理搜索
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    // 搜索逻辑已通过输入框的onChange处理
   }
 
   // 处理截图
@@ -128,8 +142,8 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           </div>
         </div>
 
-        {/* 搜索栏 */}
-        <div className="flex-1 max-w-sm mx-4">
+        {/* 搜索栏 - 桌面端显示搜索框 */}
+        <div className="hidden md:flex flex-1 max-w-sm mx-4">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -139,6 +153,17 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
               className="pl-8"
             />
           </div>
+        </div>
+
+        {/* 搜索按钮 - 移动端显示 */}
+        <div className="flex md:hidden">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsSearchOpen(true)}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* 操作按钮 */}
@@ -179,6 +204,37 @@ export function DashboardHeader({ className }: DashboardHeaderProps) {
           onClose={clearScreenshot}
         />
       )}
+
+      {/* 移动端搜索覆盖层 */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 bg-background/95 backdrop-blur md:hidden',
+          isSearchOpen ? 'block' : 'hidden'
+        )}
+      >
+        <div className="p-4 border-b border-border">
+          <div className="flex items-center space-x-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsSearchOpen(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+            <form onSubmit={handleSearch} className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="搜索卡片内容..."
+                value={filter.search || ''}
+                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
+                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
