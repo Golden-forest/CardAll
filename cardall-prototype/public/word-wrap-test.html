@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码块自动换行测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a1a;
+            color: #e2e8f0;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #60a5fa;
+            padding: 1.2em;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 1em 0;
+            font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Source Code Pro', monospace;
+            font-size: 0.95em;
+            font-weight: 400;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        .code-block code {
+            background: none;
+            padding: 0;
+            font-size: inherit;
+            color: inherit;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        h2 {
+            color: #60a5fa;
+            margin-top: 2em;
+        }
+
+        .test-info {
+            background: #2d3748;
+            padding: 1em;
+            border-radius: 6px;
+            margin-bottom: 1em;
+        }
+
+        .highlight {
+            background: #4a5568;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>代码块自动换行功能测试</h1>
+
+        <div class="test-info">
+            <p><strong>测试设置：</strong></p>
+            <ul>
+                <li>容器宽度：<span class="highlight">max-width: 600px</span></li>
+                <li>自动换行：<span class="highlight">white-space: pre-wrap</span></li>
+                <li>单词换行：<span class="highlight">word-wrap: break-word</span></li>
+                <li>智能换行：<span class="highlight">word-break: break-word</span></li>
+            </ul>
+        </div>
+
+        <h2>测试1：超长JavaScript变量名</h2>
+        <pre class="code-block"><code>const thisIsAVeryLongVariableNameThatShouldDefinitelyWrapToTheNextLineBecauseItIsTooLongForASingleLine = function() {
+    console.log("这是一个测试");
+    return true;
+};</code></pre>
+
+        <h2>测试2：长URL字符串</h2>
+        <pre class="code-block"><code>const longUrl = "https://www.example.com/very/long/path/with/many/segments/and/parameters?param1=value1&param2=value2&param3=value3&more=data";</code></pre>
+
+        <h2>测试3：复杂函数调用链</h2>
+        <pre class="code-block"><code>const result = database.users.select('*').where('status', 'active').orderBy('created_at', 'desc').limit(10).offset(page * 10).join('profiles', 'users.id', '=', 'profiles.user_id').get();</code></pre>
+
+        <h2>测试4：长CSS选择器</h2>
+        <pre class="code-block"><code>.parent-container > .child-element:nth-child(even) > .deeply-nested-component > .very-specific-class-name-that-is-extremely-long-and-would-normally-overflow {
+    color: #60a5fa;
+    font-size: 0.95em;
+}</code></pre>
+
+        <h2>测试5：JSON嵌套对象</h2>
+        <pre class="code-block"><code>{
+    "user": {
+        "id": 12345,
+        "name": "张三",
+        "email": "zhangsan@example.com",
+        "profile": {
+            "avatar": "https://cdn.example.com/avatars/user/profile/images/very-long-path/to/avatar-image.jpg",
+            "bio": "这是一个很长的个人简介，用来测试文本换行功能是否正常工作",
+            "settings": {
+                "theme": "dark",
+                "language": "zh-CN",
+                "notifications": {
+                    "email": true,
+                    "push": false,
+                    "sms": true
+                }
+            }
+        }
+    }
+}</code></pre>
+
+        <h2>测试6：SQL长查询</h2>
+        <pre class="code-block"><code>SELECT u.id, u.name, u.email, p.title, p.content, p.created_at FROM users u JOIN posts p ON u.id = p.user_id WHERE u.status = 'active' AND p.category IN ('technology', 'programming', 'web-development') AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) ORDER BY p.created_at DESC LIMIT 20;</code></pre>
+
+        <h2>测试7：Python长导入语句</h2>
+        <pre class="code-block"><code>from very.deep.module.path import VeryLongClassNameThatWouldNormallyOverflowAndRequireHorizontalScrolling, AnotherLongClassNameForTestingPurposes, YetAnotherExtremelyLongClassName</code></pre>
+
+        <h2>测试8：TypeScript复杂类型定义</h2>
+        <pre class="code-block"><code>interface VeryLongInterfaceNameThatShouldWrapProperly<T extends GenericTypeWithLongName, U extends AnotherGenericTypeWithEvenLongerName> {
+    property1: string;
+    property2: number;
+    property3: ComplexTypeWithLongName<Array<AnotherComplexTypeWithEvenLongerName<string>>>;
+    method(param1: LongParameterType, param2: AnotherLongParameterType): ReturnTypeWithLongName;
+}</code></pre>
+
+        <div class="test-info">
+            <p><strong>预期效果：</strong></p>
+            <ul>
+                <li>✅ 所有代码内容完全可见，无水平滚动</li>
+                <li>✅ 换行位置合理，保持代码可读性</li>
+                <li>✅ 在单词边界和运算符处优先换行</li>
+                <li>✅ 保持代码的缩进和格式</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

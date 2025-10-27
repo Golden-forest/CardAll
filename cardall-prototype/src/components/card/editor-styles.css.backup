@@ -75,32 +75,17 @@
 }
 
 .ProseMirror pre {
-  background-color: #1e293b;
-  color: #60a5fa;
-  padding: 1.2em;
-  border-radius: 8px;
-  border: 1px solid #334155;
-  overflow-x: hidden;
-  overflow-y: auto;
+  background-color: #f3f4f6;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
   margin: 1em 0;
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', 'Menlo', 'Source Code Pro', 'Roboto Mono', monospace;
-  font-size: 0.95em;
-  font-weight: 400;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  word-break: break-word;
-  max-width: 100%;
 }
 
 .ProseMirror pre code {
   background: none;
   padding: 0;
   font-size: inherit;
-  color: inherit;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  word-break: break-word;
 }
 
 .ProseMirror img {

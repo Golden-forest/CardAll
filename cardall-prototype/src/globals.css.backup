@@ -359,8 +359,8 @@
   background-color: #1a1a1a !important;
   padding: 0.125rem 0.375rem !important;
   border-radius: 0.375rem !important;
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', 'Menlo', 'Source Code Pro', 'Roboto Mono', monospace !important;
-  font-size: 0.95em !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875em !important;
   color: #3b82f6 !important;
   font-weight: 500 !important;
   border: 1px solid #333 !important;
@@ -385,8 +385,8 @@
   border: none !important;
   border-radius: 0 !important;
   color: #3b82f6 !important;
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', 'Menlo', 'Source Code Pro', 'Roboto Mono', monospace !important;
-  font-size: 0.95em !important;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace !important;
+  font-size: 0.875em !important;
   white-space: pre !important;
   display: block !important;
   line-height: 1.5 !important;

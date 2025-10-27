@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码块字体优化测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a1a;
+            color: #e2e8f0;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1, h2 {
+            color: #60a5fa;
+        }
+
+        .font-section {
+            margin: 2em 0;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #60a5fa;
+            padding: 1.2em;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            overflow-x: hidden;
+            overflow-y: auto;
+            margin: 1em 0;
+            font-size: 0.95em;
+            font-weight: 400;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        /* 新字体 - Claude Code风格 */
+        .new-font {
+            font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Cascadia Code', 'Consolas', 'Menlo', 'Source Code Pro', 'Roboto Mono', monospace;
+        }
+
+        /* 旧字体 */
+        .old-font {
+            font-family: 'SF Mono', 'Fira Code', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Source Code Pro', monospace;
+        }
+
+        /* VS Code 字体 */
+        .vscode-font {
+            font-family: 'Consolas', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        /* GitHub 字体 */
+        .github-font {
+            font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', monospace;
+        }
+
+        /* JetBrains Mono 专用 */
+        .jetbrains-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Fira Code 专用 */
+        .fira-font {
+            font-family: 'Fira Code', monospace;
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1em;
+            margin: 1em 0;
+        }
+
+        .font-info {
+            background: #2d3748;
+            padding: 0.5em 1em;
+            border-radius: 6px;
+            margin: 0.5em 0;
+            font-size: 0.9em;
+        }
+
+        .highlight {
+            background: #4a5568;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>代码块字体优化测试</h1>
+
+        <div class="font-info">
+            <p><strong>优化目标：</strong>使用更专业的等宽字体，提升代码显示效果</p>
+            <p><strong>主要改进：</strong>将 <span class="highlight">JetBrains Mono</span> 设为首选字体</p>
+        </div>
+
+        <div class="font-section">
+            <h2>🎯 新字体效果（推荐）</h2>
+            <p>使用了 <strong>JetBrains Mono</strong> 作为首选字体，这是目前最受开发者喜爱的等宽字体之一</p>
+            <div class="code-block new-font"><code>// JavaScript 示例代码
+function calculate fibonacci(n) {
+    if (n <= 1) return n;
+
+    let a = 0, b = 1;
+    for (let i = 2; i <= n; i++) {
+        [a, b] = [b, a + b];
+    }
+    return b;
+}
+
+const result = fibonacci(10);
+console.log(`斐波那契数列第10项: ${result}`);</code></div>
+        </div>
+
+        <div class="font-section">
+            <h2>📊 字体对比测试</h2>
+
+            <div class="comparison">
+                <div>
+                    <h3>新字体（JetBrains Mono优先）</h3>
+                    <div class="code-block new-font"><code>const greeting = "Hello World!";
+console.log(greeting);</code></div>
+                </div>
+                <div>
+                    <h3>旧字体</h3>
+                    <div class="code-block old-font"><code>const greeting = "Hello World!";
+console.log(greeting);</code></div>
+                </div>
+            </div>
+
+            <div class="comparison">
+                <div>
+                    <h3>VS Code 风格</h3>
+                    <div class="code-block vscode-font"><code>const greeting = "Hello World!";
+console.log(greeting);</code></div>
+                </div>
+                <div>
+                    <h3>GitHub 风格</h3>
+                    <div class="code-block github-font"><code>const greeting = "Hello World!";
+console.log(greeting);</code></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="font-section">
+            <h2>🔤 不同编程语言测试</h2>
+
+            <h3>Python 代码</h3>
+            <div class="code-block new-font"><code>def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+
+    return quick_sort(left) + middle + quick_sort(right)</code></div>
+
+            <h3>CSS 代码</h3>
+            <div class="code-block new-font"><code>.card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}</code></div>
+
+            <h3>SQL 查询</h3>
+            <div class="code-block new-font"><code>SELECT u.id, u.name, u.email, COUNT(p.id) as post_count
+FROM users u
+LEFT JOIN posts p ON u.id = p.user_id
+WHERE u.status = 'active'
+GROUP BY u.id, u.name, u.email
+HAVING COUNT(p.id) > 5
+ORDER BY post_count DESC
+LIMIT 20;</code></div>
+
+            <h3>TypeScript 类型</h3>
+            <div class="code-block new-font"><code>interface ApiResponse<T> {
+    data: T;
+    status: 'success' | 'error';
+    message?: string;
+    timestamp: number;
+}
+
+type User = {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+};</code></div>
+        </div>
+
+        <div class="font-section">
+            <h2>🎨 字体特点分析</h2>
+
+            <div class="font-info">
+                <p><strong>JetBrains Mono 特点：</strong></p>
+                <ul>
+                    <li>✅ 专为代码设计，字符间距均匀</li>
+                    <li>✅ 清晰的字符区分（0/O, 1/l, I/i）</li>
+                    <li>✅ 优秀的可读性和专业外观</li>
+                    <li>✅ 支持连字功能（如果可用）</li>
+                </ul>
+            </div>
+
+            <div class="font-info">
+                <p><strong>字体优先级：</strong></p>
+                <ol>
+                    <li><strong>JetBrains Mono</strong> - 首选，最专业的代码字体</li>
+                    <li><strong>Fira Code</strong> - 备选，支持连字</li>
+                    <li><strong>SF Mono</strong> - macOS 系统字体</li>
+                    <li><strong>Monaco</strong> - 经典字体</li>
+                    <li><strong>Cascadia Code</strong> - 微软开源字体</li>
+                    <li><strong>Consolas</strong> - Windows 经典字体</li>
+                    <li><strong>Monospace</strong> - 系统默认等宽字体</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
