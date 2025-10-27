@@ -1,12 +1,12 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { Card as CardType, CardContent as CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
-import { 
-  Cat, 
-  Copy, 
-  Camera, 
-  Share2, 
-  Edit3, 
+import {
+  Cat,
+  Copy,
+  Camera,
+  Share2,
+  Edit3,
   Palette,
   MoreHorizontal,
   Tag,
@@ -25,6 +25,7 @@ import {
 import { RichTextEditor } from './rich-text-editor'
 import { TitleEditor } from './title-editor'
 import { CardTags } from '../tag/card-tags'
+import { processLinksInHtml, useLinkTruncation } from '@/lib/link-truncation'
 
 interface FlipCardProps {
   card: CardType
@@ -480,6 +481,26 @@ function CardSide({
   _sideLabel,
   _card
 }: CardSideProps) {
+  // 链接截断配置
+  const linkTruncation = useLinkTruncation({
+    maxLengthMobile: 25,
+    maxLengthDesktop: 45,
+    showEllipsis: true,
+    preserveDomain: true
+  })
+
+  // 处理内容点击事件
+  const handleContentClick = (e: React.MouseEvent) => {
+    // 处理链接点击
+    const target = e.target as HTMLElement
+    if (target.tagName === 'A') {
+      e.stopPropagation()
+      const href = target.getAttribute('href')
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer')
+      }
+    }
+  }
   return (
     <div className="flex flex-col h-full">
       {/* Header with Title and Action Buttons */}
@@ -611,34 +632,11 @@ function CardSide({
             autoFocus
           />
         ) : (
-          <div 
-            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor relative z-10"
-            onDoubleClick={(e) => {
-              // 如果点击的是链接，不触发编辑
-              if ((e.target as HTMLElement).tagName === 'A') {
-                return
-              }
-              onDoubleClick('content')
-            }}
-            onClick={(e) => {
-              // 处理链接点击
-              const target = e.target as HTMLElement
-              if (target.tagName === 'A') {
-                e.stopPropagation()
-                const href = target.getAttribute('href')
-                if (href) {
-                  window.open(href, '_blank', 'noopener,noreferrer')
-                }
-              }
-            }}
-          >
-            <div 
-              className="whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ 
-                __html: content.text || '<span class="text-muted-foreground">Click to add content...</span>' 
-              }}
-            />
-          </div>
+          <CardContentDisplay
+            content={content}
+            onDoubleClick={onDoubleClick}
+            onClick={handleContentClick}
+          />
         )}
       </div>
 
@@ -657,6 +655,77 @@ function CardSide({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// 内容显示组件 - 处理链接截断
+interface CardContentDisplayProps {
+  content: CardContentType
+  onDoubleClick: (_field: 'title' | 'content') => void
+  onClick: (_e: React.MouseEvent) => void
+}
+
+function CardContentDisplay({ content, onDoubleClick, onClick }: CardContentDisplayProps) {
+  // 链接截断配置
+  const linkTruncation = useLinkTruncation({
+    maxLengthMobile: 25,
+    maxLengthDesktop: 45,
+    showEllipsis: true,
+    preserveDomain: true
+  })
+
+  // 处理链接后的HTML内容
+  const processedContent = useMemo(() => {
+    if (!content.text) return content.text
+
+    try {
+      let processedText = content.text
+
+      // 检查内容中是否已经包含链接标签，如果没有则转换纯文本URL
+      const hasExistingLinks = /<a\s+href=/i.test(content.text)
+
+      if (!hasExistingLinks) {
+        // 检测文本中的URL并转换为HTML链接（即使是在HTML内容中）
+        const urlRegex = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/g
+        processedText = content.text.replace(urlRegex, (url) => {
+          // 确保URL有协议前缀
+          const fullUrl = url.startsWith('http') ? url : `https://${url}`
+          return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`
+        })
+      }
+
+      // 处理HTML中的链接
+      return processLinksInHtml(processedText, {
+        maxLengthMobile: 25,
+        maxLengthDesktop: 45,
+        showEllipsis: true,
+        preserveDomain: true
+      })
+    } catch (error) {
+      console.warn('Error processing links in content:', error)
+      return content.text
+    }
+  }, [content.text])
+
+  return (
+    <div
+      className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor relative z-10"
+      onDoubleClick={(e) => {
+        // 如果点击的是链接，不触发编辑
+        if ((e.target as HTMLElement).tagName === 'A') {
+          return
+        }
+        onDoubleClick('content')
+      }}
+      onClick={onClick}
+    >
+      <div
+        className="whitespace-pre-wrap link-truncation-container"
+        dangerouslySetInnerHTML={{
+          __html: processedContent || '<span class="text-muted-foreground">Click to add content...</span>'
+        }}
+      />
     </div>
   )
 }

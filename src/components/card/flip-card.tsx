@@ -1,12 +1,12 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { Card as CardType, CardContent as CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
-import { 
-  Cat, 
-  Copy, 
-  Camera, 
-  Share2, 
-  Edit3, 
+import {
+  Cat,
+  Copy,
+  Camera,
+  Share2,
+  Edit3,
   Palette,
   MoreHorizontal,
   Tag,
@@ -25,6 +25,8 @@ import {
 import { RichTextEditor } from './rich-text-editor'
 import { TitleEditor } from './title-editor'
 import { CardTags } from '../tag/card-tags'
+import { processLinksInHtml, useLinkTruncation, clearLinkTruncationCache } from '@/lib/link-truncation'
+import { batchLinkProcessor, BatchProcessOptions } from '@/lib/batch-link-processor'
 
 interface FlipCardProps {
   card: CardType
@@ -64,6 +66,27 @@ export function FlipCard({
   const cardRef = useRef<HTMLDivElement>(null)
 
   const currentContent = isFlipped ? card.backContent : card.frontContent
+
+  // 性能优化：内存管理和缓存清理
+  useEffect(() => {
+    // 定期清理缓存以防止内存泄漏
+    const cleanupInterval = setInterval(() => {
+      clearLinkTruncationCache()
+    }, 30000) // 每30秒清理一次
+
+    // 页面卸载时清理缓存
+    const handleBeforeUnload = () => {
+      clearLinkTruncationCache()
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      clearInterval(cleanupInterval)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      clearLinkTruncationCache()
+    }
+  }, [])
 
   // Size variants - 确保所有尺寸都使用完整宽度
   const sizeClasses = {
@@ -480,6 +503,26 @@ function CardSide({
   _sideLabel,
   _card
 }: CardSideProps) {
+  // 链接截断配置
+  const linkTruncation = useLinkTruncation({
+    maxLengthMobile: 25,
+    maxLengthDesktop: 45,
+    showEllipsis: true,
+    preserveDomain: true
+  })
+
+  // 处理内容点击事件
+  const handleContentClick = (e: React.MouseEvent) => {
+    // 处理链接点击
+    const target = e.target as HTMLElement
+    if (target.tagName === 'A') {
+      e.stopPropagation()
+      const href = target.getAttribute('href')
+      if (href) {
+        window.open(href, '_blank', 'noopener,noreferrer')
+      }
+    }
+  }
   return (
     <div className="flex flex-col h-full">
       {/* Header with Title and Action Buttons */}
@@ -611,34 +654,11 @@ function CardSide({
             autoFocus
           />
         ) : (
-          <div 
-            className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor relative z-10"
-            onDoubleClick={(e) => {
-              // 如果点击的是链接，不触发编辑
-              if ((e.target as HTMLElement).tagName === 'A') {
-                return
-              }
-              onDoubleClick('content')
-            }}
-            onClick={(e) => {
-              // 处理链接点击
-              const target = e.target as HTMLElement
-              if (target.tagName === 'A') {
-                e.stopPropagation()
-                const href = target.getAttribute('href')
-                if (href) {
-                  window.open(href, '_blank', 'noopener,noreferrer')
-                }
-              }
-            }}
-          >
-            <div 
-              className="whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ 
-                __html: content.text || '<span class="text-muted-foreground">Click to add content...</span>' 
-              }}
-            />
-          </div>
+          <CardContentDisplay
+            content={content}
+            onDoubleClick={onDoubleClick}
+            onClick={handleContentClick}
+          />
         )}
       </div>
 
@@ -660,3 +680,86 @@ function CardSide({
     </div>
   )
 }
+
+// 内容显示组件 - 处理链接截断（性能优化版）
+interface CardContentDisplayProps {
+  content: CardContentType
+  onDoubleClick: (_field: 'title' | 'content') => void
+  onClick: (_e: React.MouseEvent) => void
+}
+
+// 链接截断配置常量，避免每次渲染重新创建
+const LINK_TRUNCATION_CONFIG = {
+  maxLengthMobile: 25,
+  maxLengthDesktop: 45,
+  showEllipsis: true,
+  preserveDomain: true
+} as const
+
+// 预编译正则表达式，避免每次创建
+const URL_REGEX_GLOBAL = /(https?:\/\/[^\s<>"]+|www\.[^\s<>"]+)/g
+const LINK_REGEX_GLOBAL = /<a\s+href=/i
+
+const CardContentDisplay = React.memo(function CardContentDisplay({
+  content,
+  onDoubleClick,
+  onClick
+}: CardContentDisplayProps) {
+  // 链接截断配置 - 使用稳定的配置对象
+  const linkTruncation = useLinkTruncation(LINK_TRUNCATION_CONFIG)
+
+  // 处理链接后的HTML内容 - 优化依赖性
+  const processedContent = useMemo(() => {
+    if (!content.text) return content.text
+
+    try {
+      let processedText = content.text
+
+      // 性能优化：使用预编译的正则表达式
+      const hasExistingLinks = LINK_REGEX_GLOBAL.test(content.text)
+
+      if (!hasExistingLinks) {
+        // 检测文本中的URL并转换为HTML链接
+        processedText = content.text.replace(URL_REGEX_GLOBAL, (url) => {
+          // 确保URL有协议前缀
+          const fullUrl = url.startsWith('http') ? url : `https://${url}`
+          return `<a href="${fullUrl}" target="_blank" rel="noopener noreferrer">${url}</a>`
+        })
+      }
+
+      // 处理HTML中的链接 - 使用缓存的处理函数
+      return linkTruncation.processLinksInHtml(processedText, LINK_TRUNCATION_CONFIG)
+    } catch (error) {
+      console.warn('Error processing links in content:', error)
+      return content.text
+    }
+  }, [content.text, linkTruncation.processLinksInHtml]) // 优化依赖项
+
+  // 性能优化：缓存事件处理函数
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    // 如果点击的是链接，不触发编辑
+    if ((e.target as HTMLElement).tagName === 'A') {
+      return
+    }
+    onDoubleClick('content')
+  }, [onDoubleClick])
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    onClick(e)
+  }, [onClick])
+
+  return (
+    <div
+      className="text-sm leading-relaxed text-left cursor-pointer hover:bg-black/5 rounded p-2 -m-2 transition-colors min-h-[100px] tiptap-editor relative z-10"
+      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
+    >
+      <div
+        className="whitespace-pre-wrap link-truncation-container"
+        dangerouslySetInnerHTML={{
+          __html: processedContent || '<span class="text-muted-foreground">Click to add content...</span>'
+        }}
+      />
+    </div>
+  )
+})
