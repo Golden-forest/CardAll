@@ -1,6 +1,0 @@
-export { TagContextMenu } from './tag-context-menu'
-export { RenameTagDialog } from './rename-tag-dialog'
-export { DeleteTagDialog } from './delete-tag-dialog'
-export { TagPanel } from './tag-panel'
-export { ConnectedTagPanel } from './tag-panel-connected'
-export { TagItem } from './tag-item'
