@@ -7,6 +7,12 @@
   z-index: 20; /* 确保编辑器在动画层之上 */
   pointer-events: auto !important;
   background: rgba(255, 255, 255, 0.1); /* 添加轻微背景以确保可见性 */
+  /* 文本溢出处理 - 确保编辑和显示模式一致 */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 /* 确保编辑器在渐变波浪样式中可见 */

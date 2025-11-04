@@ -632,10 +632,10 @@ function CardSide({
               }
             }}
           >
-            <div 
-              className="whitespace-pre-wrap"
-              dangerouslySetInnerHTML={{ 
-                __html: content.text || '<span class="text-muted-foreground">Click to add content...</span>' 
+            <div
+              className="whitespace-pre-wrap break-words overflow-wrap-anywhere"
+              dangerouslySetInnerHTML={{
+                __html: content.text || '<span class="text-muted-foreground">Click to add content...</span>'
               }}
             />
           </div>

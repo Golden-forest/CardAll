@@ -290,6 +290,15 @@
   text-align: left;
 }
 
+/* 基础文本溢出处理 - 解决长英文单词溢出问题 */
+.tiptap-editor {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
 /* 普通列表样式 - 确保显示小圆点 */
 .tiptap-editor ul:not([data-type="taskList"]) {
   list-style-type: disc !important;
