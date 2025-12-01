@@ -71,6 +71,7 @@ temp/
 # Misc
 *.tgz
 *.tar.gz
+bundle-analysis.html
 
 # Local development
 .playwright-mcp/
