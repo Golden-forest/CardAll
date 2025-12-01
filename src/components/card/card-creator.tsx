@@ -124,13 +124,12 @@ export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
 
           {/* 正面内容 */}
           <div>
-            <Label htmlFor="frontTitle">正面标题 *</Label>
+            <Label htmlFor="frontTitle">正面标题</Label>
             <Input
               id="frontTitle"
               value={formData.frontTitle}
               onChange={(e) => handleInputChange('frontTitle', e.target.value)}
-              placeholder="输入卡片正面标题"
-              required
+              placeholder="输入卡片正面标题（可选）"
             />
           </div>
 
@@ -206,7 +205,7 @@ export function CardCreator({ onCardCreated, className }: CardCreatorProps) {
 
           <Button
             type="submit"
-            disabled={isSubmitting || !formData.frontTitle || !formData.frontContent}
+            disabled={isSubmitting || !formData.frontContent}
             className="w-full"
           >
             {isSubmitting ? '创建中...' : '创建卡片'}

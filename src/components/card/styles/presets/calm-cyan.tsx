@@ -1,13 +1,13 @@
-// Modern Blue - Clean and professional style
+// Calm Cyan - Serene and peaceful style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const CalmCyanPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: '#eff6ff',
-    color: '#1d4ed8',
+    background: '#f0f9ff',
+    color: '#0284c7',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '400',
@@ -17,8 +17,8 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 
   return (
     <StylePreviewCard
-      title="Modern Blue"
-      content="Clean and professional"
+      title="Calm Cyan"
+      content="Serene and peaceful"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -27,24 +27,24 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
   )
 }
 
-export const modernBlueStyle: StylePreset = {
-  id: 'modern-blue',
-  name: 'Modern Blue',
-  category: 'business',
-  description: 'Clean and professional blue background with high contrast text',
+export const calmCyanStyle: StylePreset = {
+  id: 'calm-cyan',
+  name: 'Calm Cyan',
+  category: 'nature',
+  description: 'Serene and peaceful cyan background with high contrast text',
   style: {
     type: 'solid',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f0f9ff',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'normal',
-    textColor: '#1d4ed8',
-    titleColor: '#2563eb',
-    bodyTextColor: '#1d4ed8',
+    textColor: '#0284c7',
+    titleColor: '#0ea5e9',
+    bodyTextColor: '#0284c7',
     borderRadius: '2xl',
     shadow: 'md'
   },
-  previewComponent: ModernBluePreview
+  previewComponent: CalmCyanPreview
 }
 
-export default modernBlueStyle
+export default calmCyanStyle

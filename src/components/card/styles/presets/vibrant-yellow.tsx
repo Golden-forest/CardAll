@@ -1,13 +1,13 @@
-// Modern Blue - Clean and professional style
+// Vibrant Yellow - Energetic and cheerful style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const VibrantYellowPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: '#eff6ff',
-    color: '#1d4ed8',
+    background: '#fefce8',
+    color: '#d97706',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '400',
@@ -17,8 +17,8 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 
   return (
     <StylePreviewCard
-      title="Modern Blue"
-      content="Clean and professional"
+      title="Vibrant Yellow"
+      content="Energetic and cheerful"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -27,24 +27,24 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
   )
 }
 
-export const modernBlueStyle: StylePreset = {
-  id: 'modern-blue',
-  name: 'Modern Blue',
-  category: 'business',
-  description: 'Clean and professional blue background with high contrast text',
+export const vibrantYellowStyle: StylePreset = {
+  id: 'vibrant-yellow',
+  name: 'Vibrant Yellow',
+  category: 'warm',
+  description: 'Energetic and cheerful yellow background with high contrast text',
   style: {
     type: 'solid',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#fefce8',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'normal',
-    textColor: '#1d4ed8',
-    titleColor: '#2563eb',
-    bodyTextColor: '#1d4ed8',
+    textColor: '#d97706',
+    titleColor: '#f59e0b',
+    bodyTextColor: '#d97706',
     borderRadius: '2xl',
     shadow: 'md'
   },
-  previewComponent: ModernBluePreview
+  previewComponent: VibrantYellowPreview
 }
 
-export default modernBlueStyle
+export default vibrantYellowStyle

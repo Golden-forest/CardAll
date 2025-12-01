@@ -6,7 +6,7 @@ import { CardStyle } from './card'
 export interface StylePreset {
   id: string
   name: string
-  category: 'business' | 'creative' | 'natural' | 'personality'
+  category: 'business' | 'creative' | 'natural' | 'personality' | 'gradient' | 'nature' | 'modern' | 'warm' | 'classic' | 'dark' | 'minimalist'
   description: string
   style: CardStyle
   previewComponent: React.ComponentType<StylePreviewProps>
@@ -123,6 +123,41 @@ export const STYLE_CATEGORIES = {
     name: 'Personality',
     description: 'Bold and unique styles for expression',
     icon: 'star'
+  },
+  gradient: {
+    name: 'Gradient',
+    description: 'Beautiful gradient backgrounds with smooth transitions',
+    icon: 'gradient'
+  },
+  nature: {
+    name: 'Nature',
+    description: 'Styles inspired by the natural world',
+    icon: 'tree'
+  },
+  modern: {
+    name: 'Modern',
+    description: 'Clean and contemporary styles',
+    icon: 'layout'
+  },
+  warm: {
+    name: 'Warm',
+    description: 'Cozy and inviting warm color schemes',
+    icon: 'sun'
+  },
+  classic: {
+    name: 'Classic',
+    description: 'Timeless and elegant styles',
+    icon: 'crown'
+  },
+  dark: {
+    name: 'Dark',
+    description: 'Sleek and modern dark themes',
+    icon: 'moon'
+  },
+  minimalist: {
+    name: 'Minimalist',
+    description: 'Simple and clean minimalist designs',
+    icon: 'square'
   }
 } as const
 

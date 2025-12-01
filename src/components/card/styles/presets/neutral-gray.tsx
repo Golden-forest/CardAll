@@ -1,13 +1,13 @@
-// Modern Blue - Clean and professional style
+// Neutral Gray - Clean and minimalist style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const NeutralGrayPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: '#eff6ff',
-    color: '#1d4ed8',
+    background: '#f9fafb',
+    color: '#374151',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '400',
@@ -17,8 +17,8 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 
   return (
     <StylePreviewCard
-      title="Modern Blue"
-      content="Clean and professional"
+      title="Neutral Gray"
+      content="Clean and minimalist"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -27,24 +27,24 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
   )
 }
 
-export const modernBlueStyle: StylePreset = {
-  id: 'modern-blue',
-  name: 'Modern Blue',
-  category: 'business',
-  description: 'Clean and professional blue background with high contrast text',
+export const neutralGrayStyle: StylePreset = {
+  id: 'neutral-gray',
+  name: 'Neutral Gray',
+  category: 'minimalist',
+  description: 'Clean and minimalist gray background with high contrast text',
   style: {
     type: 'solid',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f9fafb',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'normal',
-    textColor: '#1d4ed8',
-    titleColor: '#2563eb',
-    bodyTextColor: '#1d4ed8',
+    textColor: '#374151',
+    titleColor: '#111827',
+    bodyTextColor: '#374151',
     borderRadius: '2xl',
     shadow: 'md'
   },
-  previewComponent: ModernBluePreview
+  previewComponent: NeutralGrayPreview
 }
 
-export default modernBlueStyle
+export default neutralGrayStyle

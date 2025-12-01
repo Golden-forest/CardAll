@@ -1,13 +1,13 @@
-// Modern Blue - Clean and professional style
+// Elegant Pink - Sophisticated and feminine style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const ElegantPinkPreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: '#eff6ff',
-    color: '#1d4ed8',
+    background: '#fef2f2',
+    color: '#b91c1c',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '400',
@@ -17,8 +17,8 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 
   return (
     <StylePreviewCard
-      title="Modern Blue"
-      content="Clean and professional"
+      title="Elegant Pink"
+      content="Sophisticated and feminine"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -27,24 +27,24 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
   )
 }
 
-export const modernBlueStyle: StylePreset = {
-  id: 'modern-blue',
-  name: 'Modern Blue',
-  category: 'business',
-  description: 'Clean and professional blue background with high contrast text',
+export const elegantPinkStyle: StylePreset = {
+  id: 'elegant-pink',
+  name: 'Elegant Pink',
+  category: 'modern',
+  description: 'Sophisticated and feminine pink background with high contrast text',
   style: {
     type: 'solid',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#fef2f2',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'normal',
-    textColor: '#1d4ed8',
-    titleColor: '#2563eb',
-    bodyTextColor: '#1d4ed8',
+    textColor: '#b91c1c',
+    titleColor: '#dc2626',
+    bodyTextColor: '#b91c1c',
     borderRadius: '2xl',
     shadow: 'md'
   },
-  previewComponent: ModernBluePreview
+  previewComponent: ElegantPinkPreview
 }
 
-export default modernBlueStyle
+export default elegantPinkStyle

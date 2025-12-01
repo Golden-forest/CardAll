@@ -1,4 +1,4 @@
-// Warm Orange - Creative energetic style
+// Warm Orange - Energetic and friendly style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
@@ -6,20 +6,19 @@ import { StylePreviewCard } from '../style-preview'
 
 const WarmOrangePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
-    color: '#ffffff',
+    background: '#fff7ed',
+    color: '#c2410c',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
-    fontWeight: '600',
-    borderRadius: '18px',
-    boxShadow: '0 25px 50px -12px rgba(255, 126, 95, 0.25), 0 0 0 1px rgba(255, 126, 95, 0.1)',
-    border: 'none'
+    fontWeight: '400',
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
   }
 
   return (
     <StylePreviewCard
       title="Warm Orange"
-      content="Energetic and vibrant"
+      content="Energetic and friendly"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -31,19 +30,19 @@ const WarmOrangePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 export const warmOrangeStyle: StylePreset = {
   id: 'warm-orange',
   name: 'Warm Orange',
-  category: 'creative',
-  description: 'Energetic warm orange gradient with peachy tones',
+  category: 'warm',
+  description: 'Energetic and friendly orange background with high contrast text',
   style: {
-    type: 'gradient',
-    gradientColors: ['#ff7e5f', '#feb47b'],
-    gradientDirection: 'to-br',
+    type: 'solid',
+    backgroundColor: '#fff7ed',
     fontFamily: 'system-ui',
     fontSize: 'base',
-    fontWeight: 'semibold',
-    textColor: '#ffffff',
+    fontWeight: 'normal',
+    textColor: '#c2410c',
+    titleColor: '#ea580c',
+    bodyTextColor: '#c2410c',
     borderRadius: '2xl',
-    shadow: '2xl',
-    borderWidth: 0
+    shadow: 'md'
   },
   previewComponent: WarmOrangePreview
 }

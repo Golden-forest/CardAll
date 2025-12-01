@@ -27,6 +27,8 @@ export interface CardStyle {
   fontSize?: 'sm' | 'base' | 'lg' | 'xl'
   fontWeight?: 'normal' | 'medium' | 'semibold' | 'bold'
   textColor?: string
+  titleColor?: string
+  bodyTextColor?: string
   borderRadius?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
   shadow?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'glass'
   borderWidth?: number

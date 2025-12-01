@@ -97,6 +97,7 @@ const CardSide = React.memo(function CardSide({
             <h3 
               className="text-lg font-semibold text-left cursor-pointer hover:bg-black/5 rounded px-1 py-0.5 -mx-1 transition-colors"
               onDoubleClick={() => onDoubleClick('title')}
+              style={{ color: _card.style.titleColor || _card.style.textColor }}
             >
               {content.title || 'Untitled Card'}
             </h3>

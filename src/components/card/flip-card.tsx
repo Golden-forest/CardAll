@@ -90,7 +90,7 @@ export function FlipCard({
       fontSize: style.fontSize === 'sm' ? '0.875rem' : 
                 style.fontSize === 'lg' ? '1.125rem' : '1rem',
       fontWeight: style.fontWeight,
-      color: style.textColor,
+      color: style.bodyTextColor || style.textColor,
       borderWidth: style.borderWidth || 0,
       borderColor: style.borderColor,
     }

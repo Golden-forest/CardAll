@@ -271,14 +271,14 @@ export function Dashboard({ className }: DashboardProps) {
   const handleCreateCard = () => {
     const newCard = {
       frontContent: {
-        title: 'New Card',
+        title: '',
         text: 'Click to edit this card...',
         images: [],
         tags: [],
         lastModified: new Date()
       },
       backContent: {
-        title: 'Back Side',
+        title: '',
         text: 'Add additional content here...',
         images: [],
         tags: [],

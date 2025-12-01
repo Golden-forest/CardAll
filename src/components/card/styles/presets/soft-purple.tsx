@@ -1,13 +1,13 @@
-// Modern Blue - Clean and professional style
+// Soft Purple - Elegant and modern style
 
 import React from 'react'
 import { StylePreset, StylePreviewProps } from '../../../../types/style'
 import { StylePreviewCard } from '../style-preview'
 
-const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
+const SoftPurplePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, className }) => {
   const style: React.CSSProperties = {
-    background: '#eff6ff',
-    color: '#1d4ed8',
+    background: '#faf5ff',
+    color: '#6b21a8',
     fontFamily: 'system-ui, -apple-system, sans-serif',
     fontSize: '14px',
     fontWeight: '400',
@@ -17,8 +17,8 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
 
   return (
     <StylePreviewCard
-      title="Modern Blue"
-      content="Clean and professional"
+      title="Soft Purple"
+      content="Elegant and modern"
       style={style}
       isSelected={isSelected}
       onClick={onClick}
@@ -27,24 +27,24 @@ const ModernBluePreview: React.FC<StylePreviewProps> = ({ isSelected, onClick, c
   )
 }
 
-export const modernBlueStyle: StylePreset = {
-  id: 'modern-blue',
-  name: 'Modern Blue',
-  category: 'business',
-  description: 'Clean and professional blue background with high contrast text',
+export const softPurpleStyle: StylePreset = {
+  id: 'soft-purple',
+  name: 'Soft Purple',
+  category: 'modern',
+  description: 'Elegant and modern purple background with high contrast text',
   style: {
     type: 'solid',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#faf5ff',
     fontFamily: 'system-ui',
     fontSize: 'base',
     fontWeight: 'normal',
-    textColor: '#1d4ed8',
-    titleColor: '#2563eb',
-    bodyTextColor: '#1d4ed8',
+    textColor: '#6b21a8',
+    titleColor: '#7c3aed',
+    bodyTextColor: '#6b21a8',
     borderRadius: '2xl',
     shadow: 'md'
   },
-  previewComponent: ModernBluePreview
+  previewComponent: SoftPurplePreview
 }
 
-export default modernBlueStyle
+export default softPurpleStyle

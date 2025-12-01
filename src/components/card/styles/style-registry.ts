@@ -19,7 +19,7 @@ class CardStyleRegistry implements StyleRegistry {
   }
 
   private initializeCategories(): void {
-    const categories: StyleCategory[] = ['business', 'creative', 'natural', 'personality']
+    const categories: StyleCategory[] = ['business', 'creative', 'natural', 'personality', 'gradient', 'nature', 'modern', 'warm', 'classic', 'dark', 'minimalist']
     categories.forEach(category => {
       this.categories.set(category, [])
     })
@@ -60,7 +60,7 @@ class CardStyleRegistry implements StyleRegistry {
 
   public getAllByOrder(): StylePreset[] {
     const orderedPresets: StylePreset[] = []
-    const categories: StyleCategory[] = ['business', 'creative', 'natural', 'personality']
+    const categories: StyleCategory[] = ['business', 'creative', 'natural', 'personality', 'gradient', 'nature', 'modern', 'warm', 'classic', 'dark', 'minimalist']
     
     categories.forEach(category => {
       const categoryPresets = this.getByCategory(category)

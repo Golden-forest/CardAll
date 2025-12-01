@@ -15,6 +15,17 @@ import gradientSunsetStyle from './gradient-sunset'
 import gradientMeshStyle from './gradient-mesh'
 import gradientWaveStyle from './gradient-wave'
 import movingGradientStyle from './moving-gradient'
+// New styles
+import freshMintStyle from './fresh-mint'
+import elegantPinkStyle from './elegant-pink'
+import calmCyanStyle from './calm-cyan'
+import vibrantYellowStyle from './vibrant-yellow'
+import deepPurpleGradientStyle from './deep-purple-gradient'
+import blueGreenGradientStyle from './blue-green-gradient'
+import pinkOrangeGradientStyle from './pink-orange-gradient'
+import greenBlueGradientStyle from './green-blue-gradient'
+import blackWhiteClassicStyle from './black-white-classic'
+import darkModeStyle from './dark-mode'
 
 // Register all styles
 const registerAllStyles = () => {
@@ -30,7 +41,18 @@ const registerAllStyles = () => {
     gradientSunsetStyle,
     gradientMeshStyle,
     gradientWaveStyle,
-    movingGradientStyle
+    movingGradientStyle,
+    // New styles
+    freshMintStyle,
+    elegantPinkStyle,
+    calmCyanStyle,
+    vibrantYellowStyle,
+    deepPurpleGradientStyle,
+    blueGreenGradientStyle,
+    pinkOrangeGradientStyle,
+    greenBlueGradientStyle,
+    blackWhiteClassicStyle,
+    darkModeStyle
   ]
 
   styles.forEach(style => {
@@ -56,7 +78,18 @@ export {
   gradientSunsetStyle,
   gradientMeshStyle,
   gradientWaveStyle,
-  movingGradientStyle
+  movingGradientStyle,
+  // New styles
+  freshMintStyle,
+  elegantPinkStyle,
+  calmCyanStyle,
+  vibrantYellowStyle,
+  deepPurpleGradientStyle,
+  blueGreenGradientStyle,
+  pinkOrangeGradientStyle,
+  greenBlueGradientStyle,
+  blackWhiteClassicStyle,
+  darkModeStyle
 }
 
 export default registerAllStyles
