@@ -1,4 +1,5 @@
 // Enhanced flip card with integrated style and tag selection
+import React, { useCallback } from 'react'
 import { Card as CardType } from '../../types/card'
 import { FlipCard } from './flip-card'
 import { useStylePanel } from '../../contexts/style-panel-context'
@@ -34,7 +35,7 @@ export function EnhancedFlipCard({
   const { openTagPanel } = useTagPanel()
   const { openFolderPanel } = useFolderPanel()
 
-  const handleStyleChangeClick = () => {
+  const handleStyleChangeClick = useCallback(() => {
     openStylePanel({
       targetCardId: card.id,
       currentStyle: card.style,
@@ -46,9 +47,9 @@ export function EnhancedFlipCard({
       },
       onPanelClose: () => {} // Add empty callback for panel close
     })
-  }
+  }, [card.id, card.style, onUpdate, openStylePanel])
 
-  const handleTagsChangeClick = () => {
+  const handleTagsChangeClick = useCallback(() => {
     // 注意：这里暂时使用card.isFlipped，因为EnhancedFlipCard无法直接访问FlipCard的内部状态
     const currentContent = card.isFlipped ? card.backContent : card.frontContent
     const contentKey = card.isFlipped ? 'backContent' : 'frontContent'
@@ -68,9 +69,9 @@ export function EnhancedFlipCard({
       },
       onPanelClose: () => {}
     })
-  }
+  }, [card.id, card.isFlipped, card.backContent, card.frontContent, onUpdate, openTagPanel])
 
-  const handleMoveToFolderClick = () => {
+  const handleMoveToFolderClick = useCallback(() => {
     if (onMoveToFolder) {
       openFolderPanel({
         targetCardId: card.id,
@@ -79,7 +80,7 @@ export function EnhancedFlipCard({
         onPanelClose: () => {}
       })
     }
-  }
+  }, [card.id, card.folderId, onMoveToFolder, openFolderPanel])
 
   return (
     <FlipCard
@@ -99,4 +100,3 @@ export function EnhancedFlipCard({
   )
 }
 
-export default EnhancedFlipCard

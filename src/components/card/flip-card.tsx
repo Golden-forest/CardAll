@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
 import { Card as CardType, CardContent as CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -155,7 +155,9 @@ export function FlipCard({
     }
   }
 
-  const { style: cardStyles, shadowClass, specialClasses } = getCardStyles()
+  const { style: cardStyles, shadowClass, specialClasses } = useMemo(() => {
+    return getCardStyles()
+  }, [card.style])
 
   const handleFlip = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
