@@ -11,7 +11,6 @@ import freshGreenStyle from './fresh-green'
 import softPinkStyle from './soft-pink'
 import oceanBreezeStyle from './ocean-breeze'
 import deepDarkStyle from './deep-dark'
-import gradientSunsetStyle from './gradient-sunset'
 import gradientMeshStyle from './gradient-mesh'
 import gradientWaveStyle from './gradient-wave'
 import movingGradientStyle from './moving-gradient'
@@ -24,7 +23,6 @@ import deepPurpleGradientStyle from './deep-purple-gradient'
 import blueGreenGradientStyle from './blue-green-gradient'
 import pinkOrangeGradientStyle from './pink-orange-gradient'
 import greenBlueGradientStyle from './green-blue-gradient'
-import blackWhiteClassicStyle from './black-white-classic'
 import darkModeStyle from './dark-mode'
 
 // Register all styles
@@ -38,7 +36,6 @@ const registerAllStyles = () => {
     softPinkStyle,
     oceanBreezeStyle,
     deepDarkStyle,
-    gradientSunsetStyle,
     gradientMeshStyle,
     gradientWaveStyle,
     movingGradientStyle,
@@ -51,7 +48,6 @@ const registerAllStyles = () => {
     blueGreenGradientStyle,
     pinkOrangeGradientStyle,
     greenBlueGradientStyle,
-    blackWhiteClassicStyle,
     darkModeStyle
   ]
 
@@ -75,7 +71,6 @@ export {
   softPinkStyle,
   oceanBreezeStyle,
   deepDarkStyle,
-  gradientSunsetStyle,
   gradientMeshStyle,
   gradientWaveStyle,
   movingGradientStyle,
@@ -88,7 +83,6 @@ export {
   blueGreenGradientStyle,
   pinkOrangeGradientStyle,
   greenBlueGradientStyle,
-  blackWhiteClassicStyle,
   darkModeStyle
 }
 
