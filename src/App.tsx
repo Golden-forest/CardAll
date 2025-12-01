@@ -3,12 +3,10 @@ import { Dashboard } from '@/components/dashboard'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
-// import { AuthModalEnhanced } from '@/components/auth/auth-modal-enhanced' // 认证功能已删除
 import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
-// import { AuthModalProvider, useAuthModal } from '@/contexts/auth-modal-context' // 认证功能已删除
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
 import './globals.css'
@@ -18,9 +16,6 @@ interface AppProps {
 }
 
 function AppContent({ initializationError }: AppProps) {
-  // 认证功能已删除
-  // const { isOpen, closeModal } = useAuthModal()
-
   return (
     <div className="min-h-screen bg-background">
       {/* 初始化错误提示 */}
@@ -49,9 +44,6 @@ function AppContent({ initializationError }: AppProps) {
 
       {/* PWA Install Prompt */}
       <InstallPrompt />
-
-      {/* Authentication Modal - 认证功能已删除 */}
-      {/* {AppConfig.enableAuth && <AuthModalEnhanced open={isOpen} onOpenChange={closeModal} />} */}
 
       <Toaster />
     </div>

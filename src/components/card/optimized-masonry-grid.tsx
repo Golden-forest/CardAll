@@ -19,6 +19,8 @@ interface OptimizedMasonryGridProps {
   gap?: number
   enableVirtualization?: boolean
   overscan?: number
+  isLoading?: boolean
+  error?: string
 }
 
 export function OptimizedMasonryGrid({
@@ -35,7 +37,9 @@ export function OptimizedMasonryGrid({
   className,
   gap = 16,
   enableVirtualization = true,
-  overscan = 5
+  overscan = 5,
+  isLoading = false,
+  error = ''
 }: OptimizedMasonryGridProps) {
   const [cardHeights, setCardHeights] = useState<Map<string, number>>(new Map())
   const [isInitialized, setIsInitialized] = useState(false)
@@ -197,6 +201,45 @@ export function OptimizedMasonryGrid({
     }
   }, [])
 
+  // 加载状态
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary mx-auto"></div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Loading cards...</h3>
+            <p className="text-muted-foreground max-w-sm">
+              Please wait while we load your knowledge cards.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 错误状态
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <div className="text-center space-y-4">
+          <div className="w-24 h-24 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-lg bg-destructive flex items-center justify-center">
+              <span className="text-white font-bold text-lg">!</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold">Error loading cards</h3>
+            <p className="text-muted-foreground max-w-sm">
+              {error}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 空状态
   if (sortedCards.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-12">

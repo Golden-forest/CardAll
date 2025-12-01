@@ -289,7 +289,33 @@ export function useCardsAdapter() {
 }
 
 /**
- * 便捷Hook，用于获取适配器状态
+ * 便捷Hook，用于获取存储适配器状态
+ * 
+ * 这个Hook提供了一个简化的接口，只返回适配器的状态信息，不包含完整的卡片数据操作
+ * 适用于只需要了解存储状态的组件
+ * 
+ * @returns {object} 存储适配器状态
+ * @returns {string} returns.mode - 当前存储模式 ('localStorage' | 'indexeddb' | 'migrating')
+ * @returns {boolean} returns.isReady - 适配器是否准备就绪
+ * @returns {object} returns.migrationProgress - 迁移进度信息（如果正在迁移）
+ * @returns {function} returns.retryMigration - 重试迁移的函数
+ * @returns {function} returns.rollbackMigration - 回滚迁移的函数
+ * 
+ * @example
+ * ```tsx
+ * const { mode, isReady, migrationProgress } = useStorageAdapter()
+ * 
+ * if (!isReady) {
+ *   return (
+ *     <div>
+ *       <div>正在初始化存储...</div>
+ *       {migrationProgress && (
+ *         <div>迁移进度: {migrationProgress.progress}%</div>
+ *       )}
+ *     </div>
+ *   )
+ * }
+ * ```
  */
 export function useStorageAdapter() {
   const adapter = useCardsAdapter()
@@ -303,7 +329,35 @@ export function useStorageAdapter() {
 }
 
 /**
- * 创建新的卡片Hook，自动处理存储模式
+ * 增强的卡片Hook，自动处理存储模式和迁移状态
+ * 
+ * 这个Hook在适配器未就绪时提供了安全的默认值，防止应用崩溃
+ * 适用于需要直接操作卡片数据的组件
+ * 
+ * @returns {object} 增强的卡片数据和操作方法
+ * @returns {Array} returns.cards - 当前显示的卡片列表
+ * @returns {Array} returns.allCards - 所有卡片的完整列表
+ * @returns {boolean} returns.isLoading - 是否正在加载数据
+ * @returns {function} returns.dispatch - 卡片操作的dispatch函数
+ * @returns {object} returns.adapterState - 适配器的完整状态
+ * @returns {string} returns.storageMode - 当前存储模式
+ * @returns {boolean} returns.isReady - 适配器是否准备就绪
+ * 
+ * @example
+ * ```tsx
+ * const { cards, allCards, isLoading, dispatch } = useCardsWithAdapter()
+ * 
+ * if (isLoading) {
+ *   return <div>加载中...</div>
+ * }
+ * 
+ * const handleCreateCard = () => {
+ *   dispatch({
+ *     type: 'CREATE_CARD',
+ *     payload: { title: 'New Card', content: 'Card content' }
+ *   })
+ * }
+ * ```
  */
 export function useCardsWithAdapter() {
   const adapter = useCardsAdapter()

@@ -4,19 +4,46 @@ import { useFolders } from '@/hooks/use-folders'
 import { useTags } from '@/hooks/use-tags'
 import { AppConfig } from '@/config/app-config'
 
+/**
+ * 卡片应用的全局上下文类型
+ * 包含卡片、文件夹、标签和应用配置
+ */
 interface CardAllContextType {
+  /** 卡片相关功能和状态 */
   cards: ReturnType<typeof useCardsAdapter>
+  /** 文件夹相关功能和状态 */
   folders: ReturnType<typeof useFolders>
+  /** 标签相关功能和状态 */
   tags: ReturnType<typeof useTags>
+  /** 应用配置 */
   appConfig: typeof AppConfig
 }
 
+/**
+ * 卡片应用的全局上下文
+ * 提供应用的核心状态和功能
+ */
 const CardAllContext = createContext<CardAllContextType | null>(null)
 
+/**
+ * CardAllProvider组件的属性类型
+ */
 interface CardAllProviderProps {
+  /** 子组件 */
   children: ReactNode
 }
 
+/**
+ * 卡片应用的全局状态提供者
+ * 整合卡片、文件夹和标签的状态管理
+ * 
+ * @example
+ * ```tsx
+ * <CardAllProvider>
+ *   <App />
+ * </CardAllProvider>
+ * ```
+ */
 export function CardAllProvider({ children }: CardAllProviderProps) {
   const cards = useCardsAdapter()
   const folders = useFolders()
