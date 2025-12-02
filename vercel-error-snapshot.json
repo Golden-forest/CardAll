@@ -1,0 +1,5 @@
+uid=1_0 RootWebArea "Deployment has failed" url="https://card-nujjgitjw-goldenforests-projects.vercel.app/"
+  uid=1_1 main
+    uid=1_2 heading "Deployment has failed" level="1"
+    uid=1_3 link "View Build" url="https://vercel.com/deployments/card-nujjgitjw-goldenforests-projects.vercel.app?redirect=1"
+      uid=1_4 StaticText "View Build"
