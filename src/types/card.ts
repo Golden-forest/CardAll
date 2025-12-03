@@ -10,11 +10,18 @@ export interface ImageData {
   aspectRatio?: number
 }
 
+export interface TodoItem {
+  id: string
+  text: string
+  completed: boolean
+}
+
 export interface CardContent {
   title: string
   text: string
   images: ImageData[]
   tags: string[]
+  todos: TodoItem[]
   lastModified: Date
 }
 

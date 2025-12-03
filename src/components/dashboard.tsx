@@ -25,6 +25,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { formatCardContentForCopy, copyTextToClipboard } from '@/utils/copy-utils'
 import { useScreenshot } from '@/hooks/use-screenshot'
 import { ScreenshotPreviewModal } from '@/components/screenshot/screenshot-preview-modal'
+import { CardDetailModal } from '@/components/card/card-detail-modal'
 import { useToast } from '@/hooks/use-toast'
 import {
   FolderContextMenu,
@@ -704,9 +705,9 @@ export function Dashboard({ className }: DashboardProps) {
                 onClick={handleCreateCard}
                 variant="ghost"
                 size="sm"
-                className="text-black font-bold hover:bg-gray-100 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+                className="font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-10 h-10 p-0 flex items-center justify-center"
               >
-                <Plus className="h-6 w-6" />
+                <Plus className="h-6 w-6 text-foreground" />
                 <span className="sr-only">Add Card</span>
               </Button>
               
@@ -941,6 +942,18 @@ export function Dashboard({ className }: DashboardProps) {
           previewUrl={previewData?.previewUrl || null}
           fileName={previewData?.fileName || ''}
           isDownloading={isDownloading}
+        />
+        
+        {/* Card Detail Modal */}
+        <CardDetailModal
+          isOpen={showCardDetailModal}
+          onClose={() => {
+            setShowCardDetailModal(false);
+            setCurrentCard(null);
+          }}
+          card={currentCard}
+          onCardUpdate={handleCardUpdate}
+          onFlip={handleCardFlip}
         />
 
         {/* Folder Management Dialogs */}

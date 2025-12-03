@@ -56,7 +56,7 @@ export async function captureElementAsBlob(
 ): Promise<Blob> {
   const {
     quality = 1.0,
-    pixelRatio = 2,
+    pixelRatio = 3,
     backgroundColor = 'transparent',
     includeStyles = true
   } = options

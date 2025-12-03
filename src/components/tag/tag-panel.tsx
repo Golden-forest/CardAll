@@ -103,15 +103,15 @@ export const TagPanel: React.FC<TagPanelProps> = ({
       />
       
       {/* Panel - Responsive sizing */}
-      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-6 w-full max-w-sm sm:max-w-md lg:max-w-2xl max-h-[85vh] flex flex-col">
+      <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-800/50 p-6 w-full max-w-sm sm:max-w-md lg:max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Manage Tags</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Select tags for this card
-            </p>
-          </div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Manage Tags</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            Select tags for this card
+          </p>
+        </div>
           <button
             onClick={handleClose}
             className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
@@ -159,11 +159,11 @@ export const TagPanel: React.FC<TagPanelProps> = ({
         </div>
 
         {/* Footer Info */}
-        <div className="text-xs text-gray-400 text-center mt-4 pt-4 border-t border-gray-100">
+        <div className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+            <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></div>
             <span>Click tags to add/remove them from this card</span>
-            <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+            <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700"></div>
           </div>
         </div>
       </div>

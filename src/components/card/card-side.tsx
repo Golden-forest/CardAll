@@ -12,7 +12,8 @@ import {
   Tag,
   Image as ImageIcon,
   Trash2,
-  FolderOpen
+  FolderOpen,
+  Maximize2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -155,6 +156,14 @@ const CardSide = React.memo(function CardSide({
               <DropdownMenuItem onClick={onShare}>
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                // This will be handled by the parent component
+                const event = new CustomEvent('card-view-detail', { detail: { cardId: _card.id } });
+                window.dispatchEvent(event);
+              }}>
+                <Maximize2 className="h-4 w-4 mr-2" />
+                Zoom View
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {onStyleChange && (
