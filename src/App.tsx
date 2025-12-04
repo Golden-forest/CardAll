@@ -7,6 +7,7 @@ import { InstallPrompt } from '@/components/pwa/install-prompt'
 import { CardAllProvider } from '@/contexts/cardall-context'
 import { StylePanelProvider } from '@/contexts/style-panel-context'
 import { TagPanelProvider } from '@/contexts/tag-panel-context'
+import { PaymentProvider } from '@/contexts/payment-context'
 
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle } from 'lucide-react'
@@ -34,13 +35,15 @@ function AppContent({ initializationError }: AppProps) {
       )}
 
       <TooltipProvider>
-        <CardAllProvider>
-          <StylePanelProvider>
-            <TagPanelProvider>
-              <Dashboard />
-            </TagPanelProvider>
-          </StylePanelProvider>
-        </CardAllProvider>
+        <PaymentProvider>
+          <CardAllProvider>
+            <StylePanelProvider>
+              <TagPanelProvider>
+                <Dashboard />
+              </TagPanelProvider>
+            </StylePanelProvider>
+          </CardAllProvider>
+        </PaymentProvider>
       </TooltipProvider>
 
       {/* PWA Install Prompt */}

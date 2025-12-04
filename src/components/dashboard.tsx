@@ -38,6 +38,8 @@ import {
   DeleteTagDialog,
   ConnectedTagPanel
 } from '@/components/tag'
+import { DonationButton } from '@/components/payment/donation-button'
+import { DonationModal } from '@/components/payment/donation-modal'
 import { FolderPanelProvider } from '@/contexts/folder-panel-context'
 import { AppConfig } from '@/config/app-config'
 
@@ -651,7 +653,9 @@ export function Dashboard({ className }: DashboardProps) {
               {/* Sync Status Indicator - 云端同步功能已删除，不再显示 */}
               {/* Sync status indicator has been removed as cloud sync functionality is disabled */}
 
-  
+              {/* Donation Button */}
+              <DonationButton />
+
               {/* Layout Controls Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -1016,6 +1020,9 @@ export function Dashboard({ className }: DashboardProps) {
 
         {/* Tag Panel */}
         <ConnectedTagPanel />
+
+        {/* Donation Modal */}
+        <DonationModal />
 
         {/* Conflict Management Modals - 冲突功能已删除，不再显示 */}
         {/* Conflict management modals have been removed as cloud sync functionality is disabled */}
