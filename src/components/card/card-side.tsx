@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Card as CardType, CardContentType, ImageData } from '@/types/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Dialog, DialogContent, DialogTrigger, DialogClose } from '@/components/ui/dialog'
 import { RichTextEditor } from './rich-text-editor'
 import { TitleEditor } from './title-editor'
 import { CardTags } from '../tag/card-tags'
@@ -81,8 +82,17 @@ const CardSide = React.memo(function CardSide({
   _sideLabel,
   _card
 }: CardSideProps) {
+  // 本地状态：控制全屏模态框显示
+  const [isFullscreenModalOpen, setIsFullscreenModalOpen] = useState(false)
+  
+  // 全屏切换函数
+  const toggleFullscreen = () => {
+    setIsFullscreenModalOpen(!isFullscreenModalOpen)
+  }
+
   return (
-    <div className="flex flex-col h-full">
+    <>
+      <div className="flex flex-col h-full">
       {/* Header with Title and Action Buttons */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 mr-2">
@@ -157,13 +167,9 @@ const CardSide = React.memo(function CardSide({
                 <Share2 className="h-4 w-4 mr-2" />
                 Share
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => {
-                // This will be handled by the parent component
-                const event = new CustomEvent('card-view-detail', { detail: { cardId: _card.id } });
-                window.dispatchEvent(event);
-              }}>
+              <DropdownMenuItem onClick={toggleFullscreen}>
                 <Maximize2 className="h-4 w-4 mr-2" />
-                Zoom View
+                {isFullscreenModalOpen ? 'Exit Fullscreen' : 'Fullscreen'}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {onStyleChange && (
@@ -268,6 +274,62 @@ const CardSide = React.memo(function CardSide({
         )}
       </div>
     </div>
+      
+      {/* 全屏模态框 */}
+      <Dialog open={isFullscreenModalOpen} onOpenChange={setIsFullscreenModalOpen}>
+        <DialogContent className="max-w-full max-h-full w-full h-full p-0 m-0 bg-background/95 backdrop-blur-sm rounded-none">
+          <div className="p-6 h-full flex flex-col">
+            {/* 全屏卡片内容 */}
+            <div className="flex-1 overflow-auto">
+              {/* 标题 */}
+              <h3 
+                className="text-2xl font-semibold text-center mb-6" 
+                style={{ color: _card.style.titleColor || _card.style.textColor }}
+              >
+                {content.title || 'Untitled Card'}
+              </h3>
+              
+              {/* 图片 */}
+              {content.images.length > 0 && (
+                <div className="mb-6 flex justify-center">
+                  <ImageGrid images={content.images} />
+                </div>
+              )}
+              
+              {/* 文本内容 */}
+              <div 
+                className="text-lg leading-relaxed text-left max-w-3xl mx-auto tiptap-editor overflow-y-auto overflow-x-hidden max-h-[calc(100vh-200px)]"
+              >
+                <div
+                  className="whitespace-pre-wrap break-words overflow-wrap-anywhere"
+                  dangerouslySetInnerHTML={{
+                    __html: content.text || '<span class="text-muted-foreground">No content</span>'
+                  }}
+                />
+              </div>
+              
+              {/* 标签 */}
+              {content.tags.length > 0 && (
+                <div className="mt-6 text-center">
+                  <CardTags tags={content.tags} size="md" />
+                </div>
+              )}
+            </div>
+            
+            {/* 关闭按钮 */}
+            <div className="mt-6 text-center">
+              <Button 
+                variant="outline" 
+                onClick={toggleFullscreen} 
+                className="px-6"
+              >
+                Exit Fullscreen
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 })
 

@@ -124,6 +124,10 @@ export function Dashboard({ className }: DashboardProps) {
     cardCount: number
   } | null>(null)
 
+  // Card Detail Modal
+  const [showCardDetailModal, setShowCardDetailModal] = useState(false)
+  const [currentCard, setCurrentCard] = useState<any>(null)
+
   // 截图功能
   const {
     isCapturing,
@@ -863,7 +867,7 @@ export function Dashboard({ className }: DashboardProps) {
                             sidebarCollapsed ? "h-10 p-0" : "justify-start"
                           )}
                           onClick={() => handleTagFilter(tag.name)}
-                          title={sidebarCollapsed ? `${tag.name} (Right-click to expand sidebar for tag management)` : tag.name}
+                          title={tag.name}
                         >
                           <Tag className="h-3 w-3" style={{ color: tag.color }} />
                           {!sidebarCollapsed && (
