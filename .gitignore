@@ -2,6 +2,11 @@
 node_modules/
 */node_modules/
 
+# Package manager lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
 # Build outputs
 dist/
 */dist/
@@ -76,3 +81,16 @@ bundle-analysis.html
 # Local development
 .playwright-mcp/
 .spec-workflow/
+
+# TypeScript
+*.tsbuildinfo
+
+# ESLint cache
+.eslintcache
+
+# Vite cache
+.vite/cache/
+
+# Local development files
+*.local
+.vscode/settings.json
