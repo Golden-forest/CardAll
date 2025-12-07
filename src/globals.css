@@ -458,43 +458,7 @@
   }
 }
 
-/* Smooth theme transition animations */
-:root {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-.dark {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
-
-/* Apply transitions to all elements that use CSS variables */
-* {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Specific elements that need theme transitions */
-body,
-.bg-background,
-.text-foreground,
-.card,
-.card-foreground,
-.popover,
-.popover-foreground,
-.border,
-.input,
-.ring {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Custom scrollbar theme transitions */
-.custom-scrollbar::-webkit-scrollbar-track {
-  transition: background-color 0.3s ease;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  transition: background-color 0.3s ease;
-}
-
+/* Remove smooth theme transition animations */
 /* Code block theme transitions */
 .tiptap-editor code,
 .tiptap-editor pre {

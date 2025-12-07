@@ -55,6 +55,11 @@ export const TagSearch: React.FC<TagSearchProps> = ({
           placeholder="Search tags or create new..."
           value={inputValue}
           onChange={handleInputChange}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && showCreateOption) {
+              handleCreateTag()
+            }
+          }}
           className="pl-11 pr-4 py-3 rounded-2xl border-gray-200/60 bg-gray-50/50 dark:border-gray-700/60 dark:bg-gray-900/50 backdrop-blur-sm focus:bg-white dark:focus:bg-gray-800 focus:border-blue-300 dark:focus:border-blue-500 transition-all duration-300"
         />
       </div>

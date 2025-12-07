@@ -145,6 +145,11 @@ export function CreateFolderDialog({
               id="folder-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSubmit(e)
+                }
+              }}
               placeholder="Enter folder name..."
               autoFocus
             />

@@ -15,7 +15,10 @@ import {
   Sliders,
   ChevronLeft,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Download,
+  Upload,
+  Database
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -94,6 +97,106 @@ export function Dashboard({ className }: DashboardProps) {
     gap: 16,
     showLayoutControls: false
   })
+  
+  // 批量操作功能
+  const handleExportCards = () => {
+    try {
+      // 将卡片数据转换为JSON字符串
+      const cardsData = JSON.stringify(cards, null, 2);
+      
+      // 创建Blob对象
+      const blob = new Blob([cardsData], { type: 'application/json' });
+      
+      // 创建下载链接
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cards-export-${new Date().toISOString().slice(0, 10)}.json`;
+      
+      // 模拟点击下载
+      document.body.appendChild(a);
+      a.click();
+      
+      // 清理
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      // 显示成功提示
+      toast({
+        title: 'Export Success',
+        description: `Exported ${cards.length} cards`,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'An error occurred during card export',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const handleImportCards = () => {
+    // 创建文件输入元素
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    // 监听文件选择事件
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          try {
+            const importedCards = JSON.parse(event.target?.result as string);
+            
+            // 验证导入数据
+            if (Array.isArray(importedCards)) {
+              // 导入卡片
+              importedCards.forEach(card => {
+                // 检查卡片格式是否正确
+                if (card && card.frontContent && card.backContent && card.style) {
+                  // 创建新卡片
+                  cardDispatch({
+                    type: 'CREATE_CARD',
+                    payload: {
+                      frontContent: card.frontContent,
+                      backContent: card.backContent,
+                      style: card.style,
+                      isFlipped: card.isFlipped || false,
+                      folderId: card.folderId,
+                    }
+                  });
+                }
+              });
+              
+              // 显示成功提示
+              toast({
+                title: 'Import Success',
+                description: `Imported ${importedCards.length} cards`,
+              });
+            } else {
+              throw new Error('Invalid import data format');
+            }
+          } catch (error) {
+            console.error('Import failed:', error);
+            toast({
+              title: 'Import Failed',
+              description: 'An error occurred during card import, file format may be incorrect',
+              variant: 'destructive',
+            });
+          }
+        };
+        
+        reader.readAsText(file);
+      }
+    };
+    
+    // 模拟点击文件选择
+    input.click();
+  };
 
   // 云端同步功能已删除，不再需要冲突解决系统
 
@@ -653,8 +756,19 @@ export function Dashboard({ className }: DashboardProps) {
               {/* Sync Status Indicator - 云端同步功能已删除，不再显示 */}
               {/* Sync status indicator has been removed as cloud sync functionality is disabled */}
 
-              {/* Donation Button */}
-              <DonationButton />
+              {/* Add Card Button */}
+              <Button
+                onClick={handleCreateCard}
+                variant="ghost"
+                size="sm"
+                className="font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-10 h-10 p-0 flex items-center justify-center"
+              >
+                <Plus className="h-6 w-6 text-foreground" />
+                <span className="sr-only">Add Card</span>
+              </Button>
+
+              {/* Theme Toggle Button */}
+              <ThemeToggle />
 
               {/* Layout Controls Popover */}
               <Popover>
@@ -705,19 +819,38 @@ export function Dashboard({ className }: DashboardProps) {
                 </PopoverContent>
               </Popover>
 
-              {/* Theme Toggle Button */}
-              <ThemeToggle />
+              {/* Donation Button */}
+              <DonationButton />
 
-              {/* Add Card Button */}
-              <Button
-                onClick={handleCreateCard}
-                variant="ghost"
-                size="sm"
-                className="font-bold hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full w-10 h-10 p-0 flex items-center justify-center"
-              >
-                <Plus className="h-6 w-6 text-foreground" />
-                <span className="sr-only">Add Card</span>
-              </Button>
+              {/* Bulk Operations Popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Database className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-60" align="end">
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Batch Operations</h4>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleExportCards()}
+                    >
+                      <Download className="h-4 w-4" />
+                      <span>Export Cards</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2"
+                      onClick={() => handleImportCards()}
+                    >
+                      <Upload className="h-4 w-4" />
+                      <span>Import Cards</span>
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               
             {/* Authentication Button - 认证功能已删除，不再显示 */}
               {/* Authentication functionality has been removed as cloud sync is disabled */}
