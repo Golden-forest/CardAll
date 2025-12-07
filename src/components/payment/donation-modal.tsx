@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { usePayment } from '@/contexts/payment-context';
 import { PaymentType, PaymentPlatform } from '@/config/payment-config';
-import { Coffee, Coin, CreditCard, DollarSign, Gift, Heart } from 'lucide-react';
+import { Coffee, Coins, CreditCard, DollarSign, Gift, Heart } from 'lucide-react';
 
 interface DonationModalProps {
   // This component can be used with or without a trigger
@@ -73,7 +73,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({ trigger }) => {
             className="w-full justify-start gap-3"
             onClick={handlePayPalDonate}
           >
-            <Coin className="h-5 w-5" />
+            <Coins className="h-5 w-5" />
             <span>PayPal</span>
             <CreditCard className="h-4 w-4 ml-auto text-muted-foreground" />
           </Button>
@@ -209,7 +209,7 @@ const DonationModalContent: React.FC = () => {
                       window.open(paypalUrl, '_blank');
                     }}
                   >
-                    <Coin className="h-5 w-5" />
+                    <Coins className="h-5 w-5" />
                     <span>PayPal</span>
                     <CreditCard className="h-4 w-4 ml-auto text-muted-foreground" />
                   </Button>
